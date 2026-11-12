@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ludo — jeu à deux ou à quatre</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🎲 LUDO</h1>
+    <p class="tagline">Deux dés — contre l'ordinateur, à deux sur un écran, ou en ligne</p>
+  </header>
+
+  <!-- ================= MENU ================= -->
+  <section id="screen-menu" class="screen">
+    <div class="menu-cards">
+      <button class="big-btn primary" id="btnAi">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
+      <button class="big-btn" id="btnLocal">👥 Partie locale à deux<br><small>2 joueurs sur le même écran</small></button>
+      <button class="big-btn" id="btnCreate">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
+      <button class="big-btn" id="btnJoinShow">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
+      <button class="big-btn ghost" id="btnRules">📜 Règles du jeu</button>
+    </div>
+    <div id="joinBox" class="card hidden">
+      <h2>Rejoindre une partie</h2>
+      <div class="row">
+        <input id="joinCode" placeholder="CODE (ex. K7M2P)" maxlength="8" autocomplete="off">
+        <button class="big-btn primary small" id="btnJoin">Rejoindre</button>
+      </div>
+      <p id="joinError" class="error"></p>
+    </div>
+  </section>
+
+  <!-- ================= CHOIX (couleurs / mode) ================= -->
+  <section id="screen-setup" class="screen hidden">
+    <div class="card">
+      <h2 id="setupTitle">Préparation de la partie</h2>
+
+      <div class="pick-block">
+        <h3 id="pick1Title">Ta couleur</h3>
+        <div class="swatches" id="pick1"></div>
+      </div>
+
+      <div class="pick-block" id="pick2Block">
+        <h3 id="pick2Title">Couleur du joueur 2</h3>
+        <div class="swatches" id="pick2"></div>
+      </div>
+
+      <div class="pick-block hidden" id="aiCountBlock">
+        <h3>Nombre de joueurs</h3>
+        <div class="seg" id="aiCount">
+          <button data-n="2" class="sel">2 joueurs<br><small>toi + 1 ordinateur</small></button>
+          <button data-n="4">4 joueurs<br><small>toi + 3 ordinateurs</small></button>
+        </div>
+      </div>
+
+      <p class="hint" id="setupHint">Tous les parcours ont la même longueur : choisis ce que tu veux !</p>
+      <div class="row center">
+        <button class="big-btn ghost" id="btnBackMenu">← Retour</button>
+        <button class="big-btn primary" id="btnStart">▶ Commencer</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOBBY EN LIGNE ================= -->
+  <section id="screen-lobby" class="screen hidden">
+    <div class="card center-text">
+      <h2>Partie créée !</h2>
+      <p class="code-big" id="lobbyCode">—</p>
+      <p>Envoie ce code (ou le lien) à ton ami :</p>
+      <div class="row">
+        <input id="lobbyLink" readonly>
+        <button class="big-btn small" id="btnCopy">📋 Copier</button>
+      </div>
+      <p class="waiting"><span class="spinner"></span> En attente du second joueur…</p>
+      <div class="row center">
+        <button class="big-btn ghost" id="btnLeaveLobby">← Quitter</button>
+        <button class="big-btn ghost" id="btnRules2">📜 Règles</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PARTIE ================= -->
+  <section id="screen-game" class="screen hidden">
+    <div class="game-layout">
+      <div class="board-wrap">
+        <svg id="board" viewBox="0 0 600 600" aria-label="Plateau de Ludo"></svg>
+
+        <!-- LES DEUX DÉS, AU MILIEU DU PLATEAU -->
+        <div id="diceOverlay">
+          <div class="board-die" id="die0" title="Dé 1"></div>
+          <div class="board-die" id="die1" title="Dé 2"></div>
+          <div id="diceHint">👆 Clique pour lancer</div>
+        </div>
+
+        <!-- mini-choix près du pion (avancer / reculer-manger) -->
+        <div id="miniChoice" class="mini-choice hidden"></div>
+        <div id="toast" class="toast"></div>
+      </div>
+
+      <aside class="panel">
+        <div id="turnBanner" class="turn-banner">—</div>
+        <div id="players" class="players"></div>
+
+        <div class="log-wrap">
+          <h3>Chronique</h3>
+          <div id="log" class="log"></div>
+        </div>
+
+        <button id="finishBtn" class="big-btn warn hidden">🏁 Terminer la partie</button>
+
+        <div class="mini-actions">
+          <button class="big-btn ghost small" id="btnRules3">📜 Règles</button>
+          <button class="big-btn ghost small" id="btnLeave">✕ Quitter</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<!-- ================= MODALES ================= -->
+<div id="modalRules" class="modal hidden">
+  <div class="modal-card">
+    <h2>📜 Règles</h2>
+    <ul>
+      <li><b>2 ou 4 joueurs</b>, chacun avec <b>4 pions</b> — contre l'ordinateur, à deux sur un écran, ou en ligne.</li>
+      <li><b>Deux dés</b> par lancer : <b>chaque dé donne un déplacement</b> (ton pion deux fois, ou deux pions différents).</li>
+      <li>Clique sur les <b>dés au milieu du plateau</b> pour lancer (animation), puis choisis le <b>dé</b>, puis clique sur ton <b>pion</b>.</li>
+      <li>Un <b>6</b> (sur un des deux dés) permet de <b>sortir de la base</b> ; tu peux enchaîner avec l'autre dé sur le pion sorti.</li>
+      <li><b>Relance uniquement sur double 6</b> ; <b>trois double-6 de suite = tour perdu</b>.</li>
+      <li>Atterrir sur un pion ennemi le <b>renvoie à sa base</b>.</li>
+      <li class="hl-rules"><b>🔁 Recul :</b> on peut reculer du nombre de points du dé
+        <b>uniquement pour manger</b> un pion ennemi. Sinon, on avance.</li>
+      <li class="hl-rules"><b>⚔️ Capture stricte :</b> tu ne peux manger avec un dé
+        <b>que si un autre pion peut jouer l'autre dé</b> (tant qu'il reste un dé).
+        Sinon : tu avances avec le pion que tu as.</li>
+      <li>Les <b>départs ⭘</b> et <b>étoiles ⭐</b> sont <b>protégés</b> : pas de capture dessus.</li>
+      <li><b>Premier à rentrer ses 4 pions = 1<sup>re</sup> place</b> 🥇 ;
+        la partie continue pour déterminer les places suivantes.</li>
+    </ul>
+    <button class="big-btn primary" id="btnCloseRules">Compris !</button>
+  </div>
+</div>
+
+<div id="modalOver" class="modal hidden">
+  <div class="modal-card center-text">
+    <h2>🏆 Résultats</h2>
+    <ol id="overList" class="ranking"></ol>
+    <div id="overBilan" class="bilan"></div>
+    <div class="row center">
+      <button class="big-btn primary" id="btnReplay">🔁 Rejouer</button>
+      <button class="big-btn ghost" id="btnOverMenu">Menu</button>
+    </div>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+<script src="backends.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
