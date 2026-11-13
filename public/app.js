@@ -5,6 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
+const APP_VERSION = 'v2026-11-13b';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -1123,7 +1124,7 @@ function renderLobby() {
   const both = list.length >= 2 && list.every((s) => s.joined);
   const host = youSeatNum === 0;
   const t = document.querySelector('#lobbyTitle');
-  if (t) t.textContent = !both ? 'Partie créée !' : (host ? 'Tout le monde est prêt !' : 'Tu as rejoint !');
+  if (t) t.textContent = (!both ? 'Partie créée !' : (host ? 'Tout le monde est prêt !' : 'Tu as rejoint !')) + ' · ' + APP_VERSION;
   const startBtn = document.querySelector('#btnHostStart');
   if (startBtn) startBtn.classList.toggle('hidden', !(host && both && !started));
   const wait = document.querySelector('#lobbyWaiting');
@@ -1290,6 +1291,7 @@ function bind() {
 }
 
 async function init() {
+  document.title = 'Ludo — jeu à deux ou à quatre (' + APP_VERSION + ')';
   buildBoard();
   bind();
   /* backend de partie en ligne : Firebase si configuré, sinon le serveur (Arena) */
