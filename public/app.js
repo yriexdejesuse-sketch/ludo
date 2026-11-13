@@ -23,7 +23,9 @@ let you = null;                  // couleur humaine (null = hot-seat / spectateu
 let aiColors = new Set();
 let hotseat = false;
 let seats = [];
-let started = true;
+let started = false;
+let roomNames = ['', ''];
+let youSeatNum = -1;
 let room = { code: null, token: null };
 let selectedDie = null;          // 0 | 1 | null
 let animating = false;
@@ -523,6 +525,21 @@ function pawnPips(p) {
     return `<span class="${cls}"></span>`;
   }).join('');
 }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function nameOf(color) {
+  const i = (G && G.players ? G.players : []).findIndex(p => p.color === color);
+  const nm = (i >= 0 && roomNames) ? String(roomNames[i] || '').trim() : '';
+  return nm || LABEL[color];
+}
+function logNoteFor(color) {
+  if (!G || !G.log || !G.log.length) return '';
+  const re = new RegExp('\\b' + LABEL[color] + '\\b', 'i');
+  for (let i = G.log.length - 1; i >= 0; i--) if (re.test(G.log[i])) return G.log[i];
+  return '';
+}
 function renderChrome() {
   if (!G) return;
   const cur = Ludo.currentColor(G);
@@ -532,11 +549,11 @@ function renderChrome() {
 
   let main, hint = '';
   if (G.over) main = '🏁 Partie terminée';
-  else if (!started) main = '⏳ En attente du second joueur…';
-  else if (mode === 'local') main = `Au tour de ${EMOJI[cur]} ${LABEL[cur]}`;
+  else if (!started) main = '⏳ En attente du lancement par l\'hôte…';
+  else if (mode === 'local') main = `Au tour de ${EMOJI[cur]} ${nameOf(cur)}`;
   else if (mine) { main = `${EMOJI[cur]} À toi de jouer !`; banner.classList.add('me'); }
-  else if (mode === 'ai') main = `${EMOJI[cur]} ${LABEL[cur]} (ordinateur)…`;
-  else main = `⏳ Au tour de ${EMOJI[cur]} ${LABEL[cur]}`;
+  else if (mode === 'ai') main = `${EMOJI[cur]} ${nameOf(cur)} (ordinateur)…`;
+  else main = `⏳ Au tour de ${EMOJI[cur]} ${nameOf(cur)}`;
 
   if (mine && !G.over && started && !busy()) {
     if (G.phase === 'roll') hint = 'Clique sur les deux dés au milieu du plateau';
@@ -553,10 +570,12 @@ function renderChrome() {
     if (!hotseat && started && you) {
       tag = (p.color === you) ? ' (vous)' : (mode === 'ai' ? ' (ordinateur)' : ' (ami)');
     }
+    const note = logNoteFor(p.color);
     return `<div class="pcard ${active ? 'active' : ''}">
       <span class="chip" style="background:${HEX[p.color]}"></span>
-      <span class="who"><b>${LABEL[p.color]}${tag}</b>
-        <small>${p.pawns.filter(x => x === 56).length}/4 à la maison${p.rank ? ' — ' + MEDAL[p.rank] : ''}</small></span>
+      <span class="who"><b>${esc(nameOf(p.color))}${tag}</b>
+        <small>${p.pawns.filter(x => x === 56).length}/4 à la maison${p.rank ? ' — ' + MEDAL[p.rank] : ''}</small>
+        ${note ? `<small class="pcard-note">${esc(note)}</small>` : ''}</span>
       <span class="pips">${pawnPips(p)}</span>
       <span class="medal">${p.rank ? MEDAL[p.rank] : ''}</span>
     </div>`;
@@ -903,6 +922,7 @@ function renderSetup() {
   $('#pick1Title').textContent = (isAi || isOnline) ? 'Ta couleur' : 'Joueur 1';
   $('#pick2Block').classList.toggle('hidden', !(!isAi && !isOnline));
   $('#aiCountBlock').classList.toggle('hidden', !isAi);
+  $('#onlineNameBlock').classList.toggle('hidden', !isOnline);
   $('#setupHint').textContent = isAi
     ? (aiCount === 4 ? 'Tu joues contre 3 ordinateurs.' : 'Tu joues contre 1 ordinateur.')
     : 'Tous les parcours ont la même longueur : choisis ce que tu veux !';
@@ -1005,6 +1025,7 @@ function startLocal() {
 }
 function startAiGame() {
   mode = 'ai'; hotseat = false; overShown = false; selectedDie = null;
+  started = true;
   clearFx();
   $('#modalOver').classList.add('hidden');
   const human = setupColors.c1;
@@ -1056,17 +1077,75 @@ function roomLink() {
 function applyServer(resp, animate) {
   const wasStarted = started;
   you = resp.you ? resp.you.color : null;
+  youSeatNum = (resp.you && typeof resp.you.seat === 'number') ? resp.you.seat : -1;
   seats = resp.seats || seats;
-  started = resp.started !== false;
+  if (resp.names && resp.names.length === 2) roomNames = resp.names.slice();
+  started = resp.started === true;
   if (started && !wasStarted && mode === 'online') showScreen('game');
+  if (!started && wasStarted && mode === 'online' &&
+      !document.querySelector('#screen-game').classList.contains('hidden')) showScreen('lobby');
   if (G && overShown && !resp.state.over) {
     overShown = false;
     $('#modalOver').classList.add('hidden');
   }
   commitState(resp.state, resp.legal, animate);
+  if (mode === 'online' && !document.querySelector('#screen-lobby').classList.contains('hidden')) renderLobby();
+}
+function renderLobby() {
+  const box = document.querySelector('#lobbyPlayers');
+  if (!box) return;
+  const list = seats || [];
+  box.innerHTML = list.map((s) => {
+    const raw = roomNames[s.seat] ? String(roomNames[s.seat]).trim() : '';
+    const nm = raw || (s.joined ? 'Joueur ' + (s.seat + 1) : 'en attente…');
+    const isYou = s.joined && s.seat === youSeatNum;
+    const st = !s.joined ? '<small class="lobby-st">en attente…</small>'
+      : isYou ? `<small class="lobby-st">toi${youSeatNum === 0 ? ' — hôte' : ''}</small>`
+      : '<small class="lobby-st">prêt ✓</small>';
+    let sw = '';
+    if (s.joined && !started) {
+      sw = '<span class="mini-sws">' + Ludo.COLORS.map((c) =>
+        `<button class="mini-sw${c === s.color ? ' sel' : ''}" data-color="${c}" style="background:${HEX[c]}" ` +
+        `title="${LABEL[c]}"${s.seat === youSeatNum ? '' : ' disabled'}></button>`).join('') + '</span>';
+    }
+    return `<div class="pcard lobby-card${s.joined ? ' joined' : ''}">
+      <span class="chip" style="background:${HEX[s.color]}"></span>
+      <span class="who"><b>${esc(nm)}</b>${st}</span>${sw}
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.mini-sw:not([disabled])').forEach((btn) => {
+    btn.onclick = async () => {
+      const r = await postAction({ type: 'color', color: btn.dataset.color });
+      if (r && r.error) toast(r.error);
+      else if (r) applyServer(r, false);
+    };
+  });
+  const both = list.length >= 2 && list.every((s) => s.joined);
+  const host = youSeatNum === 0;
+  const t = document.querySelector('#lobbyTitle');
+  if (t) t.textContent = !both ? 'Partie créée !' : (host ? 'Tout le monde est prêt !' : 'Tu as rejoint !');
+  const startBtn = document.querySelector('#btnHostStart');
+  if (startBtn) startBtn.classList.toggle('hidden', !(host && both && !started));
+  const wait = document.querySelector('#lobbyWaiting');
+  if (wait) {
+    if (started) wait.classList.add('hidden');
+    else if (!both) {
+      wait.classList.remove('hidden');
+      wait.innerHTML = host
+        ? '<span class="spinner"></span> En attente du second joueur… partage le lien&nbsp;!'
+        : '<span class="spinner"></span> En attente que l\'hôte lance la partie…';
+    } else if (!host) {
+      wait.classList.remove('hidden');
+      wait.innerHTML = '<span class="spinner"></span> L\'hôte va lancer la partie…';
+    } else {
+      wait.classList.remove('hidden');
+      wait.innerHTML = '✅ Tout le monde est prêt — lance la partie&nbsp;!';
+    }
+  }
 }
 async function createOnline() {
-  const resp = await Backend.createRoom(setupColors.c1);
+  const nameEl = document.querySelector('#onlineName');
+  const resp = await Backend.createRoom(setupColors.c1, nameEl ? nameEl.value : '');
   if (resp.error) { alert(resp.error); return; }
   room = { code: resp.code, token: resp.token };
   localStorage.setItem('ludo_t_' + room.code, room.token);
@@ -1075,6 +1154,7 @@ async function createOnline() {
   $('#lobbyLink').value = roomLink();
   overShown = false;
   showScreen('lobby'); /* démarre l'écoute (startWatch) */
+  renderLobby();
 }
 async function joinOnline(code, allowSpectate) {
   code = (code || '').trim().toUpperCase();
@@ -1091,12 +1171,14 @@ async function joinOnline(code, allowSpectate) {
       if (!r.started) {
         $('#lobbyCode').textContent = code;
         $('#lobbyLink').value = roomLink();
+        renderLobby();
       }
       return;
     }
     localStorage.removeItem('ludo_t_' + code);
   }
-  const resp = await Backend.joinRoom(code);
+  const joinNameEl = document.querySelector('#joinName');
+  const resp = await Backend.joinRoom(code, joinNameEl ? joinNameEl.value : '');
   if (resp && resp.error === 'full') {
     if (!allowSpectate) { showJoinError('Cette partie a déjà 2 joueurs.'); return; }
     const r = await Backend.getState(code, null);
@@ -1116,6 +1198,7 @@ async function joinOnline(code, allowSpectate) {
   overShown = false;
   applyServer(resp, false);
   showScreen(resp.started ? 'game' : 'lobby');
+  if (!resp.started) renderLobby();
 }
 function showJoinError(msg) {
   $('#joinBox').classList.remove('hidden');
@@ -1157,6 +1240,12 @@ function bind() {
     try { await navigator.clipboard.writeText(inp.value); } catch (e) { inp.select(); document.execCommand('copy'); }
     toast('Lien copié !');
   };
+  $('#btnHostStart').onclick = async () => {
+    if (!room || !room.code) return;
+    const r = await postAction({ type: 'start' });
+    if (r && r.error) toast(r.error);
+    else if (r) applyServer(r, false);
+  };
   $('#btnLeaveLobby').onclick = () => { stopWatch(); showScreen('menu'); };
   $('#btnLeave').onclick = () => {
     if (mode === 'online' && !confirm('Quitter la partie ? (tu pourras revenir avec le lien)')) return;
@@ -1188,6 +1277,7 @@ function bind() {
       const resp = await postAction({ type: 'restart' });
       if (resp.error) { toast(resp.error); return; }
       applyServer(resp, false);
+      if (!started) { showScreen('lobby'); renderLobby(); }
     }
   };
   $('#btnOverMenu').onclick = () => {

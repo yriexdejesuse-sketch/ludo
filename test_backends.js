@@ -62,13 +62,14 @@ const tick = (ms = 15) => new Promise(r => setTimeout(r, ms));
   console.log('✔ sélection du backend (Firebase si configuré, sinon serveur)');
 
   /* création */
-  const a = await fire.createRoom('red');
+  const a = await fire.createRoom('red', 'Yriex');
   assert.ok(!a.error, a.error);
   assert.ok(/^[A-Z0-9]{5}$/.test(a.code), 'code: ' + a.code);
   assert.strictEqual(a.started, false, 'pas encore de second joueur');
   assert.strictEqual(a.you.seat, 0);
   assert.deepStrictEqual(a.state.players.map(p => p.color), ['red', 'yellow']);
   assert.strictEqual(a.state.phase, 'roll');
+  assert.strictEqual(a.names[0], 'Yriex', 'nom de l\'hôte conservé');
   console.log('✔ création de partie Firebase, code =', a.code);
 
   /* état avec le token de l'hôte */
@@ -76,13 +77,28 @@ const tick = (ms = 15) => new Promise(r => setTimeout(r, ms));
   assert.strictEqual(s0.you.seat, 0);
   assert.strictEqual(s0.started, false);
 
-  /* deuxième joueur rejoint */
-  const b = await fire.joinRoom(a.code);
+  /* deuxième joueur rejoint — PAS de démarrage automatique */
+  const b = await fire.joinRoom(a.code, 'Amina');
   assert.ok(!b.error, b.error);
   assert.strictEqual(b.you.seat, 1);
-  assert.strictEqual(b.started, true);
+  assert.strictEqual(b.started, false, 'aucun démarrage auto : l\'hôte doit lancer');
+  assert.strictEqual(b.names[1], 'Amina', 'nom du rejoignant conservé');
   const tokens = [a.token, b.token];
-  console.log('✔ join → partie démarrée (2 joueurs)');
+  console.log('✔ join → lobby (2 joueurs, en attente du top de l\'hôte)');
+
+  /* couleurs libres dans le lobby + jet interdit avant le lancement */
+  const col = await fire.action(a.code, a.token, { type: 'color', color: 'green' });
+  assert.ok(!col.error, col.error);
+  assert.strictEqual(col.state.players[0].color, 'green');
+  const pre = await fire.action(a.code, a.token, { type: 'roll' });
+  assert.ok(pre.error, 'le jet doit être refusé avant le lancement');
+  /* le top de l'hôte démarre la partie */
+  const st0 = await fire.action(a.code, a.token, { type: 'start' });
+  assert.ok(!st0.error, st0.error);
+  assert.strictEqual(st0.started, true, 'le top de l\'hôte démarre la partie');
+  const nope = await fire.action(a.code, b.token, { type: 'start' });
+  assert.ok(nope.error, 'seul l\'hôte peut lancer');
+  console.log('✔ couleur + top de l\'hôte (seul l\'hôte peut lancer)');
 
   /* join supplémentaire -> complet ; observateur sans token */
   const c = await fire.joinRoom(a.code);
@@ -177,6 +193,7 @@ const tick = (ms = 15) => new Promise(r => setTimeout(r, ms));
   const re = await fire.action(a.code, a.token, { type: 'restart' });
   assert.ok(!re.error, re.error);
   assert.strictEqual(re.state.over, false);
+  assert.strictEqual(re.started, false, 'rejouer → retour au lobby (l\'hôte relancera)');
   assert.strictEqual(re.state.rev, 0);
   assert.deepStrictEqual(re.state.players[0].pawns, [-1, -1, -1, -1]);
   console.log('✔ redémarrage de la partie');

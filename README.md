@@ -143,6 +143,15 @@ Envoie le lien à ton ami → il ouvre → **Créer une partie** → il te donne
   normal, **recul = manger seulement**) et **ne peut en sortir que par un
   double6** (retour sur la bouche + jet supplémentaire) ; le propriétaire
   peut, lui, **manger l'intrus** dans son propre couloir
+- **en ligne** : chacun écrit **son nom** (affiché dans les cartes du
+  lobby/du jeu) et choisit **sa couleur** dans le lobby — **rien ne
+  démarre tout seul : c'est l'hôte qui donne le top** (« ▶ Lancer la
+  partie ») quand les deux joueurs sont prêts ; « Rejouer » ramène au
+  lobby (l'hôte relancera)
+- **commentaires hors plateau** : plus aucun message posé sur le plateau
+  (en mobile ils gênaient le clic sur les pions) — le dernier message
+  concernant le rouge s'affiche **dans la case du rouge** (idem pour les
+  autres couleurs) ; erreurs et invites passent par la barre en haut
 - **règles du manger** : **capture stricte** (un autre pion doit pouvoir
   jouer l'autre dé — sinon un seul pion en jeu = pas de manger) ;
   **après un manger, le pion qui a mangé ne rejoue plus** du tout ce tour ;

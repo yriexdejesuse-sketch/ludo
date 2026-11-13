@@ -55,8 +55,8 @@
     }
     return {
       name: 'http',
-      createRoom: (color) => call('POST', '/api/rooms', { color }),
-      joinRoom: (code) => call('POST', '/api/rooms/' + code + '/join', {}),
+      createRoom: (color, name) => call('POST', '/api/rooms', { color, name }),
+      joinRoom: (code, name) => call('POST', '/api/rooms/' + code + '/join', { name }),
       getState: (code, token) => call('GET', '/api/rooms/' + code + (token ? '?token=' + token : '')),
       action: (code, token, action) => call('POST', '/api/rooms/' + code + '/action', { token, action }),
       async watch(code, token, cb) {
@@ -84,6 +84,7 @@
       if (!sdkP) sdkP = Promise.resolve(loadFirestore(config));
       return sdkP;
     }
+    const cleanName = (v) => String(v == null ? '' : v).trim().slice(0, 16);
 
     /* même forme de réponse que le serveur Node */
     async function publicOf(room, token) {
@@ -91,7 +92,7 @@
       let seat = -1;
       (room.seats || []).forEach((s, i) => { if (s && s.tokenHash === seatHash) seat = i; });
       const you = seat >= 0 ? { seat, color: room.state.players[seat].color } : null;
-      const started = !!(room.seats || []).length && (room.seats || []).every(Boolean);
+      const started = !!room.started && !!(room.seats || []).length && (room.seats || []).every(Boolean);
       let legal = { 0: [], 1: [], sum: [] };
       if (you && started && room.state.phase === 'move' &&
           engine.currentColor(room.state) === you.color) {
@@ -106,6 +107,7 @@
         legal,
         you,
         started,
+        names: (room.names || ['', '']).slice(),
         seats: room.state.players.map((p, i) => ({
           seat: i, color: p.color, joined: !!(room.seats && room.seats[i])
         }))
@@ -114,7 +116,7 @@
 
     return {
       name: 'fire',
-      async createRoom(color) {
+      async createRoom(color, name) {
         const { db, api } = await sdk();
         const token = uid();
         const state = engine.createGame([color, engine.OPPOSITE[color] || 'blue']);
@@ -127,6 +129,7 @@
             const room = {
               state,
               seats: [{ tokenHash }, null],
+              names: [cleanName(name), null],
               createdAt: Date.now(),
               updatedAt: Date.now()
             };
@@ -138,7 +141,7 @@
         }
         return { error: 'Impossible de créer une partie (réessayez).' };
       },
-      async joinRoom(code) {
+      async joinRoom(code, name) {
         const { db, api } = await sdk();
         const token = uid();
         const tokenHash = await hash(token);
@@ -150,7 +153,10 @@
             const data = snap.data();
             if (data.seats && data.seats[1]) throw { error: 'full' };
             const seats = [data.seats[0], { tokenHash }];
-            const next = Object.assign({}, data, { seats, updatedAt: Date.now() });
+            const names = (data.names || ['', '']).slice(0, 2);
+            while (names.length < 2) names.push('');
+            names[1] = cleanName(name);
+            const next = Object.assign({}, data, { seats, names, updatedAt: Date.now() });
             tr.set(ref, next);
             return next;
           });
@@ -179,13 +185,29 @@
             let seat = -1;
             (data.seats || []).forEach((s, i) => { if (s && s.tokenHash === tokenHash) seat = i; });
             if (seat < 0) throw { error: 'Token invalide.' };
-            if (!data.seats.every(Boolean)) throw { error: 'En attente du second joueur…' };
+            const a = action || {};
+            if (a.type !== 'color' && !data.seats.every(Boolean)) throw { error: 'En attente du second joueur…' };
+            if (a.type !== 'color' && a.type !== 'start' && !data.started) throw { error: 'La partie n\'est pas encore commencée.' };
 
             const st = data.state;
-            const a = action || {};
             const myColor = st.players[seat].color;
             let r, newSt = st;
-            if (a.type === 'roll') {
+            if (a.type === 'start') {
+              if (seat !== 0) r = { error: 'Seul l\'hôte peut lancer la partie.' };
+              else r = { ok: true };
+            } else if (a.type === 'color') {
+              if (data.started) r = { error: 'La partie a déjà commencé.' };
+              else if (!engine.COLORS.includes(a.color)) r = { error: 'Couleur inconnue.' };
+              else if (!data.seats[1]) {
+                const opp = engine.OPPOSITE[a.color] || 'blue';
+                newSt = engine.createGame([a.color, opp === a.color ? engine.COLORS.find(c => c !== a.color) : opp]);
+                r = { ok: true };
+              } else {
+                const colors = st.players.map((p, i) => i === seat ? a.color : p.color);
+                if (colors[0] === colors[1]) r = { error: 'Cette couleur est déjà prise.' };
+                else { newSt = engine.createGame(colors); r = { ok: true }; }
+              }
+            } else if (a.type === 'roll') {
               if (st.over) r = { error: 'Partie terminée.' };
               else if (engine.currentColor(st) !== myColor) r = { error: "Ce n'est pas à vous de jouer." };
               else r = engine.actionRoll(st);
@@ -204,8 +226,10 @@
             if (r.error) throw r;
 
             const next = Object.assign({}, data, { state: newSt, updatedAt: Date.now() });
+            if (a.type === 'start') next.started = true;
+            if (a.type === 'restart') next.started = false;
             tr.set(ref, next);
-            return { state: newSt, seats: data.seats };
+            return next;
           });
           return publicOf(out, token);
         } catch (e) {

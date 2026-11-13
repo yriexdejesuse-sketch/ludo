@@ -1,9 +1,9 @@
 /* ============================================================
    Serveur Ludo — statiques + API de partie en ligne (Node, zéro dépendance)
-   POST /api/rooms                {color}            -> créer, rejoint en seat 0
-   POST /api/rooms/:code/join     {}                 -> rejoint en seat 1
+   POST /api/rooms                {color, name}      -> créer, rejoint en seat 0
+   POST /api/rooms/:code/join     {name}             -> rejoint en seat 1
    GET  /api/rooms/:code?token=..                    -> état de la partie
-   POST /api/rooms/:code/action   {token, action}    -> roll | move | finish | restart
+   POST /api/rooms/:code/action   {token, action}    -> start | color | roll | move | finish | restart
    ============================================================ */
 'use strict';
 const http = require('http');
@@ -36,7 +36,9 @@ function rndCode() {
 }
 const rndToken = () => crypto.randomBytes(16).toString('hex');
 
-function createRoom(color) {
+const cleanName = (v) => String(v == null ? '' : v).trim().slice(0, 16);
+
+function createRoom(color, name) {
   const opp = engine.OPPOSITE[color] || 'blue';
   let code = rndCode();
   while (rooms.has(code)) code = rndCode();
@@ -44,6 +46,7 @@ function createRoom(color) {
     code,
     state: engine.createGame([color, opp]),
     seats: [{ token: rndToken() }, null],
+    names: [cleanName(name), null],
     createdAt: Date.now(),
     lastActivity: Date.now()
   };
@@ -56,7 +59,7 @@ function publicState(room, token) {
   if (token) seat = room.seats.findIndex(s => s && s.token === token);
   const you = seat >= 0 ? { seat, color: room.state.players[seat].color } : null;
   let legal = { 0: [], 1: [], sum: [] };
-  const started = room.seats.every(Boolean);
+  const started = room.started === true && room.seats.every(Boolean);
   if (you && started && room.state.phase === 'move' &&
       engine.currentColor(room.state) === you.color) {
     legal = {
@@ -70,6 +73,7 @@ function publicState(room, token) {
     legal,
     you,
     started,
+    names: (room.names || ['', '']).slice(),
     seats: room.state.players.map((p, i) => ({ seat: i, color: p.color, joined: !!room.seats[i] }))
   };
 }
@@ -97,7 +101,7 @@ async function api(req, res, url) {
   if (method === 'POST' && parts.length === 2 && parts[1] === 'rooms') {
     const body = await readBody(req);
     const color = engine.COLORS.includes(body.color) ? body.color : 'red';
-    const room = createRoom(color);
+    const room = createRoom(color, body.name);
     room.lastActivity = Date.now();
     return send(res, 200, { code: room.code, token: room.seats[0].token, ...publicState(room, room.seats[0].token) });
   }
@@ -110,7 +114,10 @@ async function api(req, res, url) {
   /* POST /api/rooms/:code/join */
   if (method === 'POST' && parts[3] === 'join') {
     if (room.seats[1]) return send(res, 403, { error: 'full' });
+    const jbody = await readBody(req);
     room.seats[1] = { token: rndToken() };
+    room.names = room.names || ['', ''];
+    room.names[1] = cleanName(jbody.name);
     return send(res, 200, { code: room.code, token: room.seats[1].token, ...publicState(room, room.seats[1].token) });
   }
 
@@ -126,12 +133,28 @@ async function api(req, res, url) {
     const token = body.token;
     const seat = room.seats.findIndex(s => s && s.token === token);
     if (seat < 0) return send(res, 403, { error: 'Token invalide.' });
-    if (!room.seats.every(Boolean)) return send(res, 400, { error: 'En attente du second joueur…' });
+    const a = body.action || {};
+    if (a.type !== 'color' && !room.seats.every(Boolean)) return send(res, 400, { error: 'En attente du second joueur…' });
+    if (a.type !== 'color' && a.type !== 'start' && !room.started) return send(res, 400, { error: 'La partie n\'est pas encore commencée.' });
 
     const st = room.state;
-    const a = body.action || {};
     let r;
-    if (a.type === 'roll') {
+    if (a.type === 'start') {
+      if (seat !== 0) r = { error: 'Seul l\'hôte peut lancer la partie.' };
+      else { room.started = true; r = { ok: true }; }
+    } else if (a.type === 'color') {
+      if (room.started) r = { error: 'La partie a déjà commencé.' };
+      else if (!engine.COLORS.includes(a.color)) r = { error: 'Couleur inconnue.' };
+      else if (!room.seats[1]) {
+        const opp = engine.OPPOSITE[a.color] || 'blue';
+        room.state = engine.createGame([a.color, opp === a.color ? engine.COLORS.find(c => c !== a.color) : opp]);
+        r = { ok: true };
+      } else {
+        const colors = st.players.map((p, i) => i === seat ? a.color : p.color);
+        if (colors[0] === colors[1]) r = { error: 'Cette couleur est déjà prise.' };
+        else { room.state = engine.createGame(colors); r = { ok: true }; }
+      }
+    } else if (a.type === 'roll') {
       if (st.over) r = { error: 'Partie terminée.' };
       else if (engine.currentColor(st) !== st.players[seat].color) r = { error: "Ce n'est pas à vous de jouer." };
       else r = engine.actionRoll(st);
@@ -145,7 +168,7 @@ async function api(req, res, url) {
       else r = engine.finishNow(st);
     } else if (a.type === 'restart') {
       if (!st.over) r = { error: 'La partie est encore en cours.' };
-      else { room.state = engine.createGame(st.players.map(p => p.color)); r = { ok: true }; }
+      else { room.state = engine.createGame(st.players.map(p => p.color)); room.started = false; r = { ok: true }; }
     } else {
       r = { error: 'Action inconnue.' };
     }

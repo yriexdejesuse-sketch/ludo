@@ -271,6 +271,18 @@ cellule du couloir   = INFO[host].home[k-1]          // pour un pion piégé
     normale : retour en base + jet supplémentaire). La règle stricte de
     capture s'applique aussi là-bas.
 
+13. **Lobby en ligne** : chaque joueur écrit son **nom** (affiché dans
+    les cartes du lobby/du jeu et dans la bannière du tour) et choisit sa
+    **couleur** dans le lobby (tant que rien n'a commencé ; une couleur
+    déjà prise est refusée). **Rien ne démarre tout seul** : seul
+    l'hôte (siège0) clique « ▶ Lancer la partie » quand les deux sont
+    prêts ; « Rejouer » ramène au lobby (l'hôte relancera).
+14. **Commentaires hors plateau** : aucun message posé sur le plateau
+    (en mobile ils gênaient le clic sur les pions) — le dernier message
+    du journal **concernant une couleur** s'affiche **dans la case de ce
+    joueur** ; les retours transitoires (erreurs, invites) passent par la
+    barre **en haut** de l'écran.
+
 ### Choix évidents (simplifications d'interface)
 
 - Clic sur un pion = **menu libellé de tous ses coups** (jamais de refus).
@@ -361,23 +373,26 @@ si over → showOver() (classement + bilan)
 | Synchro | polling `GET /api/rooms/:code` toutes les **750 ms** | `onSnapshot` en direct |
 | Tests | `test_backends.js` (API réelle) | `test_backends.js` (Firestore factice) |
 
-Interface commune (appelée par `app.js`) : `createRoom(color)`,
-`joinRoom(code)`, `getState(code, token)`, `action(code, token, action)`,
+Interface commune (appelée par `app.js`) : `createRoom(color, name)`,
+`joinRoom(code, name)`, `getState(code, token)`, `action(code, token, action)`,
 `watch(code, token, cb)` — les deux fournisseurs implémentent exactement
-ces5 méthodes.
+ces5 méthodes. Les réponses publient `names` (2 chaînes : noms des joueurs)
+et `started` (vrai **seulement** après le top de l'hôte).
 
 ###8.2 API REST du serveur (`server.js`)
 
 | Route | Corps / params | Rôle |
 |---|---|---|
-| `POST /api/rooms` | `{color}` | crée une salle → `{code, token, state}` |
-| `POST /api/rooms/:code/join` | — | rejoint →2e `{token, state}` (refus `403 full` si complet) |
+| `POST /api/rooms` | `{color, name}` | crée une salle → `{code, token, state, names}` |
+| `POST /api/rooms/:code/join` | `{name}` | rejoint →2e `{token, state, names}` (refus `403 full` si complet) |
 | `GET /api/rooms/:code?token=` | — | récupère l'état (`publicState` masque l'autre token) |
 | `POST /api/rooms/:code/action` | `{token, action}` | joue une action (voir ci-dessous) |
 | `GET /*` | — | fichiers statiques de `public/` |
 
 `action` ∈ :
 ```json
+{ "type": "start" }                                   // top de l'hôte (siège0 seul)
+{ "type": "color", "color": "green" }                 // changer de couleur (lobby, avant start)
 { "type": "roll" }
 { "type": "move",  "pawn": 0, "to": 14, "die": 0 }     // die :0 |1 | "sum"
 { "type": "finish" }                                    // bouton Terminer
@@ -386,6 +401,12 @@ ces5 méthodes.
 Le serveur **revérifie tout** (tour du siège, légalité via le moteur) :
 c'est le serveur qui a toujours raison (état revérifié par le moteur). Salles purgées après2 h d'inactivité.
 **En ligne =2 joueurs maximum** (2e siège seulement).
+**Démarrage** : une salle rejointe n'est PAS lancée — `started` ne devient
+vrai qu'après l'action `start` de l'hôte (siège0 ; le siège1 est refusé) ;
+`restart` remet `started = false` (retour au lobby, l'hôte relancera).
+Les noms vivent dans `room.names` (hors `state`, le moteur n'y touche pas).
+**Couleurs** : l'action `color` reconstruit l'état via `createGame`
+(uniquement tant que `!started`, couleurs distinctes exigées).
 
 ---
 
@@ -407,7 +428,7 @@ c'est le serveur qui a toujours raison (état revérifié par le moteur). Salles
 
 ##10. Tests
 
-###10.1 `test.js` — moteur (15 scénarios, ~0,4 s)
+###10.1 `test.js` — moteur (20 scénarios, ~0,4 s)
 
 | # | Ce qu'il verrouille |
 |---|---|
@@ -437,6 +458,13 @@ c'est le serveur qui a toujours raison (état revérifié par le moteur). Salles
 Enchaîne : partie locale (clics réels), mini-choix, verrou du mangeur,
 choix évidents, doubles, somme, **zéro clic**, **le6 qui attend le choix**,
 reprise auto après choix, **trou**, puis IA à4, puis en ligne (2 fenêtres).
+
+**Flux en ligne vérifié en E2E** : aucun démarrage automatique (le
+rejoignant arrive au lobby), **noms affichés des deux côtés**, puis le
+**top de l'hôte** qui fait entrer les deux joueurs dans le jeu et la
+synchro des dés. Le harness neutralise `firebase-config.js` (remplacement
+du `<script>` par `FIREBASE_CONFIG = null`) pour rester sur le backend
+HTTP — jsdom29 n'expose plus `ResourceLoader`.
 
 ###10.3 Crochets de test (dans `app.js`)
 
@@ -517,6 +545,12 @@ qui est en fait un choix assumé.
    plus violenté) ; **fin de partie** = arrêt dès qu'un seul joueur n'a pas
    fini ; **commentaires retirés du plateau** (journal uniquement) + messages
    restants déplacés hors du plateau.
+9. **Lobby, noms, top de l'hôte** (round14) : noms saisis à la
+   création/rejoindre, **couleurs libres dans le lobby**, **démarrage
+   manuel par l'hôte** (plus aucun auto-start) ; **commentaires dans la
+   case du joueur concerné** (toast en haut, plus rien sur le plateau) ;
+   retour au lobby après « Rejouer ». **Contrainte permanente** : mettre
+   `DOCUMENTATION.md` + `README.md` à jour **à chaque modification**.
 
 ---
 
