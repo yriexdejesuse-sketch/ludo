@@ -20,7 +20,14 @@
    Le jeu détecte automatiquement : si c'est rempli → Firebase,
    sinon → le serveur local (Arena).
    ============================================================ */
-window.FIREBASE_CONFIG = null;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCexiSBen0liUjBb02T_DYuYnZyUeuUNrE",
+  authDomain: "ludo-yriex-zbv338.firebaseapp.com",
+  projectId: "ludo-yriex-zbv338",
+  storageBucket: "ludo-yriex-zbv338.firebasestorage.app",
+  messagingSenderId: "713866437537",
+  appId: "1:713866437537:web:21ef574de4eeaf8b62e1e0"
+};
 
 /* Exemple (remplace par ta vraie configuration) :
 window.FIREBASE_CONFIG = {
