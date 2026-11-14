@@ -291,6 +291,13 @@ cellule du couloir   = INFO[host].home[k-1]          // pour un pion piégé
     (« Ta couleur : Rouge ») ; en local : les **deux** couleurs. Rafraîchi
     par `renderMyColor()` (appelé depuis `showScreen`, `renderChrome` et
     `renderLobby`).
+16. **Orientation du plateau** : la **case de départ** de la couleur du
+    joueur regarde **toujours le coin bas-gauche de son écran** — le
+    plateau pivote (`#board` + `BOARD_ROT` : 🔵0°, 🟡+90°, 🔴-90°,
+    🟢180°). Référence : en ligne/IA = **ta couleur** (`you`), en local =
+    celle du **joueur1** (un seul écran). Appelé à chaque `renderPanel()`
+    (`applyBoardOrientation()`), transition CSS douce, et le mini-choix
+    suit via `rotBoardPoint()` (rotation du point du viewBox).
 
 ### Choix évidents (simplifications d'interface)
 
@@ -565,6 +572,11 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11b. **Round14quater** : le plateau **pivote pour que la case du joueur
+    soit en bas à gauche** de son écran (règle16) — vérifié par
+    `ludotest/shot_orient.js` (vert → `rotate(180deg)`, case verte en
+    bas à gauche) + assertions dans `test_live.js` (hôte et ami reçoivent
+    des orientations **différentes**).
 11. **Round14ter** : la pastille `#diceHint` (« 👆 Clique pour lancer »)
     est **sortie du plateau** — elle vit désormais dans `.panel` (jamais
     de commentaire sur le plateau, mobile comme bureau). Correctif

@@ -92,6 +92,7 @@ input:focus{outline:none;border-color:var(--accent)}
 #board{
   width:100%;height:auto;aspect-ratio:1/1;display:block;background:#f4f1ea;border-radius:16px;
   box-shadow:0 18px 50px rgba(0,0,0,.5);touch-action:manipulation;
+  transition:transform .35s ease;
 }
 .panel{
   flex:0 1 320px;min-width:280px;display:flex;flex-direction:column;gap:12px;

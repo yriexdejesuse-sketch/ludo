@@ -155,6 +155,10 @@ Envoie le lien à ton ami → il ouvre → **Créer une partie** → il te donne
  …) ; une petite barre n'apparaît que dans les menus (jamais sur un
   plateau) ; la pastille « 👆 Clique pour lancer » vit dans le
   **panneau** sous le plateau, plus jamais dessus
+- **plateau orienté sur toi** : le plateau **pivote** pour que ta case
+  de départ soit **en bas à gauche de ton écran** (rouge -90°, vert
+  180°, jaune +90°, bleu0°) — en ligne et contre l'ordinateur : ta
+  couleur ; en local : le joueur1
 - **badge de couleur** : une pastille fixe **en bas à gauche** de
   l'écran te montre ta couleur — en ligne et contre l'ordinateur
   (« Ta couleur : Rouge »), les deux couleurs en partie locale

@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13c';
+const APP_VERSION = 'v2026-11-13d';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -481,9 +481,10 @@ function showMiniChoice(die, opts) {
   const color = Ludo.currentColor(G);
   const pawnPos = G.players[G.turn].pawns[opts[0].m.pawn];
   const cell = Ludo.visualCell(color, pawnPos);
+  const [mx, my] = rotBoardPoint(cell[0] * 40 + 20, cell[1] * 40 + 20);
   const el = $('#miniChoice');
-  el.style.left = ((cell[0] * 40 + 20) / 600 * 100) + '%';
-  el.style.top = ((cell[1] * 40 + 20) / 600 * 100) + '%';
+  el.style.left = (mx / 600 * 100) + '%';
+  el.style.top = (my / 600 * 100) + '%';
   const mixed = new Set(opts.map(o => o.die)).size > 1; /* options venant de plusieurs dés */
   el.innerHTML = opts.map((o, i) => {
     const v = o.die === 'sum' ? (G.dice[0] + G.dice[1]) : G.dice[o.die];
@@ -556,6 +557,29 @@ function boxNoteFor(color) {
   if (b && (!a || b.stamp >= a.stamp)) return b.msg;
   return a ? a.msg : '';
 }
+/* ── orientation du plateau : la case de la couleur du joueur est TOUJOURS
+   en bas à gauche de son écran (red -90° / green 180° / yellow +90° / blue 0°) ── */
+const BOARD_ROT = { blue: 0, yellow: 90, red: -90, green: 180 };
+let boardDeg = 0;
+function boardRefColor() {
+  if (!G || !G.players || !G.players[0]) return null;
+  if (you && (mode === 'online' || mode === 'ai')) return you;
+  return G.players[0].color; /* partie locale : écran orienté sur le joueur1 */
+}
+function applyBoardOrientation() {
+  const ref = boardRefColor();
+  boardDeg = ref ? (BOARD_ROT[ref] || 0) : 0;
+  const svg = $('#board');
+  if (svg) svg.style.transform = boardDeg ? `rotate(${boardDeg}deg)` : '';
+}
+/* point du viewBox 600x600 après la rotation (mini-choix, etc.) */
+function rotBoardPoint(x, y) {
+  const dx = x - 300, dy = y - 300;
+  if (boardDeg === 90) return [300 - dy, 300 + dx];
+  if (boardDeg === -90) return [300 + dy, 300 - dx];
+  if (boardDeg === 180) return [300 - dx, 300 - dy];
+  return [x, y];
+}
 function renderChrome() {
   if (!G) return;
   const cur = Ludo.currentColor(G);
@@ -608,6 +632,7 @@ function renderChrome() {
   renderHint();
 }
 function renderPanel() {
+  applyBoardOrientation();
   renderChrome();
   syncPawns();
   checkOver();
