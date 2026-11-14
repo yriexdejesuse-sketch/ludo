@@ -90,7 +90,7 @@ input:focus{outline:none;border-color:var(--accent)}
 .game-layout{display:flex;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
 .board-wrap{position:relative;flex:0 1 620px;min-width:300px}
 #board{
-  width:100%;height:auto;display:block;background:#f4f1ea;border-radius:16px;
+  width:100%;height:auto;aspect-ratio:1/1;display:block;background:#f4f1ea;border-radius:16px;
   box-shadow:0 18px 50px rgba(0,0,0,.5);touch-action:manipulation;
 }
 .panel{
@@ -180,10 +180,10 @@ input:focus{outline:none;border-color:var(--accent)}
   100%{transform:rotate(360deg) translateY(0)}
 }
 #diceHint{
-  position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);
-  white-space:nowrap;background:rgba(15,23,42,.9);color:#fff;font-size:.8rem;font-weight:700;
-  padding:5px 11px;border-radius:999px;border:1.5px solid var(--accent);pointer-events:auto;
-  cursor:pointer;animation:hintBlink 1.4s ease-in-out infinite;
+  display:block;width:max-content;max-width:100%;margin:0 auto 8px;
+  background:rgba(15,23,42,.9);color:#fff;font-size:.8rem;font-weight:700;
+  padding:5px 11px;border-radius:999px;border:1.5px solid var(--accent);
+  cursor:pointer;animation:hintBlink 1.4s ease-in-out infinite;text-align:center;
 }
 @keyframes hintBlink{0%,100%{opacity:1}50%{opacity:.55}}
 #diceHint.hide{display:none}
@@ -246,8 +246,11 @@ input:focus{outline:none;border-color:var(--accent)}
 .ranking{padding-left:26px;font-size:1.15rem;line-height:2}
 
 @media (max-width:760px){
-  .game-layout{flex-direction:column;align-items:stretch}
-  .board-wrap,.panel{flex:1 1 auto;min-width:0}
+  /* bloc pur : le SVG est dimensionné normalement — en flex column, sa
+     contribution de hauteur était fausse (300px au lieu de334) et le
+     plateau débordait sur le bandeau du tour */
+  .game-layout{display:block}
+  .panel{margin-top:18px}
   header h1{font-size:1.7rem}
   .code-big{font-size:2rem}
   .board-die{width:40px;height:40px}

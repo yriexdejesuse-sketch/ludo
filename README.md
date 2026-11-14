@@ -153,7 +153,8 @@ Envoie le lien à ton ami → il ouvre → **Créer une partie** → il te donne
   dans **la case du joueur concerné** : le dernier message du journal qui
   le cite, mais aussi les erreurs et les invites («6 ! à toi de choisir »
  …) ; une petite barre n'apparaît que dans les menus (jamais sur un
-  plateau)
+  plateau) ; la pastille « 👆 Clique pour lancer » vit dans le
+  **panneau** sous le plateau, plus jamais dessus
 - **badge de couleur** : une pastille fixe **en bas à gauche** de
   l'écran te montre ta couleur — en ligne et contre l'ordinateur
   (« Ta couleur : Rouge »), les deux couleurs en partie locale

@@ -565,6 +565,16 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11. **Round14ter** : la pastille `#diceHint` (« 👆 Clique pour lancer »)
+    est **sortie du plateau** — elle vit désormais dans `.panel` (jamais
+    de commentaire sur le plateau, mobile comme bureau). Correctif
+    d'alignement : en mobile le `.game-layout` est en **`display:block`**
+    (et non flex column) — en flex column le SVG ne repropage pas sa
+    hauteur (**contribution de300 px au lieu de334** : c'est la taille
+    intrinsèque par défaut des SVG), le plateau débordait de34 px et
+    recouvrait le bandeau du tour. Mesures de non-régression :
+    `ludotest/measure.js` / `measure_desktop.js` (chevauchements
+    plateau/bandeau + pastille sur plateau = false/false).
 
 ---
 
