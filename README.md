@@ -148,10 +148,15 @@ Envoie le lien à ton ami → il ouvre → **Créer une partie** → il te donne
   démarre tout seul : c'est l'hôte qui donne le top** (« ▶ Lancer la
   partie ») quand les deux joueurs sont prêts ; « Rejouer » ramène au
   lobby (l'hôte relancera)
-- **commentaires hors plateau** : plus aucun message posé sur le plateau
-  (en mobile ils gênaient le clic sur les pions) — le dernier message
-  concernant le rouge s'affiche **dans la case du rouge** (idem pour les
-  autres couleurs) ; erreurs et invites passent par la barre en haut
+- **commentaires hors plateau** : plus **aucun** message flottant sur le
+  plateau (en mobile ils gênaient le clic sur les pions) — **tout** part
+  dans **la case du joueur concerné** : le dernier message du journal qui
+  le cite, mais aussi les erreurs et les invites («6 ! à toi de choisir »
+ …) ; une petite barre n'apparaît que dans les menus (jamais sur un
+  plateau)
+- **badge de couleur** : une pastille fixe **en bas à gauche** de
+  l'écran te montre ta couleur — en ligne et contre l'ordinateur
+  (« Ta couleur : Rouge »), les deux couleurs en partie locale
 - **règles du manger** : **capture stricte** (un autre pion doit pouvoir
   jouer l'autre dé — sinon un seul pion en jeu = pas de manger) ;
   **après un manger, le pion qui a mangé ne rejoue plus** du tout ce tour ;

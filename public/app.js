@@ -27,6 +27,8 @@ let seats = [];
 let started = false;
 let roomNames = ['', ''];
 let youSeatNum = -1;
+let noteStamp = 0, lastLogLen = 0, lastRev = -1;
+let logNotes = {}, toastNotes = {};
 let room = { code: null, token: null };
 let selectedDie = null;          // 0 | 1 | null
 let animating = false;
@@ -535,11 +537,24 @@ function nameOf(color) {
   const nm = (i >= 0 && roomNames) ? String(roomNames[i] || '').trim() : '';
   return nm || LABEL[color];
 }
-function logNoteFor(color) {
-  if (!G || !G.log || !G.log.length) return '';
-  const re = new RegExp('\\b' + LABEL[color] + '\\b', 'i');
-  for (let i = G.log.length - 1; i >= 0; i--) if (re.test(G.log[i])) return G.log[i];
-  return '';
+function harvestLogNotes() {
+  if (!G) return;
+  if (G.rev < lastRev) { logNotes = {}; toastNotes = {}; }
+  lastRev = G.rev;
+  if (!G.log) return;
+  if (G.log.length < lastLogLen) { lastLogLen = G.log.length; return; }
+  for (let i = lastLogLen; i < G.log.length; i++) {
+    const line = G.log[i];
+    ['red', 'green', 'yellow', 'blue'].forEach((c) => {
+      if (new RegExp('\\b' + LABEL[c] + '\\b', 'i').test(line)) logNotes[c] = { msg: line, stamp: ++noteStamp };
+    });
+  }
+  lastLogLen = G.log.length;
+}
+function boxNoteFor(color) {
+  const a = logNotes[color], b = toastNotes[color];
+  if (b && (!a || b.stamp >= a.stamp)) return b.msg;
+  return a ? a.msg : '';
 }
 function renderChrome() {
   if (!G) return;
@@ -565,13 +580,14 @@ function renderChrome() {
   }
   banner.innerHTML = main + (hint ? `<br><small style="font-weight:500;color:var(--muted)">${hint}</small>` : '');
 
+  harvestLogNotes();
   $('#players').innerHTML = G.players.map(p => {
     const active = !G.over && started && cur === p.color;
     let tag = '';
     if (!hotseat && started && you) {
       tag = (p.color === you) ? ' (vous)' : (mode === 'ai' ? ' (ordinateur)' : ' (ami)');
     }
-    const note = logNoteFor(p.color);
+    const note = boxNoteFor(p.color);
     return `<div class="pcard ${active ? 'active' : ''}">
       <span class="chip" style="background:${HEX[p.color]}"></span>
       <span class="who"><b>${esc(nameOf(p.color))}${tag}</b>
@@ -598,7 +614,22 @@ function renderPanel() {
   scheduleAi();
 }
 function toast(msg) {
+  if (!msg) return;
+  /* en jeu : la note part dans la case du joueur concerné — RIEN sur le plateau */
+  const hit = ['red', 'green', 'yellow', 'blue'].filter((c) =>
+    new RegExp('\\b' + LABEL[c] + '\\b', 'i').test(msg));
+  const stamp = ++noteStamp;
+  if (hit.length) hit.forEach((c) => { toastNotes[c] = { msg, stamp }; });
+  else {
+    let target = you;
+    if (!target && G && G.players && G.players[G.turn]) target = G.players[G.turn].color;
+    if (target) toastNotes[target] = { msg, stamp };
+  }
+  const inGame = !document.querySelector('#screen-game').classList.contains('hidden');
+  if (inGame) { renderPanel(); return; }
+  /* hors du jeu (menu/lobby) : barre en haut, jamais sur un plateau */
   const t = $('#toast');
+  if (!t) return;
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(t._tm);
@@ -846,12 +877,30 @@ function scoreAi(m, dieIdx) {
 /* ============================================================
    ÉCRANS / DÉMARRAGE
    ============================================================ */
+function renderMyColor() {
+  const el = document.querySelector('#myColorBadge');
+  if (!el) return;
+  const onGame = !document.querySelector('#screen-game').classList.contains('hidden');
+  const onLobby = !document.querySelector('#screen-lobby').classList.contains('hidden');
+  let html = '';
+  if (onGame || onLobby) {
+    if ((mode === 'online' || mode === 'ai') && you) {
+      html = `<span class="chip" style="background:${HEX[you]}"></span> Ta couleur : ${LABEL[you]}`;
+    } else if (mode === 'local' && G && G.players) {
+      html = G.players.map((p) => `<span class="chip" style="background:${HEX[p.color]}"></span> ${LABEL[p.color]}`)
+        .join('<span style="opacity:.45"> · </span>');
+    }
+  }
+  el.innerHTML = html;
+  el.classList.toggle('hidden', !html);
+}
 function showScreen(name) {
   clearAuto();
   ['menu', 'setup', 'lobby', 'game'].forEach(s =>
     $('#screen-' + s).classList.toggle('hidden', s !== name));
   if (mode === 'online' && room.code && (name === 'lobby' || name === 'game')) startWatch();
   else stopWatch();
+  renderMyColor();
 }
 function checkOver() {
   if (G && G.over && !overShown) {
@@ -1062,9 +1111,9 @@ function onRoomState(resp) {
   if (!resp) return;
   if (resp.error) {
     stopWatch();
-    toast(resp.error);
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
     showScreen('menu');
+    toast(resp.error);
     return;
   }
   applyServer(resp, true);

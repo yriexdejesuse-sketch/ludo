@@ -278,10 +278,19 @@ cellule du couloir   = INFO[host].home[k-1]          // pour un pion piégé
     l'hôte (siège0) clique « ▶ Lancer la partie » quand les deux sont
     prêts ; « Rejouer » ramène au lobby (l'hôte relancera).
 14. **Commentaires hors plateau** : aucun message posé sur le plateau
-    (en mobile ils gênaient le clic sur les pions) — le dernier message
-    du journal **concernant une couleur** s'affiche **dans la case de ce
-    joueur** ; les retours transitoires (erreurs, invites) passent par la
-    barre **en haut** de l'écran.
+    (en mobile ils gênaient le clic sur les pions). **Tout** part dans la
+    **case du joueur concerné** : le dernier message du journal qui cite
+    cette couleur **et** les retours transitoires (erreurs, invites
+    «6 ! », recul possible… — ciblés sur la couleur citée, sinon sur le
+    joueur courant). Fusion journal + retours par horodatage interne
+    (`logNotes` / `toastNotes` + `noteStamp`). La **barre flottante**
+    (`#toast`, en haut) ne s'affiche **que hors du jeu** (menu/lobby) —
+    il n'y a jamais de plateau à l'écran à ce moment-là.
+15. **Badge de couleur** : pastille fixe **en bas à gauche** de l'écran
+    (`#myColorBadge`) — en ligne et contre l'ordinateur : **ta couleur**
+    (« Ta couleur : Rouge ») ; en local : les **deux** couleurs. Rafraîchi
+    par `renderMyColor()` (appelé depuis `showScreen`, `renderChrome` et
+    `renderLobby`).
 
 ### Choix évidents (simplifications d'interface)
 
@@ -551,6 +560,11 @@ qui est en fait un choix assumé.
    case du joueur concerné** (toast en haut, plus rien sur le plateau) ;
    retour au lobby après « Rejouer ». **Contrainte permanente** : mettre
    `DOCUMENTATION.md` + `README.md` à jour **à chaque modification**.
+10. **Round14bis** : plus **aucune** barre flottante en jeu (tout part
+    dans les cases — les retours d'erreur y compris) ; **badge de
+    couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
+    **version visible** (`APP_VERSION` dans le titre de l'onglet + le
+    titre du lobby) pour diagnostiquer les onglets périmés à distance.
 
 ---
 
