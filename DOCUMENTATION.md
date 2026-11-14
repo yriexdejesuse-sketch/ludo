@@ -572,6 +572,15 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11c. **README restructuré** (demande « revois le README ») : le lien
+    live + le mode d'emploi « jouer en ligne » sont **en tête** ; arbre
+    des fichiers corrigé (`firebase-config.js` **déjà rempli** — plus
+    « À REMPLIR », + `DOCUMENTATION.md`/`MISE_EN_LIGNE.md`/tests) ;
+    section mise en ligne reformulée : **« c'est déjà fait ✓ »** (état
+    réel : Pages = branche `gh-pages`, projet `ludo-yriex-zbv338`) au
+    lieu d'un tutoriel depuis zéro, renvoi vers `MISE_EN_LIGNE.md` pour
+    le détail ; flux d'invitation ré-aligné (hôte crée → envoie le lien →
+    l'ami rejoint → **l'hôte lance**).
 11b. **Round14quater** : le plateau **pivote pour que la case du joueur
     soit en bas à gauche** de son écran (règle16) — vérifié par
     `ludotest/shot_orient.js` (vert → `rotate(180deg)`, case verte en

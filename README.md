@@ -1,22 +1,46 @@
 # 🎲 Ludo — jeu en ligne à deux ou à quatre
 
-Jeu de Ludo complet : **local à deux**, **contre l'ordinateur** (2 ou 4 joueurs),
-ou **en ligne avec un ami** (partage d'un code / lien).
+## ▶ Le jeu est déjà en ligne : https://yriexdejesuse-sketch.github.io/ludo/
+
+Ouvre le lien : l'onglet affiche la **version** (ex. `(v2026-11-13d)`) —
+si elle manque, rafraîchis avec **Ctrl+Maj+R**.
+
+Jeu de Ludo complet : **local à deux**, **contre l'ordinateur** (2 ou 4
+joueurs), ou **en ligne avec un ami** (partage d'un code / lien).
+
+## 🎮 Jouer en ligne à deux
+
+1. **Toi** : « Créer une partie » → choisis ta couleur + tape ton nom →
+   « Lancer » → tu reçois un **code** (ex. `5AU2H`) et un **lien**
+   `…?room=CODE`.
+2. **Ton ami** : il ouvre **ton lien** (ou tape le code sur la page
+   d'accueil) → il arrive dans le lobby.
+3. **Toi, l'hôte** : clique **« ▶ Lancer la partie »** quand il est
+   prêt — **rien ne démarre tout seul**.
+
+Mises à jour **temps réel** (aucun rafraîchissement), plateau orienté
+sur la couleur de chaque joueur, commentaires dans les cases des
+joueurs concernés.
 
 ## Contenu
 
 ```
 ludo/
-├── server.js                 # serveur optionnel (utilisé sur Arena / en local)
+├── server.js                 # serveur optionnel (Arena / local)
 ├── package.json
-├── README.md
-└── public/
+├── README.md                 # ce fichier
+├── DOCUMENTATION.md          # règles internes, décisions, historique
+├── MISE_EN_LIGNE.md          # guide complet de mise en ligne
+├── test.js                   # tests du moteur de règles
+├── test_backends.js          # tests du backend en ligne
+├── site-github-pages.zip     # copie du site pour GitHub Pages
+└── public/                   # ← le site lui-même (servi par Pages)
     ├── index.html            # l'interface
     ├── style.css
-    ├── app.js                # interface, animations, sons, IA
+    ├── app.js                # interface, animations, sons, IA, orientation
     ├── engine.js             # moteur de règles (partagé)
     ├── backends.js           # partie en ligne : Firebase OU le serveur
-    └── firebase-config.js    # ⚙️ À REMPLIR pour le mode en ligne statique
+    └── firebase-config.js    # ✅ déjà rempli (projet ludo-yriex-zbv338)
 ```
 
 ## Lancer le jeu sur ton ordinateur
@@ -30,21 +54,25 @@ Aucune dépendance : `npm install` n'est même pas nécessaire.
 
 ---
 
-# 🌐 Mettre le jeu en ligne pour tes amis
+# 🌐 Mise en ligne — c'est déjà fait ✓
 
-## ✅ Option E (recommandée) — Firebase + GitHub Pages : gratuit, permanent, sans serveur
+Tout est déjà configuré et hébergé dans ce dépôt :
 
-Le jeu se connecte à **Firebase Firestore** (base de données gratuite de Google)
-directement depuis le navigateur. Plus besoin de serveur : le site tient sur
-n'importe quel hébergement **statique**.
+| | État actuel |
+|---|---|
+| **Site** | GitHub Pages sert la branche **`gh-pages`** (contenu de `public/` à la racine) → l'URL ci-dessus ; redéployée à chaque mise à jour |
+| **Base de données** | Firebase **Firestore**, projet **`ludo-yriex-zbv338`** (gratuit) |
+| **Config** | `public/firebase-config.js` **déjà rempli** — ne pas l'écraser |
+| **Règles Firestore** | ouvertes sur `/rooms/{code}` (le jeu est prévu entre amis) |
 
-### Étape 1 — Créer le projet Firebase (5 minutes, gratuit)
+Les étapes détaillées (recréer un projet, règles, config, déploiement)
+sont dans **`MISE_EN_LIGNE.md`**.
 
-1. Va sur **https://console.firebase.google.com** → **Ajouter un projet**
-   (nom au choix, Analytics facultatif).
-2. Dans le projet : menu **Build → Firestore Database → Créer une base**
-   → choisis **« Démarrer en mode test »** → région proche → *Créer*.
-3. Onglet **Règles** → remplace par :
+### Résumé — si tu veux refaire ta propre mise en ligne
+
+1. **Firebase** (gratuit,5 min) : **console.firebase.google.com** →
+   *Ajouter un projet* → **Build → Firestore Database → Créer une base**
+   → « Démarrer en mode test » → onglet **Règles** →
 
    ```
    rules_version = '2';
@@ -57,50 +85,19 @@ n'importe quel hébergement **statique**.
    }
    ```
 
-   → **Publier**. *(Règles ouvertes : le jeu est prévu entre amis ; le code de
-   la partie et les jetons gardent la porte fermée aux curieux.)*
-4. **Paramètres du projet** (icône engrenage) → **Vos applications** →
-   créer une app **Web (</>)** → donne-lui un nom → copie l'objet
-   `const firebaseConfig = { ... }`.
-
-### Étape 2 — Coller la configuration dans le jeu
-
-Ouvre `public/firebase-config.js` et colle ta configuration à la place de `null` :
-
-```js
-window.FIREBASE_CONFIG = {
-  apiKey: "AIza...",
-  authDomain: "ton-projet.firebaseapp.com",
-  projectId: "ton-projet",
-  ...
-};
-```
-
-> Le jeu détecte tout seul : **config rempli → Firebase** /
-> **config vide → le serveur** (mode Arena). Tu peux garder les deux.
-
-### Étape 3 — Mettre le jeu sur GitHub Pages (5 minutes, gratuit)
-
-1. Crée un dépôt **GitHub** et envoie-y **le contenu du dossier `ludo/`**
-   (`server.js`, `package.json`, `README.md`, `public/`… à la racine).
-2. Sur GitHub : **Settings → Pages → Build and deployment →**
-   *Source: Deploy from a branch* → branche `main`, dossier **`/ (root)`** → Save.
-3. Attend1-2 min : ton jeu est sur
-   `https://ton-nom.github.io/nom-du-depot/`
-
-> **Astuce** : si GitHub Pages sert mal les fichiers, déplace `public/` à la
-> racine (ou configure Pages pour servir `public/`). L'important est que
-> `index.html` soit accessible à l'URL racine.
-
-### Étape 4 — Partager 🎉
-
-Envoie le lien à ton ami → il ouvre → **Créer une partie** → il te donne un
-**code** (ou le lien `?room=CODE`) → tu rejoins → vous jouez.
-
-- Les mises à jour sont **temps réel** (écoute `onSnapshot`, aucun rafraîchissement).
-- **Gratuit** : le plan gratuit Firestore couvre des milliers de parties/jour.
-- Les salles inactives sont oubliées naturellement (tu peux nettoyer dans la
-  console Firebase si besoin).
+   → **Publier**. Puis **Paramètres du projet → Vos applications →
+   Web (</>)** → copier l'objet `firebaseConfig`.
+2. **Config** : colle-le dans `public/firebase-config.js`
+   (`window.FIREBASE_CONFIG = { … }`) — *dans ce dépôt, c'est déjà
+   rempli*. Détection automatique : **config remplie → Firebase** /
+   **config vide → le serveur** (mode Arena) — les deux coexistent.
+3. **GitHub Pages** (gratuit) : dépôt GitHub → **Settings → Pages →
+   Deploy from a branch** → soit la branche **`gh-pages`** avec le
+   contenu de `public/` à la racine (**comme ici**), soit `main` avec
+   `public/` déplacé à la racine → 1-2 min →
+   `https://ton-nom.github.io/nom-du-depot/`.
+4. **Partager** : tu crées la partie, tu envoies le **lien** à ton ami,
+   il rejoint, **tu lances** 🎉.
 
 ## Les autres options (résumé)
 
@@ -110,7 +107,7 @@ Envoie le lien à ton ami → il ouvre → **Créer une partie** → il te donne
 | **B. Render.com** | `https://ton-jeu.onrender.com` | gratuit | exécute `server.js` ; veille ~15 min |
 | **C. Oracle Cloud VM** | `https://ton-domaine` | gratuit (Always Free) | allumé 24h/24, un peu technique |
 | **D. VPS payant** | domaine au choix | ~2-7 €/mois | le plus simple côté admin |
-| **E. Firebase + Pages** ✅ | `https://ton-nom.github.io/...` | gratuit | **sans serveur, permanent** |
+| **E. Firebase + Pages** ✅ | `https://ton-nom.github.io/...` | gratuit | **sans serveur, permanent** — **c'est ce qui est utilisé ici** |
 
 ---
 
