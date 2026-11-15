@@ -1,7 +1,7 @@
 /* ============================================================
    Moteur de jeu Ludo — DEUX DÉS (partagé navigateur + serveur, UMD)
    Règles :
-   - 2 ou 4 joueurs, 4 pions chacun
+   - 2 à 4 joueurs, 4 pions chacun
    - deux dés : chaque dé donne un déplacement (mêmes pions ou différents)
    - il faut un 6 (sur un des deux dés) pour sortir de la base ;
      on peut enchaîner avec l'autre dé sur le pion que l'on vient de sortir
@@ -419,10 +419,23 @@
 
   /* ---------- actions ---------- */
 
+  /* VRAI hasard : entropie matérielle du navigateur (crypto.getRandomValues),
+     indépendant de tout état du jeu — repli sur Math.random si indisponible */
+  function sysRandom() {
+    try {
+      if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        var a = new Uint32Array(1);
+        crypto.getRandomValues(a);
+        return a[0] / 4294967296;
+      }
+    } catch (e) { /* repli ci-dessous */ }
+    return Math.random();
+  }
+
   function actionRoll(state, rng) {
     if (state.over) return { error: 'Partie terminée.' };
     if (state.phase !== 'roll') return { error: "Ce n'est pas à vous de jouer." };
-    var rand = rng || Math.random;
+    var rand = rng || sysRandom;
     var d1 = 1 + Math.floor(rand() * 6);
     var d2 = 1 + Math.floor(rand() * 6);
     var pl = state.players[state.turn];

@@ -169,4 +169,8 @@ sont dans **`MISE_EN_LIGNE.md`**.
   la dernière place et **la partie s'arrête** (donc à deux, un vainqueur
   suffit) ; à la fin, un **bilan** affiche le plus violent (pions mangés)
   et le plus violenté (pions perdus), avec le tableau des captures
+- **dés vraiment aléatoires** : chaque jet utilise
+  `crypto.getRandomValues()` (entropie matérielle du navigateur) — le
+  résultat ne dépend d'aucun état ni d'aucun historique du jeu ; repli
+  automatique sur `Math.random` si l'API est indisponible
 - sons : lancer des dés, pas du pion, capture, maison, fin de partie

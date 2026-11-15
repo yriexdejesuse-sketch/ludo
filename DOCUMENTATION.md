@@ -572,6 +572,16 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11e. **Vrai hasard + anti-cache (round15)** : les jets utilisent
+    `crypto.getRandomValues()` (`sysRandom()` dans engine — entropie
+    matérielle, indépendant de tout état ; repli `Math.random`) ;
+    **tous les assets** de `index.html` sont suffixés `?v=VERSION`
+    (avec `APP_VERSION`) pour forcer le rechargement — réponse au
+    « mode local reste toujours à2 » : non reproductible sur le live
+    (flux exact Joueur2=vert →3 cartes/12 pions → red, green, yellow
+    ont joué — `ludotest/theirflow.js`) ; l'origine la plus probable
+    était un onglet à cache mixte. `smoke.js` neutralise
+    `firebase-config.js` par regex (compatible `?v=`).
 11d. **Partie locale à 3/4 joueurs** : sélecteur `#localCount` (2/3/4)
     sur l'écran de choix local — les joueurs 3 et 4 reçoivent
     **automatiquement** les couleurs restantes (`#localExtra` les
