@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13d';
+const APP_VERSION = 'v2026-11-13e';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -18,6 +18,7 @@ const MEDAL = ['', '🥇', '🥈', '🥉', '4️⃣'];
 let mode = null;                 // 'local' | 'ai' | 'online'
 let setupKind = 'local';         // écran de préparation
 let aiCount = 2;
+let localCount = 2;
 let G = null;
 let legal = { 0: [], 1: [], sum: [] };
 let you = null;                  // couleur humaine (null = hot-seat / spectateur)
@@ -993,9 +994,11 @@ function renderSetup() {
   const isAi = setupKind === 'ai', isOnline = setupKind === 'online';
   $('#setupTitle').textContent =
     isAi ? 'Jouer contre l\'ordinateur' :
-    isOnline ? 'Créer une partie en ligne' : 'Partie locale à deux';
+    isOnline ? 'Créer une partie en ligne' :
+    (localCount === 2 ? 'Partie locale à deux' : 'Partie locale à ' + localCount + ' joueurs');
   $('#pick1Title').textContent = (isAi || isOnline) ? 'Ta couleur' : 'Joueur 1';
   $('#pick2Block').classList.toggle('hidden', !(!isAi && !isOnline));
+  $('#localCountBlock').classList.toggle('hidden', !(!isAi && !isOnline));
   $('#aiCountBlock').classList.toggle('hidden', !isAi);
   $('#onlineNameBlock').classList.toggle('hidden', !isOnline);
   $('#setupHint').textContent = isAi
@@ -1015,6 +1018,12 @@ function renderSetup() {
       if (setupColors.c1 === c) setupColors.c1 = Ludo.COLORS.find(x => x !== c);
       renderSetup();
     });
+    const rest = Ludo.COLORS.filter(c => c !== setupColors.c1 && c !== setupColors.c2);
+    const auto = rest.slice(0, localCount - 2);
+    $('#localExtra').textContent = auto.length
+      ? auto.map((c, i) => 'Joueur' + (i + 3) + ' : ' + LABEL[c]).join(' · ') +
+        ' — les couleurs restantes, automatiques'
+      : '';
   }
 }
 
@@ -1092,7 +1101,10 @@ function startLocal() {
   started = true; overShown = false; selectedDie = null;
   clearFx();
   $('#modalOver').classList.add('hidden');
-  G = Ludo.createGame([setupColors.c1, setupColors.c2]);
+  const cols = [setupColors.c1, setupColors.c2];
+  const rest = Ludo.COLORS.filter(c => c !== cols[0] && c !== cols[1]);
+  while (cols.length < localCount) cols.push(rest.shift());
+  G = Ludo.createGame(cols);
   seats = G.players.map((p, i) => ({ seat: i, color: p.color, joined: true }));
   legal = { 0: [], 1: [], sum: [] };
   showScreen('game');
@@ -1306,6 +1318,13 @@ function bind() {
     b.onclick = () => {
       aiCount = +b.dataset.n;
       $('#aiCount').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
+      renderSetup();
+    };
+  });
+  $('#localCount').querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      localCount = +b.dataset.n;
+      $('#localCount').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
       renderSetup();
     };
   });

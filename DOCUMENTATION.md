@@ -572,6 +572,14 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11d. **Partie locale à 3/4 joueurs** : sélecteur `#localCount` (2/3/4)
+    sur l'écran de choix local — les joueurs 3 et 4 reçoivent
+    **automatiquement** les couleurs restantes (`#localExtra` les
+    affiche) ; `startLocal()` assemble `cols` sur `localCount` puis
+    `createGame` (moteur générique — `test.js` simule des parties à 3
+    et 4 jusqu'au classement complet ; smoke vérifie le câblage du
+    sélecteur ; `play4.js` démarre réellement une partie à 4 : 4 cartes,
+    16 pions).
 11c. **README restructuré** (demande « revois le README ») : le lien
     live + le mode d'emploi « jouer en ligne » sont **en tête** ; arbre
     des fichiers corrigé (`firebase-config.js` **déjà rempli** — plus

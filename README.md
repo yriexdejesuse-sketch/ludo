@@ -5,8 +5,9 @@
 Ouvre le lien : l'onglet affiche la **version** (ex. `(v2026-11-13d)`) —
 si elle manque, rafraîchis avec **Ctrl+Maj+R**.
 
-Jeu de Ludo complet : **local à deux**, **contre l'ordinateur** (2 ou 4
-joueurs), ou **en ligne avec un ami** (partage d'un code / lien).
+Jeu de Ludo complet : **local à 2, 3 ou 4 joueurs** (même écran),
+**contre l'ordinateur** (2 ou 4 joueurs), ou **en ligne avec un ami**
+(partage d'un code / lien).
 
 ## 🎮 Jouer en ligne à deux
 

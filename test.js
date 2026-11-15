@@ -437,4 +437,31 @@ console.log('✔ sortie du couloir = double6 + jet supplémentaire');
 }
 console.log('✔ le propriétaire mange l\'intrus dans son couloir (règle stricte)');
 
+/* parties locales à 3 et 4 joueurs : moteur générique (classement complet) */
+for (const colors of [['red', 'green', 'yellow'],
+                      ['red', 'green', 'yellow', 'blue']]) {
+  const st = L.createGame(colors);
+  let steps = 0;
+  while (!st.over && steps++ < 12000) {
+    if (st.phase === 'roll') L.actionRoll(st);
+    else {
+      const playable = L.playableDice(st);
+      const sum = L.movesForSum(st);
+      assert.ok(playable.length > 0 || sum.length > 0, 'coup possible attendu');
+      if (!playable.length || (sum.length && Math.random() < 0.3)) {
+        L.actionMove(st, sum[0].pawn, sum[0].to, 'sum');
+      } else {
+        const die = playable[Math.floor(Math.random() * playable.length)];
+        const mv = L.movesForDie(st, die);
+        const m = mv[Math.floor(Math.random() * mv.length)];
+        L.actionMove(st, m.pawn, m.to, die);
+      }
+    }
+  }
+  assert.ok(st.over, colors.length + ' joueurs : la partie doit se terminer');
+  assert.strictEqual(st.ranks.length, colors.length, 'classement complet');
+  assert.strictEqual(new Set(colors).size, colors.length, 'couleurs toutes distinctes');
+}
+console.log('✔ parties locales à 3 et 4 joueurs terminées, classement complet');
+
 console.log('\nTous les tests passent ✅');
