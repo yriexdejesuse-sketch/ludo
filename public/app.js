@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13g';
+const APP_VERSION = 'v2026-11-13h';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -41,6 +41,12 @@ let autoTimer = null, autoLastRev = null, autoStall = 0; /* mode zéro clic */
 let aiTimer = null;
 let overShown = false;
 let setupColors = { c1: 'red', c2: 'blue' };
+let localPlayers = [
+  { name: 'Joueur 1', color: 'red' },
+  { name: 'Joueur 2', color: 'blue' },
+  { name: 'Joueur 3', color: 'green' },
+  { name: 'Joueur 4', color: 'yellow' }
+];
 
 const $ = (s) => document.querySelector(s);
 const busy = () => animating || rollAnim;
@@ -996,34 +1002,88 @@ function renderSetup() {
     isAi ? 'Jouer contre l\'ordinateur' :
     isOnline ? 'Créer une partie en ligne' :
     (localCount === 2 ? 'Partie locale à deux' : 'Partie locale à ' + localCount + ' joueurs');
+  const isLocal = !isAi && !isOnline;
   $('#pick1Title').textContent = (isAi || isOnline) ? 'Ta couleur' : 'Joueur 1';
-  $('#pick2Block').classList.toggle('hidden', !(!isAi && !isOnline));
-  $('#localCountBlock').classList.toggle('hidden', !(!isAi && !isOnline));
+  $('#pick1').parentElement.classList.toggle('hidden', isLocal);
+  $('#pick2Block').classList.toggle('hidden', !isLocal ? true : false);
+  // en local on cache les pick1/pick2 simples, on affiche le bloc complet
+  if (isLocal) {
+    $('#pick1').parentElement.classList.add('hidden');
+    $('#pick2Block').classList.add('hidden');
+    $('#localPlayersBlock').classList.remove('hidden');
+    // ajuster la taille de localPlayers selon localCount
+    while (localPlayers.length < localCount) {
+      const used = localPlayers.slice(0, localCount-1).map(p=>p.color);
+      const avail = Ludo.COLORS.find(c=>!used.includes(c)) || Ludo.COLORS[localPlayers.length % 4];
+      localPlayers.push({ name: 'Joueur ' + (localPlayers.length+1), color: avail });
+    }
+    const cont = $('#localPlayers');
+    cont.innerHTML = '';
+    for (let i=0;i<localCount;i++) {
+      const pl = localPlayers[i];
+      const row = document.createElement('div');
+      row.className = 'local-player-row';
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap';
+      const lab = document.createElement('span');
+      lab.textContent = 'Joueur ' + (i+1);
+      lab.style.cssText = 'min-width:70px;font-weight:600';
+      const inp = document.createElement('input');
+      inp.type='text'; inp.value=pl.name; inp.placeholder='Nom'; inp.maxLength=16;
+      inp.style.cssText = 'flex:1;min-width:90px;padding:6px 8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#f1f5f9';
+      inp.oninput = (e)=>{ localPlayers[i].name = e.target.value; };
+      const sw = document.createElement('div');
+      sw.className = 'swatches';
+      sw.style.cssText = 'display:flex;gap:6px';
+      Ludo.COLORS.forEach(c=>{
+        const b=document.createElement('button');
+        const taken = localPlayers.some((p,idx)=> idx!==i && p.color===c);
+        b.className='swatch' + (c===pl.color?' sel':'') + (taken?' taken':'');
+        b.style.background=HEX[c];
+        b.style.opacity=taken?'0.35':'';
+        b.title=LABEL[c] + (taken?' (déjà pris)':'');
+        b.textContent=c===pl.color?'✓':'';
+        b.onclick=()=>{
+          const otherIdx = localPlayers.findIndex((p,idx)=> idx!==i && p.color===c);
+          if (otherIdx!==-1) {
+            const tmp=localPlayers[otherIdx].color;
+            localPlayers[otherIdx].color=pl.color;
+            localPlayers[i].color=c;
+          } else {
+            localPlayers[i].color=c;
+          }
+          renderSetup();
+        };
+        sw.appendChild(b);
+      });
+      row.appendChild(lab); row.appendChild(inp); row.appendChild(sw);
+      cont.appendChild(row);
+    }
+  } else {
+    $('#localPlayersBlock').classList.add('hidden');
+    $('#pick1').parentElement.classList.remove('hidden');
+  }
+  $('#localCountBlock').classList.toggle('hidden', !isLocal);
   $('#aiCountBlock').classList.toggle('hidden', !isAi);
   $('#onlineNameBlock').classList.toggle('hidden', !isOnline);
   $('#setupHint').textContent = isAi
     ? (aiCount === 4 ? 'Tu joues contre 3 ordinateurs.' : 'Tu joues contre 1 ordinateur.')
     : 'Tous les parcours ont la même longueur : choisis ce que tu veux !';
 
-  renderSwatches($('#pick1'), setupColors.c1, (c) => {
-    setupColors.c1 = c;
-    if (!isAi && !isOnline && setupColors.c2 === c) {
-      setupColors.c2 = Ludo.COLORS.find(x => x !== c);
-    }
-    renderSetup();
-  });
-  if (!isAi && !isOnline) {
-    renderSwatches($('#pick2'), setupColors.c2, (c) => {
-      setupColors.c2 = c;
-      if (setupColors.c1 === c) setupColors.c1 = Ludo.COLORS.find(x => x !== c);
+  if (!isLocal) {
+    renderSwatches($('#pick1'), setupColors.c1, (c) => {
+      setupColors.c1 = c;
+      if (!isAi && !isOnline && setupColors.c2 === c) {
+        setupColors.c2 = Ludo.COLORS.find(x => x !== c);
+      }
       renderSetup();
     });
-    const rest = Ludo.COLORS.filter(c => c !== setupColors.c1 && c !== setupColors.c2);
-    const auto = rest.slice(0, localCount - 2);
-    $('#localExtra').textContent = auto.length
-      ? auto.map((c, i) => 'Joueur' + (i + 3) + ' : ' + LABEL[c]).join(' · ') +
-        ' — les couleurs restantes, automatiques'
-      : '';
+    if (!isAi && !isOnline) {
+      renderSwatches($('#pick2'), setupColors.c2, (c) => {
+        setupColors.c2 = c;
+        if (setupColors.c1 === c) setupColors.c1 = Ludo.COLORS.find(x => x !== c);
+        renderSetup();
+      });
+    }
   }
 }
 
@@ -1102,10 +1162,12 @@ function startLocal() {
   started = true; overShown = false; selectedDie = null;
   clearFx();
   $('#modalOver').classList.add('hidden');
-  const cols = [setupColors.c1, setupColors.c2];
-  const rest = Ludo.COLORS.filter(c => c !== cols[0] && c !== cols[1]);
-  while (cols.length < localCount) cols.push(rest.shift());
+  const cols = localPlayers.slice(0, localCount).map(p=>p.color);
+  const names = localPlayers.slice(0, localCount).map(p=>p.name.trim()||('Joueur '+(localPlayers.indexOf(p)+1)));
   G = Ludo.createGame(cols);
+  roomNames = names.slice();
+  // compléter roomNames pour l'affichage des 4 couleurs
+  while (roomNames.length < 4) roomNames.push('');
   seats = G.players.map((p, i) => ({ seat: i, color: p.color, joined: true }));
   legal = { 0: [], 1: [], sum: [] };
   showScreen('game');

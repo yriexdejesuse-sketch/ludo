@@ -572,6 +572,8 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11g. **Mode local 2/3/4 avec noms et couleurs (round17)** : le bloc `#localPlayersBlock` remplace l'ancien `#pick2` + `#localExtra` — `localPlayers[4]` (nom + couleur) + `localCount` (2/3/4) génèrent dynamiquement N lignes (input + swatches) ; clic couleur = échange si déjà prise ; `startLocal()` utilise `cols = localPlayers.slice(0,N).map(p=>p.color)` et `roomNames = …map(p=>p.name)` puis `createGame(cols)` (moteur générique) ; `nameOf()` affiche déjà `roomNames[i]` dans les cartes et le journal ; menu « Partie locale » renommé « 2, 3 ou 4 joueurs ».
+
 11f. **Nouvelles règles maison (round16)** : six demandes validées une par une —
     1) **Manger dehors** garde la règle stricte (capturer avec un dé n'est autorisé que si un autre pion peut jouer l'autre dé) ; la somme est à part.
     2) **Intrus dans le couloir adverse** : avance ET recule **libres** (ex : 2 = +2 ou -2 au choix) — seule la **sortie** est verrouillée : soit **double 6** (consomme les 2 dés → 1 seul jet supp., triple double 6 = tour perdu), soit **sortie en mangeant dehors** (`sortie_mange` : depuis la bouche, à ±valeur sur l'anneau, sans double 6).

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Ludo — jeu à deux ou à quatre</title>
-<link rel="stylesheet" href="style.css?v=2026-11-13g">
+<link rel="stylesheet" href="style.css?v=2026-11-13h">
 </head>
 <body>
 <div id="app">
@@ -21,7 +21,7 @@
   <section id="screen-menu" class="screen">
     <div class="menu-cards">
       <button class="big-btn primary" id="btnAi">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
-      <button class="big-btn" id="btnLocal">👥 Partie locale à deux<br><small>2 joueurs sur le même écran</small></button>
+      <button class="big-btn" id="btnLocal">👥 Partie locale<br><small>2, 3 ou 4 joueurs sur le même écran</small></button>
       <button class="big-btn" id="btnCreate">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
       <button class="big-btn" id="btnJoinShow">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
       <button class="big-btn ghost" id="btnRules">📜 Règles du jeu</button>
@@ -61,7 +61,13 @@
           <button data-n="3">3 joueurs<br><small>sur le même écran</small></button>
           <button data-n="4">4 joueurs<br><small>sur le même écran</small></button>
         </div>
-        <p class="hint" id="localExtra"></p>
+      </div>
+
+      <div class="pick-block hidden" id="localPlayersBlock">
+        <h3>Joueurs (noms et couleurs)</h3>
+        <div id="localPlayers"></div>
+        <p class="hint">Chacun choisit sa couleur — les couleurs doivent être différentes.</p>
+        <p class="hint hidden" id="localExtra"></p>
       </div>
 
       <div class="pick-block hidden" id="aiCountBlock">
@@ -177,9 +183,9 @@
   </div>
 </div>
 
-<script src="engine.js?v=2026-11-13g"></script>
-<script src="backends.js?v=2026-11-13g"></script>
-<script src="firebase-config.js?v=2026-11-13g"></script>
-<script src="app.js?v=2026-11-13g"></script>
+<script src="engine.js?v=2026-11-13h"></script>
+<script src="backends.js?v=2026-11-13h"></script>
+<script src="firebase-config.js?v=2026-11-13h"></script>
+<script src="app.js?v=2026-11-13h"></script>
 </body>
 </html>
