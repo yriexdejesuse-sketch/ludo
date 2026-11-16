@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13l';
+const APP_VERSION = 'v2026-11-13m';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -40,6 +40,7 @@ let watchStop = null, watchSeq = 0;
 let Backend = null;              // 'http' (serveur Arena) ou 'fire' (Firebase)
 let autoTimer = null, autoLastRev = null, autoStall = 0; /* mode zéro clic */
 let aiTimer = null;
+let simPaused = false;
 let overShown = false;
 let setupColors = { c1: 'red', c2: 'blue' };
 let localPlayers = [
@@ -650,6 +651,7 @@ function renderPanel() {
   renderChrome();
   syncPawns();
   checkOver();
+  updateSimPauseUI();
   scheduleAi();
 }
 function toast(msg) {
@@ -854,14 +856,37 @@ function isAiTurn() {
   if (mode === 'sim' && G && !G.over && started) return true;
   return mode === 'ai' && G && !G.over && started && aiColors.has(Ludo.currentColor(G));
 }
+function setSimPaused(v){
+  simPaused = !!v;
+  if (simPaused){ clearTimeout(aiTimer); aiTimer=null; clearAuto(); }
+  else if (mode==='sim' && started && G && !G.over) scheduleAi();
+  updateSimPauseUI();
+}
+function updateSimPauseUI(){
+  const wrap = document.querySelector('#simControls');
+  const btn = document.querySelector('#simPauseBtn');
+  const ov = document.querySelector('#simPauseOverlay');
+  const show = mode==='sim' && started && !G.over;
+  if (wrap) wrap.classList.toggle('hidden', !show);
+  if (ov) ov.classList.toggle('hidden', !simPaused || !show);
+  if (btn){
+    btn.textContent = simPaused ? '▶️ Reprendre' : '⏸️ Pause';
+    btn.classList.toggle('primary', !simPaused);
+    btn.classList.toggle('warn', simPaused);
+  }
+  const hint = document.querySelector('#diceHint');
+  if (hint && mode==='sim' && show) hint.textContent = simPaused ? '⏸️ Simulation en pause' : '🔬 Simulation en cours…';
+}
 function scheduleAi() {
   clearTimeout(aiTimer); aiTimer = null;
+  if (simPaused) return;
   if (!isAiTurn() || busy()) return;
   const sim = mode === 'sim';
   aiTimer = setTimeout(aiStep, sim ? (G.phase === 'roll' ? 420 : 260) : (G.phase === 'roll' ? 650 : 430));
 }
 function aiStep() {
   aiTimer = null;
+  if (simPaused) return;
   if (!isAiTurn() || busy()) { if (isAiTurn()) scheduleAi(); return; }
   if (G.phase === 'roll') { doRoll(true); return; }
   if (G.phase === 'move') {
@@ -939,9 +964,11 @@ function showScreen(name) {
   clearAuto();
   ['menu', 'setup', 'lobby', 'game'].forEach(s =>
     $('#screen-' + s).classList.toggle('hidden', s !== name));
+  if (name==='menu') setSimPaused(false);
   if (mode === 'online' && room.code && (name === 'lobby' || name === 'game')) startWatch();
   else stopWatch();
   renderMyColor();
+  updateSimPauseUI();
 }
 function checkOver() {
   if (G && G.over && !overShown) {
@@ -1214,7 +1241,7 @@ function startSim() {
   mode = 'sim'; hotseat = false; you = null;
   const cols = simPlayers.slice(0, simCount).map(p=>p.color);
   const names = simPlayers.slice(0, simCount).map(p=>p.name.trim()||('Ordi '+(simPlayers.indexOf(p)+1)));
-  started = true; overShown = false; selectedDie = null;
+  started = true; overShown = false; selectedDie = null; simPaused = false;
   clearFx();
   $('#modalOver').classList.add('hidden');
   G = Ludo.createGame(cols);
@@ -1485,10 +1512,12 @@ function bind() {
     if (mode === 'online' && !confirm('Quitter la partie ? (tu pourras revenir avec le lien)')) return;
     stopWatch();
     clearTimeout(aiTimer);
+    setSimPaused(false);
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
     showScreen('menu');
   };
 
+  const simBtn=$('#simPauseBtn'); if(simBtn) simBtn.onclick = () => setSimPaused(!simPaused);
   $('#die0').onclick = () => onDieClick(0);
   $('#die1').onclick = () => onDieClick(1);
   $('#diceHint').onclick = () => {

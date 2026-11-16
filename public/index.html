@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Ludo — jeu à deux ou à quatre</title>
-<link rel="stylesheet" href="style.css?v=2026-11-13l">
+<link rel="stylesheet" href="style.css?v=2026-11-13m">
 </head>
 <body>
 <div id="app">
@@ -141,11 +141,15 @@
 
         <!-- mini-choix près du pion (avancer / reculer-manger) -->
         <div id="miniChoice" class="mini-choice hidden"></div>
+        <div id="simPauseOverlay" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.78);border-radius:18px;font-size:1.45rem;font-weight:800;z-index:7;pointer-events:none;backdrop-filter:blur(2px)">⏸️ En pause</div>
       </div>
 
       <aside class="panel">
         <div id="diceHint">👆 Clique pour lancer</div>
         <div id="turnBanner" class="turn-banner">—</div>
+        <div id="simControls" class="hidden" style="display:flex;gap:8px;margin:6px 0">
+          <button id="simPauseBtn" class="big-btn small" style="flex:1">⏸️ Pause</button>
+        </div>
         <div id="players" class="players"></div>
 
         <div class="log-wrap">
@@ -200,9 +204,9 @@
   </div>
 </div>
 
-<script src="engine.js?v=2026-11-13l"></script>
-<script src="backends.js?v=2026-11-13l"></script>
-<script src="firebase-config.js?v=2026-11-13l"></script>
-<script src="app.js?v=2026-11-13l"></script>
+<script src="engine.js?v=2026-11-13m"></script>
+<script src="backends.js?v=2026-11-13m"></script>
+<script src="firebase-config.js?v=2026-11-13m"></script>
+<script src="app.js?v=2026-11-13m"></script>
 </body>
 </html>
