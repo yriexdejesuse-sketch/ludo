@@ -572,6 +572,15 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11f. **Nouvelles règles maison (round16)** : six demandes validées une par une —
+    1) **Manger dehors** garde la règle stricte (capturer avec un dé n'est autorisé que si un autre pion peut jouer l'autre dé) ; la somme est à part.
+    2) **Intrus dans le couloir adverse** : avance ET recule **libres** (ex : 2 = +2 ou -2 au choix) — seule la **sortie** est verrouillée : soit **double 6** (consomme les 2 dés → 1 seul jet supp., triple double 6 = tour perdu), soit **sortie en mangeant dehors** (`sortie_mange` : depuis la bouche, à ±valeur sur l'anneau, sans double 6).
+    3) **Sortie double 6 corrigée** : les 2 dés sont annulés, 1 seul jet supplémentaire (l'ancien code laissait un 6 rejouable).
+    4) **Propriétaire mange dans sa maison depuis n'importe où** : si un intrus est en cellule N (1..5) de ta maison, tout pion en jeu qui fait exactement N peut **téléporter en 50+N et le manger** (`home_retour`).
+    5) **Plus de relance après manger/arrivée** : seule le double 6 relance (`endTurn` simplifié — `turnCaptured`/`turnArrived` conservés pour compat mais ignorés).
+    6) **Jamais mixer avant/arrière dans le même jet** : `turnDir` (`fwd`/`bwd`) posé au premier coup (`actionMove`) et filtré dans `movesForDie` ; la somme peut être jouée en avant **ou** en arrière mais jamais 1 dé en avant + 1 dé en arrière. `humanChoiceNeeded` et `hasBwd` ne considèrent plus la somme avant comme un choix.
+    Moteur : `rawMovesFor` intrus libre + `sortie_mange` + `home_retour`, `movesForDie` filtre direction, `movesForSum` rendu avant/arrière, `advance`/`actionRoll`/`endTurn` gèrent `turnDir`.
+
 11e. **Vrai hasard + anti-cache (round15)** : les jets utilisent
     `crypto.getRandomValues()` (`sysRandom()` dans engine — entropie
     matérielle, indépendant de tout état ; repli `Math.random`) ;

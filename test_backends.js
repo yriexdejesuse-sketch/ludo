@@ -176,10 +176,18 @@ const tick = (ms = 15) => new Promise(r => setTimeout(r, ms));
       st = out.state;
     } else {
       const out0 = await fire.getState(a.code, tok);
+      // gérer aussi la somme des 2 dés
+      const hasSum = out0.legal.sum && out0.legal.sum.length;
       const pl = [0, 1].filter(i => out0.legal[i] && out0.legal[i].length);
-      assert.ok(pl.length > 0, 'phase move doit avoir un dé jouable');
-      const d = pl[Math.floor(Math.random() * pl.length)];
-      const m = out0.legal[d][Math.floor(Math.random() * out0.legal[d].length)];
+      assert.ok(pl.length > 0 || hasSum, 'phase move doit avoir un dé jouable');
+      let d, m;
+      if (!pl.length || (hasSum && Math.random() < 0.3)) {
+        m = out0.legal.sum[Math.floor(Math.random()*out0.legal.sum.length)];
+        d = 'sum';
+      } else {
+        d = pl[Math.floor(Math.random() * pl.length)];
+        m = out0.legal[d][Math.floor(Math.random() * out0.legal[d].length)];
+      }
       const out = await fire.action(a.code, tok, { type: 'move', pawn: m.pawn, to: m.to, die: d });
       assert.ok(!out.error, out.error);
       st = out.state;

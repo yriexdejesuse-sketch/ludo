@@ -5,18 +5,14 @@
    - deux dés : chaque dé donne un déplacement (mêmes pions ou différents)
    - il faut un 6 (sur un des deux dés) pour sortir de la base ;
      on peut enchaîner avec l'autre dé sur le pion que l'on vient de sortir
-   - relance sur DOUBLE 6, sur un MANGER et sur une ARRIVÉE À LA MAISON ;
+   - relance UNIQUEMENT sur DOUBLE 6 (manger ou arriver ne donne plus de relance) ;
      trois double-6 de suite = tour perdu
    - atterrir sur un pion ennemi le renvoie à sa base
-   - RECOULEMENT : on peut reculer du nombre de points du dé
-     UNIQUEMENT si cela permet de manger un pion ennemi
-   - SOMME DES DEUX DÉS : si les deux dés sont encore disponibles et
-     que leur somme permet de reculer sur un pion ennemi, on peut
-     utiliser les deux d'un coup pour manger en arrière
-   - RÈGLE STRICTE DE CAPTURE : manger avec un dé n'est possible
-     que si un AUTRE pion peut encore jouer l'autre dé (s'il reste un dé)
-   - APRÈS UN MANGER : le pion qui vient de manger avec un dé ne peut
-     plus jouer du tout avec ce pion-là (le reste du tour)
+   - RECOULEMENT : sur l'anneau, reculer UNIQUEMENT pour manger ; dans le couloir adverse, avance ET recule LIBRES
+   - SORTIE DE COULOIR : double 6 consomme les 2 dés (1 seul jet supp.) ; intrus peut aussi sortir en mangeant dehors ; propriétaire peut entrer dans sa maison pour manger l'intrus si dé == cellule
+   - JAMAIS mixer avant/arrière dans le même jet (somme = tout en avant OU tout en arrière)
+   - RÈGLE STRICTE DE CAPTURE : manger dehors avec un dé n'est possible que si un AUTRE pion peut encore jouer l'autre dé
+   - APRÈS UN MANGER : le pion qui vient de manger ne rejoue plus du tout ce tour
    - cases de départ et cases étoillées = protégées
    - pions alliés empilables ; 1er à rentrer ses 4 pions gagne,
      la partie continue pour les places suivantes
@@ -148,8 +144,9 @@
       dieUsed: [false, false],
       sixStreak: 0,         // double-6 consécutifs dans le tour
       eaten: null,          // pion qui a mangé ce tour : il ne joue plus
-      turnCaptured: false,  // a mangé pendant ce jet → jet supplémentaire
-      turnArrived: false,   // pion rentré à la maison pendant ce jet → jet supplémentaire
+      turnCaptured: false,  // conservé pour compat, plus de relance
+      turnArrived: false,   // conservé pour compat
+      turnDir: null,       // 'fwd' | 'bwd' | null — interdit de mixer avant/arrière dans le même jet
       ranks: [],
       stats: colors.reduce(function (o, c) { o[c] = { ate: 0, lost: 0 }; return o; }, {}),
       log: ['Partie de Ludo ! Deux dés, bonne chance.'],
@@ -199,6 +196,7 @@
          en sortir tout seul (sortie = double6, voir movesForDie) */
       var it = intruderInfo(pos);
       if (it) {
+        // Intrus dans le couloir adverse : avance ET recule LIBRES (sauf sortir)
         var fC = it.cell + value;
         if (fC <= 5) {
           var occF = corridorAt(state, it.host, fC, pl.color);
@@ -211,10 +209,23 @@
         var bC = it.cell - value;
         if (bC >= 1) {
           var occB = corridorAt(state, it.host, bC, pl.color);
-          if (occB.some(function (o) { return o.color !== pl.color; })) {
+          if (occB.length === 0) {
+            out.push({ pawn: i, to: makeIntruderPos(it.host, bC), type: 'bwd', capture: false });
+          } else if (occB.some(function (o) { return o.color !== pl.color; })) {
             out.push({ pawn: i, to: makeIntruderPos(it.host, bC), type: 'bwd', capture: true });
           }
         }
+        // Sortie en mangeant dehors (sans double 6) : depuis la bouche, à ±value sur l'anneau
+        var mouthAbs = INFO[it.host].mouth;
+        [mouthAbs + value, mouthAbs - value].forEach(function (absT) {
+          var a = ((absT % 52) + 52) % 52;
+          var occ = occupiedBy(state, a, pl.color);
+          if (occ.length > 0 && !SAFE[a]) {
+            var offT = ((a - INFO[pl.color].start) % 52 + 52) % 52;
+            var toT = (offT === 51) ? -2 : offT;
+            out.push({ pawn: i, to: toT, type: 'sortie_mange', capture: true });
+          }
+        });
         return;
       }
 
@@ -241,6 +252,18 @@
             var laneCapt = fwd <= 55 &&
               corridorAt(state, pl.color, fwd - 50, pl.color).some(function (o) { return o.color !== pl.color; });
             out.push({ pawn: i, to: fwd, type: 'fwd', capture: laneCapt });
+          }
+        }
+        // Propriétaire mange l'intrus DANS SA MAISON depuis n'importe où : dé == cellule
+        if (pos >= -2 && pos <= 50) {
+          for (var cell = 1; cell <= 5; cell++) {
+            if (value !== cell) continue;
+            var occHome = corridorAt(state, pl.color, cell, pl.color);
+            var hasIntruder = occHome.some(function (o) { return o.color !== pl.color; });
+            if (hasIntruder) {
+              var toHome = 50 + cell;
+              out.push({ pawn: i, to: toHome, type: 'home_retour', capture: true });
+            }
           }
         }
       }
@@ -294,9 +317,7 @@
     var v = state.dice[dieIndex];
     if (v == null) return [];
     var moves = rawMovesFor(state, v);
-    /* SORTIE D'UN COULOIR : uniquement avec un double6 — le pion réapparaît
-       sur la bouche du couloir ; comme tout double6, jet supplémentaire
-       en fin de tour (le pion sorti ne rejoue plus ce tour) */
+    /* SORTIE D'UN COULOIR par double 6 : consomme LES DEUX dés, 1 seul jet supplémentaire */
     if (state.dice[0] === 6 && state.dice[1] === 6 && v === 6) {
       var plS = state.players[state.turn];
       plS.pawns.forEach(function (pos, i) {
@@ -314,6 +335,12 @@
     if (state.eaten != null) {
       moves = moves.filter(function (m) { return m.pawn !== state.eaten; });
     }
+    // Règle 6 : jamais mixer avant/arrière dans le même jet
+    if (state.turnDir === 'fwd') {
+      moves = moves.filter(function (m) { return m.type !== 'bwd'; });
+    } else if (state.turnDir === 'bwd') {
+      moves = moves.filter(function (m) { return m.type === 'bwd'; });
+    }
 
     var other = 1 - dieIndex;
     var otherPending = !state.dieUsed[other] && state.dice[other] != null;
@@ -322,6 +349,8 @@
     var otherV = state.dice[other];
     return moves.filter(function (m) {
       if (!m.capture) return true;
+      // nouvelles captures spéciales toujours autorisées même avec un seul pion
+      if (m.type === 'home_retour' || m.type === 'sortie_mange') return true;
       var pl = state.players[state.turn];
       for (var i = 0; i < pl.pawns.length; i++) {
         if (i === m.pawn) continue;
@@ -342,21 +371,23 @@
     return res;
   }
 
-  /* ---------- SOMME DES DEUX DÉS : recul-capture combiné ----------
-     Les deux dés sont encore disponibles : leur somme peut reculer
-     sur un pion ennemi non protégé → on les utilise d'un seul coup. */
+  /* ---------- SOMME DES DEUX DÉS ----------
+     Les deux dés ensemble : soit en avant, soit en arrière (jamais mixer).
+     On les consomme d'un seul coup. */
   function movesForSum(state) {
     if (state.over || state.phase !== 'move') return [];
     if (state.dieUsed[0] || state.dieUsed[1]) return [];
     if (state.dice[0] == null || state.dice[1] == null) return [];
     var v = state.dice[0] + state.dice[1];
-    return rawMovesFor(state, v).filter(function (m) { return m.type === 'bwd'; });
+    var all = rawMovesFor(state, v);
+    return all;
   }
 
   function advance(state) {
     var n = state.players.length;
     var guard = 0;
     state.sixStreak = 0;
+    state.turnDir = null;
     do {
       state.turn = (state.turn + 1) % n;
       guard++;
@@ -371,21 +402,11 @@
   function endTurn(state) {
     var wasDouble = state.dice[0] === 6 && state.dice[1] === 6;
     if (wasDouble && state.sixStreak > 0 && state.sixStreak < 3) {
-      /* relance sur double 6 */
+      /* seule relance : double 6 */
       state.phase = 'roll';
       state.dieUsed = [true, true];
+      state.turnDir = null;
       state.log.push('Double 6 — jet supplémentaire !');
-      trimLog(state);
-      return;
-    }
-    /* relance si on a mangé ou si un pion est rentré à la maison ce jet */
-    if (state.turnCaptured || state.turnArrived) {
-      var col = INFO[state.players[state.turn].color].label;
-      var why = (state.turnCaptured && state.turnArrived) ? 'Manger + pion à la maison'
-        : state.turnCaptured ? 'Manger !' : 'Pion à la maison !';
-      state.phase = 'roll';
-      state.dieUsed = [true, true];
-      state.log.push(why + ' — ' + col + ' a un jet supplémentaire !');
       trimLog(state);
       return;
     }
@@ -443,9 +464,10 @@
 
     state.dice = [d1, d2];
     state.dieUsed = [false, false];
-    state.eaten = null; /* nouveau jet : le pion qui a mangé se déverrouille */
+    state.eaten = null;
     state.turnCaptured = false;
     state.turnArrived = false;
+    state.turnDir = null;
     state.rev++;
     state.log.push(INFO[pl.color].label + ' lance : ' + d1 + ' + ' + d2 + (dbl ? ' — double 6 !' : ''));
 
@@ -487,10 +509,16 @@
     var col = pl.color;
     var v = isSum ? state.dice[0] + state.dice[1] : state.dice[dieIndex];
 
+    // direction du tour : jamais mixer avant/arrière
+    if (!state.turnDir) {
+      if (mv.type === 'bwd') state.turnDir = 'bwd';
+      else state.turnDir = 'fwd';
+    }
     pl.pawns[pawnIdx] = mv.to;
     if (isSum) { state.dieUsed[0] = true; state.dieUsed[1] = true; }
+    else if (mv.type === 'sortie') { state.dieUsed[0] = true; state.dieUsed[1] = true; }
     else state.dieUsed[dieIndex] = true;
-    if (mv.to === 56) state.turnArrived = true; /* arrivée à la maison */
+    if (mv.to === 56) state.turnArrived = true;
     state.rev++;
 
     var msg;
@@ -501,7 +529,9 @@
     else if (mv.type === 'entree') msg = INFO[col].label + ' entre dans le couloir de ' +
       INFO[intruderInfo(mv.to).host].label;
     else if (mv.type === 'sortie') msg = INFO[col].label + ' sort du couloir grâce au double 6 !';
-    else msg = INFO[col].label + ' avance de ' + v;
+    else if (mv.type === 'sortie_mange') msg = INFO[col].label + ' sort du couloir en mangeant dehors !';
+    else if (mv.type === 'home_retour') msg = INFO[col].label + ' rentre dans sa maison pour manger l\'intrus !';
+    else msg = INFO[col].label + (isSum && state.turnDir === 'bwd' ? ' recule de ' + v + ' (somme)' : ' avance de ' + v);
 
     var caps = [];
     var mvIt = intruderInfo(mv.to);
@@ -563,8 +593,8 @@
     } else {
       state.log.push(msg);
     }
-    if (mv.type === 'sortie') {
-      state.eaten = pawnIdx; /* sorti du couloir : il ne rejoue plus ce tour */
+    if (mv.type === 'sortie' || mv.type === 'sortie_mange' || mv.type === 'home_retour') {
+      state.eaten = pawnIdx;
     }
 
     var done = pl.pawns.every(function (x) { return x === 56; });

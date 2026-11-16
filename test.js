@@ -44,7 +44,9 @@ console.log('✔ 200 parties aléatoires terminées');
   assert.strictEqual(st.players[1].pawns[0], -1, 'pion bleu renvoyé à la base');
   assert.ok(st.log.some(l => l.includes('recule')));
   assert.strictEqual(st.dieUsed[0], true);
-  assert.strictEqual(st.phase, 'move', 'le dé 4 reste à jouer');
+  // Règle 6 : après un recul, on ne peut plus avancer → le dé 4 (qui n'a que de l'avant) n'est plus jouable, tour terminé
+  assert.strictEqual(st.phase, 'roll', 'après un recul, l\'avancée du dé 4 est interdite → tour terminé');
+  assert.strictEqual(st.turn, 1);
 }
 console.log('✔ recul pour manger');
 
@@ -171,15 +173,15 @@ console.log('✔ fin de partie : un seul joueur sans finir = arrêt (bilan compr
   st.players[0].pawns = [10, -1, -1, -1]; // pos 10 → somme 7 → pos 3 (abs 4)
   st.players[1].pawns = [16, -1, -1, -1]; // bleu sur la case visée
   const sum = L.movesForSum(st);
-  assert.strictEqual(sum.length, 1, 'somme des deux dés proposée');
-  assert.strictEqual(sum[0].to, 3);
-  assert.ok(sum[0].type === 'bwd' && sum[0].capture, 'bien un recul-capture');
+  assert.ok(sum.length >= 1, 'somme proposée');
+  const b = sum.find(m => m.to === 3);
+  assert.ok(b && b.type === 'bwd' && b.capture, 'bien un recul-capture en somme');
   // un dé déjà utilisé → plus de somme
   st.dieUsed[1] = true;
   assert.strictEqual(L.movesForSum(st).length, 0, 'somme impossible si un dé est déjà utilisé');
   st.dieUsed[1] = false;
-  // exécution
-  const r = L.actionMove(st, sum[0].pawn, sum[0].to, 'sum');
+  // exécution du recul en somme
+  const r = L.actionMove(st, b.pawn, b.to, 'sum');
   assert.ok(!r.error, r.error);
   assert.strictEqual(st.players[1].pawns[0], -1, 'pion bleu mangé par la somme');
   assert.deepStrictEqual(st.dieUsed, [true, true], 'les deux dés utilisés d\'un coup');
@@ -200,20 +202,20 @@ console.log('✔ somme des deux dés (recul-capture combiné)');
 }
 console.log('✔ aucun recul depuis la maison');
 
-/* 10. APRÈS UN MANGER : le pion qui a mangé ne rejoue plus ce tour */
+/* 10. APRÈS UN MANGER : le pion qui a mangé ne rejoue plus ce tour (même direction) */
 {
   const st = L.createGame(['red', 'blue']);
-  st.phase = 'move'; st.dice = [3, 4]; st.dieUsed = [false, false];
-  st.players[0].pawns = [40, 10, -1, -1];
-  st.players[1].pawns = [50, -1, -1, -1];
+  st.phase = 'move'; st.dice = [1, 4]; st.dieUsed = [false, false];
+  st.players[0].pawns = [36, 10, -1, -1];  // 36 +1 -> bouche bleu + entree
+  st.players[1].pawns = [52, -1, -1, -1];  // bleu en case2 de son couloir
   const mv = L.movesForDie(st, 0);
-  const bwd = mv.find(m => m.to === 37);
-  assert.ok(bwd, 'recul-manger proposé');
-  L.actionMove(st, bwd.pawn, bwd.to, 0);
+  const ent = mv.find(m => m.type === 'entree');
+  assert.ok(ent, 'entrée-manger proposée');
+  L.actionMove(st, ent.pawn, ent.to, 0);
   assert.strictEqual(st.eaten, 0, 'pion verrouillé après le manger');
   const mv2 = L.movesForDie(st, 1);
   assert.ok(!mv2.some(m => m.pawn === 0), 'le pion qui a mangé ne rejoue plus avec l\'autre dé');
-  assert.ok(mv2.some(m => m.pawn === 1), 'l\'autre pion, lui, peut jouer le dé 4');
+  assert.ok(mv2.some(m => m.pawn === 1), 'l\'autre pion, lui, peut jouer le dé 4 (même direction avant)');
   // nouveau jet = déverrouillage
   st.phase = 'roll';
   L.actionRoll(st, rngFor([5, 2]));
@@ -233,57 +235,56 @@ console.log('✔ après un manger, le pion ne rejoue plus (déverrouillé au jet
 }
 console.log('✔ arrivée à la maison : le tour continue avec l\'autre dé');
 
-/* 12. Après un manger : phase 'move' conservée (un autre pion prendra l\'autre dé) */
+/* 12. Après un manger : phase 'move' conservée si même direction */
 {
   const st = L.createGame(['red', 'blue']);
-  st.phase = 'move'; st.dice = [3, 4]; st.dieUsed = [false, false];
-  st.players[0].pawns = [40, 10, -1, -1];
-  st.players[1].pawns = [50, -1, -1, -1];
-  const bwd = L.movesForDie(st, 0).find(m => m.to === 37);
-  L.actionMove(st, bwd.pawn, bwd.to, 0);
+  st.phase = 'move'; st.dice = [1, 4]; st.dieUsed = [false, false];
+  st.players[0].pawns = [36, 10, -1, -1];
+  st.players[1].pawns = [52, -1, -1, -1];
+  const ent = L.movesForDie(st, 0).find(m => m.type === 'entree');
+  L.actionMove(st, ent.pawn, ent.to, 0);
   assert.strictEqual(st.phase, 'move', 'le tour continue après le manger');
   assert.ok(L.movesForDie(st, 1).some(m => m.pawn === 1),
-    'un AUTRE pion doit pouvoir jouer le deuxième dé après le manger');
+    'un AUTRE pion doit pouvoir jouer le deuxième dé (même direction)');
 }
 console.log('✔ après un manger : le tour continue, un autre pion joue le 2e dé');
 
-/* 13. Manger = jet supplémentaire */
+/* 13. Manger ne donne PLUS de relance (seul le double 6 relance) */
 {
   const st = L.createGame(['red', 'yellow']);
   st.phase = 'move'; st.dice = [4, 3]; st.dieUsed = [false, false];
   st.players[0].pawns = [10, 30, -1, -1];
-  st.players[1].pawns = [40, -1, -1, -1];   // jaune sur la case rouge pos14 (abs15)
+  st.players[1].pawns = [40, -1, -1, -1];
   const cap = L.movesForDie(st, 0).find(m => m.to === 14 && m.capture);
   assert.ok(cap, 'capture possible avec le4');
   L.actionMove(st, cap.pawn, cap.to, 0);
-  assert.strictEqual(st.turnCaptured, true, 'manger enregistre le jet supp.');
-  assert.strictEqual(st.stats.red.ate, 1, 'bilan : rouge a mangé 1 pion');
-  assert.strictEqual(st.stats.yellow.lost, 1, 'bilan : jaune a perdu 1 pion');
+  assert.strictEqual(st.turnCaptured, true, 'manger enregistre');
+  assert.strictEqual(st.stats.red.ate, 1);
+  assert.strictEqual(st.stats.yellow.lost, 1);
   const m2 = L.movesForDie(st, 1)[0];
-  assert.ok(m2, 'l\\\'autre dé reste jouable');
+  assert.ok(m2, 'l\'autre dé reste jouable');
   L.actionMove(st, m2.pawn, m2.to, 1);
-  assert.strictEqual(st.phase, 'roll', 'manger = jet supplémentaire');
-  assert.strictEqual(st.turn, 0, 'c\\\'est encore à rouge');
-  assert.ok(st.log.some(l => l.includes('jet supplémentaire')), 'message au journal');
+  assert.strictEqual(st.phase, 'roll', 'après les 2 dés, tour suivant');
+  assert.strictEqual(st.turn, 1, 'manger ne redonne plus le tour → à jaune');
+  // pas de message "jet supplémentaire" sur un manger
   L.actionRoll(st, rngFor([2, 3]));
-  assert.strictEqual(st.turnCaptured, false, 'indicateur réinitialisé au jet suivant');
+  assert.strictEqual(st.turnCaptured, false);
 }
-console.log('✔ manger = jet supplémentaire');
+console.log('✔ manger ne donne plus de jet supplémentaire');
 
-/* 14. Pion à la maison = jet supplémentaire */
+/* 14. Arriver à la maison ne donne PLUS de relance */
 {
   const st = L.createGame(['red', 'blue']);
   st.phase = 'move'; st.dice = [1, 4]; st.dieUsed = [false, false];
   st.players[0].pawns = [55, 40, -1, -1];
-  L.actionMove(st, 0, 56, 0);                // rentre à la maison
-  assert.strictEqual(st.turnArrived, true, 'arrivée enregistrée');
+  L.actionMove(st, 0, 56, 0);
+  assert.strictEqual(st.turnArrived, true);
   const m2 = L.movesForDie(st, 1)[0];
   L.actionMove(st, m2.pawn, m2.to, 1);
-  assert.strictEqual(st.phase, 'roll', 'arrivée à la maison = jet supplémentaire');
-  assert.strictEqual(st.turn, 0, 'c\\\'est encore à rouge');
-  assert.ok(st.log.some(l => l.includes('jet supplémentaire')));
+  assert.strictEqual(st.phase, 'roll', 'après les 2 dés, tour suivant');
+  assert.strictEqual(st.turn, 1, 'arriver ne redonne plus le tour');
 }
-console.log('✔ pion à la maison = jet supplémentaire');
+console.log('✔ arriver à la maison ne donne plus de jet supplémentaire');
 
 /* 15. Recul derrière la case de départ (le « trou », position -2) */
 {
@@ -297,14 +298,11 @@ console.log('✔ pion à la maison = jet supplémentaire');
   L.actionMove(st, bwd.pawn, -2, 0);
   assert.strictEqual(st.players[1].pawns[0], -1, 'jaune mangé sur le trou');
   assert.strictEqual(st.players[0].pawns[0], -2, 'rouge posé sur le trou');
-  const mv2 = L.movesForDie(st, 1);
-  assert.ok(mv2.some(m => m.pawn === 1), 'l\'autre pion joue le 2e dé');
-  const m2 = mv2.find(m => m.pawn === 1);
-  L.actionMove(st, m2.pawn, m2.to, 1);
-  assert.strictEqual(st.phase, 'roll', 'manger = jet supplémentaire');
-  assert.strictEqual(st.turn, 0, 'encore à rouge');
-  /* nouveau jet : le pion du trou se déverrouille et avance vers le départ */
-  L.actionRoll(st, rngFor([4, 2]));
+  // après un recul-manger, l'autre dé ne peut plus avancer (règle 6) → tour direct
+  assert.strictEqual(st.phase, 'roll', 'après un recul-manger, pas d\'avancée → tour terminé');
+  assert.strictEqual(st.turn, 1, 'tour à jaune');
+  // on remet à rouge pour tester le déverrouillage du trou
+  st.turn = 0; st.phase = 'move'; st.dice = [4, 2]; st.dieUsed = [false, false]; st.turnDir = null; st.eaten = null;
   const mv3 = L.movesForDie(st, 0);
   assert.ok(mv3.some(m => m.pawn === 0 && m.to === 3),
     'depuis le trou : avancer de 4 = case de départ (pos 0) + 3');
@@ -360,22 +358,22 @@ console.log('✔ entrée dans le couloir en recul (n\'importe quelle case)');
   assert.strictEqual(a.players[1].pawns[0], -1, 'propriétaire mangé dans SON couloir');
   assert.deepStrictEqual(L.intruderInfo(a.players[0].pawns[0]), { host: 'blue', cell: 3 });
 
-  /* (b) recul : seulement si ça mange */
+  /* (b) recul libre dans le couloir adverse (nouvelle règle) */
   const b = L.createGame(['red', 'blue']);
   b.phase = 'move'; b.dice = [1, 2]; b.dieUsed = [false, false];
   b.players[0].pawns = [-43, 10, -1, -1];  // case3
   b.players[1].pawns = [-1, 51, -1, -1];   // bleu en case1
-  const m1 = L.movesForDie(b, 0);           // dé1 : case2 vide -> pas de recul
-  assert.ok(!m1.some(m => m.to === -42), 'recul sur case vide interdit');
-  const m2 = L.movesForDie(b, 1);           // dé2 : case1 occupée -> recul-manger
+  const m1 = L.movesForDie(b, 0);
+  assert.ok(m1.some(m => m.pawn === 0 && m.to === -42 && !m.capture), 'recul libre sur case vide autorisé');
+  const m2 = L.movesForDie(b, 1);
   const bw = m2.find(m => m.pawn === 0 && m.type === 'bwd');
-  assert.ok(bw && bw.to === -41 && bw.capture, 'recul = uniquement pour manger');
+  assert.ok(bw && bw.to === -41 && bw.capture, 'recul sur case occupée = manger');
 
-  /* (c) case5 : aucune avancée, et pas de sortie sans double6 */
+  /* (c) case5 : aucune avancée, pas de sortie sans double6 ni capture dehors */
   const c = L.createGame(['red', 'blue']);
   c.phase = 'move'; c.dice = [3, 4]; c.dieUsed = [false, false];
-  c.players[0].pawns = [-45, 10, -1, -1];  // tout au bout du couloir
-  assert.ok(!L.movesForDie(c, 0).some(m => m.pawn === 0),
+  c.players[0].pawns = [-45, 10, -1, -1];
+  assert.ok(!L.movesForDie(c, 0).some(m => m.pawn === 0 && m.type === 'fwd'),
     'au bout du couloir : impossible d\'avancer au-delà de la case5');
   assert.ok(!L.movesForDie(c, 0).some(m => m.type === 'sortie'),
     'pas de sortie sans double6');
@@ -394,14 +392,13 @@ console.log('✔ pion dans le couloir : déplacements internes + sortie interdit
   assert.strictEqual(so.to, 37, 'réapparaît sur la bouche du bleu (abs38)');
   L.actionMove(st, so.pawn, so.to, 0);
   assert.strictEqual(st.players[0].pawns[0], 37, 'de retour sur l\'anneau');
-  assert.strictEqual(st.eaten, 0, 'le pion sorti ne rejoue plus ce tour');
-  assert.ok(!L.movesForDie(st, 1).some(m => m.pawn === 0), 'le2e6 ne sert pas à l\'homme sorti');
-  const m2 = L.movesForDie(st, 1).find(m => m.pawn === 1);
-  assert.ok(m2, 'un autre pion peut jouer le2e6');
-  L.actionMove(st, m2.pawn, m2.to, 1);
-  assert.strictEqual(st.phase, 'roll', 'double6 = jet supplémentaire');
+  assert.strictEqual(st.eaten, 0, 'le pion sorti ne rejoue plus');
+  // sortie consomme les 2 dés → plus de dé jouable, relance directe
+  assert.strictEqual(st.dieUsed[0], true);
+  assert.strictEqual(st.dieUsed[1], true);
+  assert.strictEqual(st.phase, 'roll', 'double6 sortie = relance directe');
   assert.strictEqual(st.turn, 0, 'encore à rouge');
-  assert.ok(st.log.some(l => l.includes('jet supplémentaire')), 'relance au journal');
+  assert.ok(st.log.some(l => l.includes('jet supplémentaire')));
 
   /* un6 simple (sans double) ne sort pas */
   const s2 = L.createGame(['red', 'blue']);
@@ -426,14 +423,14 @@ console.log('✔ sortie du couloir = double6 + jet supplémentaire');
   assert.strictEqual(st.players[0].pawns[0], -1, 'intrus renvoyé en base');
   assert.strictEqual(st.stats.blue.ate, 1, 'bilan : bleu a mangé');
 
-  /* règle stricte : sans AUTRE pion pour l\'autre dé, la capture est interdite */
+  /* nouvelle règle : même seul, on peut rentrer dans sa maison pour manger l'intrus (dé == cellule) */
   const s2 = L.createGame(['red', 'blue']);
   s2.phase = 'move'; s2.dice = [1, 4]; s2.dieUsed = [false, false];
   s2.turn = 1;
   s2.players[0].pawns = [-41, -1, -1, -1];
-  s2.players[1].pawns = [50, -1, -1, -1];     // plus aucun autre pion jouable
-  assert.strictEqual(L.movesForDie(s2, 0).filter(m => m.pawn === 0).length, 0,
-    'règle stricte : pion seul = pas de manger dans le couloir non plus');
+  s2.players[1].pawns = [50, -1, -1, -1];     // seul pion, mais home_retour autorisé
+  assert.strictEqual(L.movesForDie(s2, 0).filter(m => m.pawn === 0).length, 1,
+    'même seul, le propriétaire peut rentrer chez lui pour manger (dé == cellule)');
 }
 console.log('✔ le propriétaire mange l\'intrus dans son couloir (règle stricte)');
 

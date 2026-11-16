@@ -123,24 +123,10 @@ sont dans **`MISE_EN_LIGNE.md`**.
   (sortir un nouveau pion ou avancer ton pion en jeu)** ; idem pour une
   éventuelle capture à la somme des2 dés)
 - un 6 sort de la base (enchaînement possible avec l'autre dé) ;
-  relance sur **double 6**, sur **un manger** et sur **une arrivée à la
-  maison** ; **3 double-6 de suite = tour perdu**
-- **recul uniquement pour manger** (mini-choix près du pion), jamais depuis
-  la maison ; le jeu **calcule et propose à chaque lancer** tout manger en
-  arrière possible (avec l'un des deux dés ou la **somme des deux dés** :
-  si les 2 dés sont encore dispo et que leur somme permet un recul sur un
-  pion ennemi, le jeu propose d'utiliser les deux d'un coup) ;
-  **recul derrière sa propre ligne de départ** : l'anneau est un cercle —
-  un pion qui vient de sortir peut reculer sur la case « trou » située
-  juste avant son départ et y manger un ennemi (premier pion en jeu
-  compris)
-- **couloir adverse** : quand un pion atterrit sur la bouche d'un
-  adversaire dont un pion est dans son couloir (les5 cases avant sa
-  maison), on peut **entrer dans le couloir et le manger** — en avant ou
-  en recul, sur la case de son choix ; le pion entré s'y déplace (avant
-  normal, **recul = manger seulement**) et **ne peut en sortir que par un
-  double6** (retour sur la bouche + jet supplémentaire) ; le propriétaire
-  peut, lui, **manger l'intrus** dans son propre couloir
+  **relance uniquement sur double 6** (manger ou arriver ne relance plus) ; **3 double-6 de suite = tour perdu** ; sortir du couloir adverse par double 6 **consomme les 2 dés** → 1 seul jet supplémentaire
+- **recul uniquement pour manger sur l'anneau** (mini-choix près du pion), jamais depuis sa propre maison ; le jeu **calcule et propose à chaque lancer** tout manger en arrière possible (avec l'un des deux dés ou la **somme des deux dés** — la somme peut désormais être jouée **en avant comme en arrière**, en un seul coup) ; **recul derrière sa propre ligne de départ** : l'anneau est un cercle — un pion qui vient de sortir peut reculer sur la case « trou » située juste avant son départ et y manger un ennemi
+- **couloir adverse** : quand un pion atterrit sur la bouche d'un adversaire dont un pion est dans son couloir (les5 cases avant sa maison), on peut **entrer dans le couloir et le manger** — en avant ou en recul, sur la case de son choix ; le pion entré s'y déplace **librement en avant comme en arrière** (ex : 2 = +2 ou -2) et **ne peut en sortir que par double 6 ou en mangeant dehors** (depuis la bouche, à ±valeur sur l'anneau) ; le propriétaire peut, depuis **n'importe où**, **rentrer dans sa maison pour manger l'intrus** si son dé vaut exactement le numéro de la cellule (ex : intrus en 2, tu fais 2 → tu téléportes en 52 et tu manges)
+- **jamais mixer avant/arrière dans le même jet** : soit tu avances (avec les 2 dés séparés ou la somme en avant), soit tu recules (avec les 2 dés ou la somme en arrière), jamais 1 dé en avant + 1 dé en arrière
 - **en ligne** : chacun écrit **son nom** (affiché dans les cartes du
   lobby/du jeu) et choisit **sa couleur** dans le lobby — **rien ne
   démarre tout seul : c'est l'hôte qui donne le top** (« ▶ Lancer la
