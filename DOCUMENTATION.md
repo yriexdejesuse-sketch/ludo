@@ -572,6 +572,8 @@ qui est en fait un choix assumé.
     couleur en bas à gauche** (online/IA = ta couleur, local = les deux) ;
     **version visible** (`APP_VERSION` dans le titre de l'onglet + le
     titre du lobby) pour diagnostiquer les onglets périmés à distance.
+11h. **IA à 2/3/4 joueurs** : `#aiCount` passe de 2/4 à 2/3/4 (toi + 1/2/3 ordinateurs) — `startAiGame` choisit `ais = 1→OPPOSITE, 2→others.slice(0,2), 3→others`.
+
 11g. **Mode local 2/3/4 avec noms et couleurs (round17)** : le bloc `#localPlayersBlock` remplace l'ancien `#pick2` + `#localExtra` — `localPlayers[4]` (nom + couleur) + `localCount` (2/3/4) génèrent dynamiquement N lignes (input + swatches) ; clic couleur = échange si déjà prise ; `startLocal()` utilise `cols = localPlayers.slice(0,N).map(p=>p.color)` et `roomNames = …map(p=>p.name)` puis `createGame(cols)` (moteur générique) ; `nameOf()` affiche déjà `roomNames[i]` dans les cartes et le journal ; menu « Partie locale » renommé « 2, 3 ou 4 joueurs ».
 
 11f. **Nouvelles règles maison (round16)** : six demandes validées une par une —

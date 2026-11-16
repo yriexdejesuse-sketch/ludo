@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13h';
+const APP_VERSION = 'v2026-11-13i';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -1066,7 +1066,7 @@ function renderSetup() {
   $('#aiCountBlock').classList.toggle('hidden', !isAi);
   $('#onlineNameBlock').classList.toggle('hidden', !isOnline);
   $('#setupHint').textContent = isAi
-    ? (aiCount === 4 ? 'Tu joues contre 3 ordinateurs.' : 'Tu joues contre 1 ordinateur.')
+    ? (aiCount === 4 ? 'Tu joues contre 3 ordinateurs.' : aiCount === 3 ? 'Tu joues contre 2 ordinateurs.' : 'Tu joues contre 1 ordinateur.')
     : 'Tous les parcours ont la même longueur : choisis ce que tu veux !';
 
   if (!isLocal) {
@@ -1180,7 +1180,7 @@ function startAiGame() {
   $('#modalOver').classList.add('hidden');
   const human = setupColors.c1;
   const others = Ludo.COLORS.filter(c => c !== human);
-  const ais = aiCount === 2 ? [Ludo.OPPOSITE[human]] : others;
+  const ais = aiCount === 2 ? [Ludo.OPPOSITE[human]] : aiCount === 3 ? others.slice(0,2) : others;
   aiColors = new Set(ais);
   you = human;
   G = Ludo.createGame([human, ...ais]);
