@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13j';
+const APP_VERSION = 'v2026-11-13k';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -741,7 +741,7 @@ async function doRoll(force) {
   hideMini();
   clearAuto();
   selectedDie = null;
-  if (mode === 'local' || mode === 'ai') {
+  if (mode === 'local' || mode === 'ai' || mode === 'sim') {
     const old = JSON.parse(JSON.stringify(G));
     const r = Ludo.actionRoll(G);
     if (r.error) { toast(r.error); return; }
@@ -755,7 +755,7 @@ async function doRoll(force) {
 async function executeMove(die, m, force) {
   if ((!canAct() && !force) || busy()) return;
   hideMini();
-  if (mode === 'local' || mode === 'ai') {
+  if (mode === 'local' || mode === 'ai' || mode === 'sim') {
     const old = JSON.parse(JSON.stringify(G));
     const r = Ludo.actionMove(G, m.pawn, m.to, die);
     if (r.error) { toast(r.error); return; }
@@ -836,7 +836,7 @@ function onPawnClick(color, idx) {
 async function doFinish() {
   if (!G || G.over) return;
   if (!confirm('Arrêter la partie ici et établir le classement ?')) return;
-  if (mode === 'local' || mode === 'ai') {
+  if (mode === 'local' || mode === 'ai' || mode === 'sim') {
     const old = JSON.parse(JSON.stringify(G));
     Ludo.finishNow(G);
     commitState(G, null, true, old);
@@ -857,7 +857,8 @@ function isAiTurn() {
 function scheduleAi() {
   clearTimeout(aiTimer); aiTimer = null;
   if (!isAiTurn() || busy()) return;
-  aiTimer = setTimeout(aiStep, G.phase === 'roll' ? 650 : 430);
+  const sim = mode === 'sim';
+  aiTimer = setTimeout(aiStep, sim ? (G.phase === 'roll' ? 420 : 260) : (G.phase === 'roll' ? 650 : 430));
 }
 function aiStep() {
   aiTimer = null;
