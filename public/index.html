@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Ludo — jeu à deux ou à quatre</title>
-<link rel="stylesheet" href="style.css?v=2026-11-13i">
+<link rel="stylesheet" href="style.css?v=2026-11-13j">
 </head>
 <body>
 <div id="app">
@@ -22,6 +22,7 @@
     <div class="menu-cards">
       <button class="big-btn primary" id="btnAi">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
       <button class="big-btn" id="btnLocal">👥 Partie locale<br><small>2, 3 ou 4 joueurs sur le même écran</small></button>
+      <button class="big-btn" id="btnSim">🔬 Simulateur entre ordinateurs<br><small>2, 3 ou 4 IA s'affrontent seules</small></button>
       <button class="big-btn" id="btnCreate">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
       <button class="big-btn" id="btnJoinShow">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
       <button class="big-btn ghost" id="btnRules">📜 Règles du jeu</button>
@@ -77,6 +78,21 @@
           <button data-n="3">3 joueurs<br><small>toi + 2 ordinateurs</small></button>
           <button data-n="4">4 joueurs<br><small>toi + 3 ordinateurs</small></button>
         </div>
+      </div>
+
+      <div class="pick-block hidden" id="simCountBlock">
+        <h3>Nombre de joueurs (simulateur)</h3>
+        <div class="seg" id="simCount">
+          <button data-n="2" class="sel">2 joueurs<br><small>2 ordinateurs</small></button>
+          <button data-n="3">3 joueurs<br><small>3 ordinateurs</small></button>
+          <button data-n="4">4 joueurs<br><small>4 ordinateurs</small></button>
+        </div>
+      </div>
+
+      <div class="pick-block hidden" id="simPlayersBlock">
+        <h3>Ordinateurs (couleurs)</h3>
+        <div id="simPlayers"></div>
+        <p class="hint">Choisis les couleurs des IA — elles doivent être différentes.</p>
       </div>
 
       <div class="pick-block hidden" id="onlineNameBlock">
@@ -184,9 +200,9 @@
   </div>
 </div>
 
-<script src="engine.js?v=2026-11-13i"></script>
-<script src="backends.js?v=2026-11-13i"></script>
-<script src="firebase-config.js?v=2026-11-13i"></script>
-<script src="app.js?v=2026-11-13i"></script>
+<script src="engine.js?v=2026-11-13j"></script>
+<script src="backends.js?v=2026-11-13j"></script>
+<script src="firebase-config.js?v=2026-11-13j"></script>
+<script src="app.js?v=2026-11-13j"></script>
 </body>
 </html>

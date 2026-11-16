@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13i';
+const APP_VERSION = 'v2026-11-13j';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -19,6 +19,7 @@ let mode = null;                 // 'local' | 'ai' | 'online'
 let setupKind = 'local';         // écran de préparation
 let aiCount = 2;
 let localCount = 2;
+let simCount = 2;
 let G = null;
 let legal = { 0: [], 1: [], sum: [] };
 let you = null;                  // couleur humaine (null = hot-seat / spectateur)
@@ -46,6 +47,12 @@ let localPlayers = [
   { name: 'Joueur 2', color: 'blue' },
   { name: 'Joueur 3', color: 'green' },
   { name: 'Joueur 4', color: 'yellow' }
+];
+let simPlayers = [
+  { name: 'Ordi 1', color: 'red' },
+  { name: 'Ordi 2', color: 'blue' },
+  { name: 'Ordi 3', color: 'green' },
+  { name: 'Ordi 4', color: 'yellow' }
 ];
 
 const $ = (s) => document.querySelector(s);
@@ -844,6 +851,7 @@ async function doFinish() {
    ORDINATEUR (IA)
    ============================================================ */
 function isAiTurn() {
+  if (mode === 'sim' && G && !G.over && started) return true;
   return mode === 'ai' && G && !G.over && started && aiColors.has(Ludo.currentColor(G));
 }
 function scheduleAi() {
@@ -997,12 +1005,13 @@ function renderSwatches(container, current, onPick) {
   });
 }
 function renderSetup() {
-  const isAi = setupKind === 'ai', isOnline = setupKind === 'online';
+  const isAi = setupKind === 'ai', isOnline = setupKind === 'online', isSim = setupKind === 'sim';
   $('#setupTitle').textContent =
     isAi ? 'Jouer contre l\'ordinateur' :
     isOnline ? 'Créer une partie en ligne' :
+    isSim ? (simCount === 2 ? 'Simulateur à deux' : 'Simulateur à ' + simCount + ' joueurs') :
     (localCount === 2 ? 'Partie locale à deux' : 'Partie locale à ' + localCount + ' joueurs');
-  const isLocal = !isAi && !isOnline;
+  const isLocal = !isAi && !isOnline && !isSim;
   $('#pick1Title').textContent = (isAi || isOnline) ? 'Ta couleur' : 'Joueur 1';
   $('#pick1').parentElement.classList.toggle('hidden', isLocal);
   $('#pick2Block').classList.toggle('hidden', !isLocal ? true : false);
@@ -1064,6 +1073,49 @@ function renderSetup() {
   }
   $('#localCountBlock').classList.toggle('hidden', !isLocal);
   $('#aiCountBlock').classList.toggle('hidden', !isAi);
+  $('#simCountBlock').classList.toggle('hidden', !isSim);
+  $('#simPlayersBlock').classList.toggle('hidden', !isSim);
+  if (isSim) {
+    // ajuster simPlayers selon simCount
+    while (simPlayers.length < simCount) {
+      const used = simPlayers.slice(0, simCount-1).map(p=>p.color);
+      const avail = Ludo.COLORS.find(c=>!used.includes(c)) || Ludo.COLORS[simPlayers.length % 4];
+      simPlayers.push({ name: 'Ordi ' + (simPlayers.length+1), color: avail });
+    }
+    const contS = $('#simPlayers');
+    contS.innerHTML = '';
+    for (let i=0;i<simCount;i++) {
+      const pl = simPlayers[i];
+      const row = document.createElement('div');
+      row.className = 'local-player-row';
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap';
+      const lab = document.createElement('span');
+      lab.textContent = 'Ordi ' + (i+1);
+      lab.style.cssText = 'min-width:70px;font-weight:600';
+      const inp = document.createElement('input');
+      inp.type='text'; inp.value=pl.name; inp.placeholder='Nom'; inp.maxLength=16;
+      inp.style.cssText = 'flex:1;min-width:90px;padding:6px 8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#f1f5f9';
+      inp.oninput = (e)=>{ simPlayers[i].name = e.target.value; };
+      const sw = document.createElement('div');
+      sw.className = 'swatches'; sw.style.cssText = 'display:flex;gap:6px';
+      Ludo.COLORS.forEach(c=>{
+        const b=document.createElement('button');
+        const taken = simPlayers.some((p,idx)=> idx!==i && p.color===c && idx < simCount);
+        b.className='swatch' + (c===pl.color?' sel':'') + (taken?' taken':'');
+        b.style.background=HEX[c]; b.style.opacity=taken?'0.35':'';
+        b.title=LABEL[c] + (taken?' (déjà pris)':'');
+        b.textContent=c===pl.color?'✓':'';
+        b.onclick=()=>{
+          const otherIdx = simPlayers.findIndex((p,idx)=> idx!==i && p.color===c && idx < simCount);
+          if (otherIdx!==-1) { const tmp=simPlayers[otherIdx].color; simPlayers[otherIdx].color=pl.color; simPlayers[i].color=c; } else simPlayers[i].color=c;
+          renderSetup();
+        };
+        sw.appendChild(b);
+      });
+      row.appendChild(lab); row.appendChild(inp); row.appendChild(sw);
+      contS.appendChild(row);
+    }
+  }
   $('#onlineNameBlock').classList.toggle('hidden', !isOnline);
   $('#setupHint').textContent = isAi
     ? (aiCount === 4 ? 'Tu joues contre 3 ordinateurs.' : aiCount === 3 ? 'Tu joues contre 2 ordinateurs.' : 'Tu joues contre 1 ordinateur.')
@@ -1156,6 +1208,21 @@ function autoStep() {
   autoLastRev = G.rev;
   executeMove(best.die, best.m);
   if (!autoTimer) autoTimer = setTimeout(autoStep, 900);
+}
+function startSim() {
+  mode = 'sim'; hotseat = false; you = null;
+  const cols = simPlayers.slice(0, simCount).map(p=>p.color);
+  const names = simPlayers.slice(0, simCount).map(p=>p.name.trim()||('Ordi '+(simPlayers.indexOf(p)+1)));
+  started = true; overShown = false; selectedDie = null;
+  clearFx();
+  $('#modalOver').classList.add('hidden');
+  G = Ludo.createGame(cols);
+  roomNames = names.slice(); while (roomNames.length < 4) roomNames.push('');
+  aiColors = new Set(cols); // toutes les couleurs sont des IA
+  seats = G.players.map((p,i)=>({ seat:i, color:p.color, joined:true }));
+  legal = { 0:[],1:[], sum:[] };
+  showScreen('game');
+  renderPanel();
 }
 function startLocal() {
   mode = 'local'; hotseat = true; you = null; aiColors = new Set();
@@ -1362,6 +1429,7 @@ function showJoinError(msg) {
 function bind() {
   $('#btnAi').onclick = () => { setupKind = 'ai'; renderSetup(); showScreen('setup'); };
   $('#btnLocal').onclick = () => { setupKind = 'local'; renderSetup(); showScreen('setup'); };
+  $('#btnSim').onclick = () => { setupKind = 'sim'; renderSetup(); showScreen('setup'); };
   $('#btnCreate').onclick = () => { setupKind = 'online'; renderSetup(); showScreen('setup'); };
   $('#btnJoinShow').onclick = () => {
     $('#joinBox').classList.toggle('hidden');
@@ -1375,12 +1443,20 @@ function bind() {
   $('#btnStart').onclick = () => {
     if (setupKind === 'ai') startAiGame();
     else if (setupKind === 'online') { mode = 'online'; hotseat = false; createOnline(); }
+    else if (setupKind === 'sim') startSim();
     else startLocal();
   };
   $('#aiCount').querySelectorAll('button').forEach(b => {
     b.onclick = () => {
       aiCount = +b.dataset.n;
       $('#aiCount').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
+      renderSetup();
+    };
+  });
+  $('#simCount').querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      simCount = +b.dataset.n;
+      $('#simCount').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
       renderSetup();
     };
   });
