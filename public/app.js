@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13k';
+const APP_VERSION = 'v2026-11-13l';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -954,7 +954,7 @@ function showOver() {
   const order = G.ranks.slice();
   G.players.forEach(p => { if (!order.includes(p.color)) order.push(p.color); });
   list.innerHTML = order.map((c, i) =>
-    `<li>${MEDAL[i + 1] || (i + 1) + '.'} <b style="color:${HEX[c]}">${LABEL[c]}</b></li>`).join('');
+    `<li>${MEDAL[i + 1] || (i + 1) + '.'} <span class="chip" style="background:${HEX[c]}"></span> <b style="color:${HEX[c]}">${esc(nameOf(c))}</b></li>`).join('');
   renderBilan();
   $('#modalOver').classList.remove('hidden');
 }
@@ -976,18 +976,18 @@ function renderBilan() {
     b = '<p class="bilan-line">😌 Aucune capture pendant la partie.</p>';
   } else {
     if (maxA > 0) {
-      const vil = rows.filter(r => r.ate === maxA).map(r => LABEL[r.c]).join(', ');
+      const vil = rows.filter(r => r.ate === maxA).map(r => esc(nameOf(r.c))).join(', ');
       b += `<p class="bilan-line">🗡️ <b>Le plus violent :</b> ${vil} — ` +
         `${maxA} pion${maxA > 1 ? 's' : ''} mangé${maxA > 1 ? 's' : ''}</p>`;
     }
     if (maxL > 0) {
-      const vic = rows.filter(r => r.lost === maxL).map(r => LABEL[r.c]).join(', ');
+      const vic = rows.filter(r => r.lost === maxL).map(r => esc(nameOf(r.c))).join(', ');
       b += `<p class="bilan-line">😵 <b>Le plus violenté :</b> ${vic} — ` +
         `${maxL} pion${maxL > 1 ? 's' : ''} perdu${maxL > 1 ? 's' : ''}</p>`;
     }
   }
   b += '<table class="bilan-table"><tr><th></th><th>mangés</th><th>perdus</th></tr>' +
-    rows.map(r => `<tr><td><b style="color:${HEX[r.c]}">${LABEL[r.c]}</b></td>` +
+    rows.map(r => `<tr><td><span class="chip" style="background:${HEX[r.c]}"></span> <b style="color:${HEX[r.c]}">${esc(nameOf(r.c))}</b></td>` +
       `<td>${r.ate}</td><td>${r.lost}</td></tr>`).join('') +
     '</table>';
   el.innerHTML = b;
