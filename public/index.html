@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Ludo — jeu à deux ou à quatre</title>
-<link rel="stylesheet" href="style.css?v=2026-11-13m">
+<link rel="stylesheet" href="style.css?v=2026-11-13n">
 </head>
 <body>
 <div id="app">
@@ -95,6 +95,15 @@
         <p class="hint">Choisis les couleurs des IA — elles doivent être différentes.</p>
       </div>
 
+      <div class="pick-block hidden" id="onlineCountBlock">
+        <h3>Nombre de joueurs (en ligne)</h3>
+        <div class="seg" id="onlineCount">
+          <button data-n="2" class="sel">2 joueurs<br><small>2 en ligne</small></button>
+          <button data-n="3">3 joueurs<br><small>3 en ligne</small></button>
+          <button data-n="4">4 joueurs<br><small>4 en ligne</small></button>
+        </div>
+      </div>
+
       <div class="pick-block hidden" id="onlineNameBlock">
         <h3>Ton nom</h3>
         <input id="onlineName" maxlength="16" placeholder="Ton prénom ou pseudo" autocomplete="nickname">
@@ -112,7 +121,7 @@
     <div class="card center-text">
       <h2 id="lobbyTitle">Partie créée !</h2>
       <p class="code-big" id="lobbyCode">—</p>
-      <p>Envoie ce code (ou le lien) à ton ami :</p>
+      <p id="lobbyInvite">Envoie ce code (ou le lien) à ton ami :</p>
       <div class="row">
         <input id="lobbyLink" readonly>
         <button class="big-btn small" id="btnCopy">📋 Copier</button>
@@ -204,9 +213,9 @@
   </div>
 </div>
 
-<script src="engine.js?v=2026-11-13m"></script>
-<script src="backends.js?v=2026-11-13m"></script>
-<script src="firebase-config.js?v=2026-11-13m"></script>
-<script src="app.js?v=2026-11-13m"></script>
+<script src="engine.js?v=2026-11-13n"></script>
+<script src="backends.js?v=2026-11-13n"></script>
+<script src="firebase-config.js?v=2026-11-13n"></script>
+<script src="app.js?v=2026-11-13n"></script>
 </body>
 </html>

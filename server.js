@@ -38,15 +38,20 @@ const rndToken = () => crypto.randomBytes(16).toString('hex');
 
 const cleanName = (v) => String(v == null ? '' : v).trim().slice(0, 16);
 
-function createRoom(color, name) {
-  const opp = engine.OPPOSITE[color] || 'blue';
+function createRoom(color, name, count) {
+  const max = Math.min(4, Math.max(2, parseInt(count,10) || 2));
+  const others = engine.COLORS.filter(c=>c!==color);
+  let colors;
+  if (max===2) colors=[color, engine.OPPOSITE[color] || others[0]];
+  else colors=[color, ...others.slice(0,max-1)];
   let code = rndCode();
   while (rooms.has(code)) code = rndCode();
+  const seats = Array(max).fill(null); seats[0]={ token: rndToken() };
+  const names = Array(max).fill(null); names[0]=cleanName(name);
   const room = {
     code,
-    state: engine.createGame([color, opp]),
-    seats: [{ token: rndToken() }, null],
-    names: [cleanName(name), null],
+    state: engine.createGame(colors),
+    seats, names, max,
     createdAt: Date.now(),
     lastActivity: Date.now()
   };
@@ -101,7 +106,7 @@ async function api(req, res, url) {
   if (method === 'POST' && parts.length === 2 && parts[1] === 'rooms') {
     const body = await readBody(req);
     const color = engine.COLORS.includes(body.color) ? body.color : 'red';
-    const room = createRoom(color, body.name);
+    const room = createRoom(color, body.name, body.count);
     room.lastActivity = Date.now();
     return send(res, 200, { code: room.code, token: room.seats[0].token, ...publicState(room, room.seats[0].token) });
   }
@@ -113,12 +118,15 @@ async function api(req, res, url) {
 
   /* POST /api/rooms/:code/join */
   if (method === 'POST' && parts[3] === 'join') {
-    if (room.seats[1]) return send(res, 403, { error: 'full' });
+    if (room.seats.every(s=>s)) return send(res, 403, { error: 'full', max: room.max || room.seats.length });
+    const emptyIdx = room.seats.findIndex(s=>!s);
+    if (emptyIdx < 0) return send(res, 403, { error: 'full', max: room.max || room.seats.length });
     const jbody = await readBody(req);
-    room.seats[1] = { token: rndToken() };
-    room.names = room.names || ['', ''];
-    room.names[1] = cleanName(jbody.name);
-    return send(res, 200, { code: room.code, token: room.seats[1].token, ...publicState(room, room.seats[1].token) });
+    room.seats[emptyIdx] = { token: rndToken() };
+    room.names = room.names || Array(room.max||2).fill('');
+    while (room.names.length < (room.max||room.seats.length)) room.names.push('');
+    room.names[emptyIdx] = cleanName(jbody.name);
+    return send(res, 200, { code: room.code, token: room.seats[emptyIdx].token, ...publicState(room, room.seats[emptyIdx].token) });
   }
 
   /* GET /api/rooms/:code */
@@ -145,13 +153,9 @@ async function api(req, res, url) {
     } else if (a.type === 'color') {
       if (room.started) r = { error: 'La partie a déjà commencé.' };
       else if (!engine.COLORS.includes(a.color)) r = { error: 'Couleur inconnue.' };
-      else if (!room.seats[1]) {
-        const opp = engine.OPPOSITE[a.color] || 'blue';
-        room.state = engine.createGame([a.color, opp === a.color ? engine.COLORS.find(c => c !== a.color) : opp]);
-        r = { ok: true };
-      } else {
+      else {
         const colors = st.players.map((p, i) => i === seat ? a.color : p.color);
-        if (colors[0] === colors[1]) r = { error: 'Cette couleur est déjà prise.' };
+        if (new Set(colors).size !== colors.length) r = { error: 'Cette couleur est déjà prise.' };
         else { room.state = engine.createGame(colors); r = { ok: true }; }
       }
     } else if (a.type === 'roll') {

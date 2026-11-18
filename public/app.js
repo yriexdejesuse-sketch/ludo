@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13m';
+const APP_VERSION = 'v2026-11-13n';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -20,6 +20,7 @@ let setupKind = 'local';         // écran de préparation
 let aiCount = 2;
 let localCount = 2;
 let simCount = 2;
+let onlineCount = 2;
 let G = null;
 let legal = { 0: [], 1: [], sum: [] };
 let you = null;                  // couleur humaine (null = hot-seat / spectateur)
@@ -1036,7 +1037,7 @@ function renderSetup() {
   const isAi = setupKind === 'ai', isOnline = setupKind === 'online', isSim = setupKind === 'sim';
   $('#setupTitle').textContent =
     isAi ? 'Jouer contre l\'ordinateur' :
-    isOnline ? 'Créer une partie en ligne' :
+    isOnline ? (onlineCount === 2 ? 'Partie en ligne à deux' : 'Partie en ligne à ' + onlineCount + ' joueurs') :
     isSim ? (simCount === 2 ? 'Simulateur à deux' : 'Simulateur à ' + simCount + ' joueurs') :
     (localCount === 2 ? 'Partie locale à deux' : 'Partie locale à ' + localCount + ' joueurs');
   const isLocal = !isAi && !isOnline && !isSim;
@@ -1103,6 +1104,7 @@ function renderSetup() {
   $('#aiCountBlock').classList.toggle('hidden', !isAi);
   $('#simCountBlock').classList.toggle('hidden', !isSim);
   $('#simPlayersBlock').classList.toggle('hidden', !isSim);
+  $('#onlineCountBlock').classList.toggle('hidden', !isOnline);
   if (isSim) {
     // ajuster simPlayers selon simCount
     while (simPlayers.length < simCount) {
@@ -1324,7 +1326,7 @@ function applyServer(resp, animate) {
   you = resp.you ? resp.you.color : null;
   youSeatNum = (resp.you && typeof resp.you.seat === 'number') ? resp.you.seat : -1;
   seats = resp.seats || seats;
-  if (resp.names && resp.names.length === 2) roomNames = resp.names.slice();
+  if (resp.names && resp.names.length >= 2) { roomNames = resp.names.slice(); while(roomNames.length < 4) roomNames.push(''); }
   started = resp.started === true;
   if (started && !wasStarted && mode === 'online') showScreen('game');
   if (!started && wasStarted && mode === 'online' &&
@@ -1365,20 +1367,25 @@ function renderLobby() {
       else if (r) applyServer(r, false);
     };
   });
-  const both = list.length >= 2 && list.every((s) => s.joined);
+  const total = list.length;
+  const joined = list.filter(s=>s.joined).length;
+  const allJoined = total>=2 && list.every(s=>s.joined);
+  const both = allJoined; // compat
   const host = youSeatNum === 0;
+  const inv = document.querySelector('#lobbyInvite');
+  if (inv) inv.textContent = total>2 ? 'Envoie ce code (ou le lien) à tes amis :' : 'Envoie ce code (ou le lien) à ton ami :';
   const t = document.querySelector('#lobbyTitle');
-  if (t) t.textContent = (!both ? 'Partie créée !' : (host ? 'Tout le monde est prêt !' : 'Tu as rejoint !')) + ' · ' + APP_VERSION;
+  if (t) t.textContent = (!allJoined ? 'Partie créée ! ('+joined+'/'+total+')' : (host ? 'Tout le monde est prêt !' : 'Tu as rejoint !')) + ' · ' + APP_VERSION;
   const startBtn = document.querySelector('#btnHostStart');
-  if (startBtn) startBtn.classList.toggle('hidden', !(host && both && !started));
+  if (startBtn) startBtn.classList.toggle('hidden', !(host && allJoined && !started));
   const wait = document.querySelector('#lobbyWaiting');
   if (wait) {
     if (started) wait.classList.add('hidden');
-    else if (!both) {
+    else if (!allJoined) {
       wait.classList.remove('hidden');
       wait.innerHTML = host
-        ? '<span class="spinner"></span> En attente du second joueur… partage le lien&nbsp;!'
-        : '<span class="spinner"></span> En attente que l\'hôte lance la partie…';
+        ? '<span class="spinner"></span> En attente des autres joueurs ('+joined+'/'+total+')… partage le lien&nbsp;!'
+        : '<span class="spinner"></span> En attente que l\'hôte lance la partie ('+joined+'/'+total+')…';
     } else if (!host) {
       wait.classList.remove('hidden');
       wait.innerHTML = '<span class="spinner"></span> L\'hôte va lancer la partie…';
@@ -1390,7 +1397,7 @@ function renderLobby() {
 }
 async function createOnline() {
   const nameEl = document.querySelector('#onlineName');
-  const resp = await Backend.createRoom(setupColors.c1, nameEl ? nameEl.value : '');
+  const resp = await Backend.createRoom(setupColors.c1, nameEl ? nameEl.value : '', onlineCount);
   if (resp.error) { alert(resp.error); return; }
   room = { code: resp.code, token: resp.token };
   localStorage.setItem('ludo_t_' + room.code, room.token);
@@ -1425,7 +1432,8 @@ async function joinOnline(code, allowSpectate) {
   const joinNameEl = document.querySelector('#joinName');
   const resp = await Backend.joinRoom(code, joinNameEl ? joinNameEl.value : '');
   if (resp && resp.error === 'full') {
-    if (!allowSpectate) { showJoinError('Cette partie a déjà 2 joueurs.'); return; }
+    const msg = resp.max ? 'Cette partie est complète ('+resp.max+' joueurs max).' : 'Cette partie a déjà 2 joueurs.';
+    if (!allowSpectate) { showJoinError(msg); return; }
     const r = await Backend.getState(code, null);
     if (r && !r.error) {
       room = { code, token: null };
@@ -1492,6 +1500,13 @@ function bind() {
     b.onclick = () => {
       localCount = +b.dataset.n;
       $('#localCount').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
+      renderSetup();
+    };
+  });
+  $('#onlineCount').querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      onlineCount = +b.dataset.n;
+      $('#onlineCount').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
       renderSetup();
     };
   });

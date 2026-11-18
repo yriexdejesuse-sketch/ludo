@@ -55,7 +55,7 @@
     }
     return {
       name: 'http',
-      createRoom: (color, name) => call('POST', '/api/rooms', { color, name }),
+      createRoom: (color, name, count) => call('POST', '/api/rooms', { color, name, count }),
       joinRoom: (code, name) => call('POST', '/api/rooms/' + code + '/join', { name }),
       getState: (code, token) => call('GET', '/api/rooms/' + code + (token ? '?token=' + token : '')),
       action: (code, token, action) => call('POST', '/api/rooms/' + code + '/action', { token, action }),
@@ -116,20 +116,28 @@
 
     return {
       name: 'fire',
-      async createRoom(color, name) {
+      async createRoom(color, name, count) {
         const { db, api } = await sdk();
         const token = uid();
-        const state = engine.createGame([color, engine.OPPOSITE[color] || 'blue']);
+        const max = Math.min(4, Math.max(2, parseInt(count,10) || 2));
+        const others = engine.COLORS.filter(c=>c!==color);
+        let colors;
+        if (max===2) colors=[color, engine.OPPOSITE[color] || others[0]];
+        else colors=[color, ...others.slice(0,max-1)];
+        const state = engine.createGame(colors);
         const tokenHash = await hash(token);
         let code = genCode();
         for (let i = 0; i < 6; i++) {
           const ref = api.doc(db, 'rooms', code);
           const snap = await api.getDoc(ref);
           if (!snap.exists()) {
+            const seats = Array(max).fill(null); seats[0]={ tokenHash };
+            const names = Array(max).fill(null); names[0]=cleanName(name);
             const room = {
               state,
-              seats: [{ tokenHash }, null],
-              names: [cleanName(name), null],
+              seats,
+              names,
+              max,
               createdAt: Date.now(),
               updatedAt: Date.now()
             };
@@ -151,11 +159,14 @@
             const snap = await tr.get(ref);
             if (!snap.exists()) throw { error: 'Partie introuvable (code invalide).' };
             const data = snap.data();
-            if (data.seats && data.seats[1]) throw { error: 'full' };
-            const seats = [data.seats[0], { tokenHash }];
-            const names = (data.names || ['', '']).slice(0, 2);
-            while (names.length < 2) names.push('');
-            names[1] = cleanName(name);
+            const maxSeats = data.max || (data.seats||[]).length || 2;
+            if (data.seats && data.seats.every(s=>s)) throw { error: 'full', max: maxSeats };
+            const emptyIdx = (data.seats||[]).findIndex(s=>!s);
+            if (emptyIdx < 0) throw { error: 'full', max: maxSeats };
+            const seats = (data.seats||[]).slice(); seats[emptyIdx]={ tokenHash };
+            const names = (data.names || Array(maxSeats).fill('')).slice();
+            while (names.length < maxSeats) names.push('');
+            names[emptyIdx] = cleanName(name);
             const next = Object.assign({}, data, { seats, names, updatedAt: Date.now() });
             tr.set(ref, next);
             return next;
@@ -163,7 +174,7 @@
           const pub = await publicOf(room, token);
           return Object.assign({ code, token }, pub);
         } catch (e) {
-          return { error: (e && e.error) || 'Erreur réseau.' };
+          return { error: (e && e.error) || 'Erreur réseau.', max: e && e.max };
         }
       },
       async getState(code, token) {
@@ -198,13 +209,9 @@
             } else if (a.type === 'color') {
               if (data.started) r = { error: 'La partie a déjà commencé.' };
               else if (!engine.COLORS.includes(a.color)) r = { error: 'Couleur inconnue.' };
-              else if (!data.seats[1]) {
-                const opp = engine.OPPOSITE[a.color] || 'blue';
-                newSt = engine.createGame([a.color, opp === a.color ? engine.COLORS.find(c => c !== a.color) : opp]);
-                r = { ok: true };
-              } else {
+              else {
                 const colors = st.players.map((p, i) => i === seat ? a.color : p.color);
-                if (colors[0] === colors[1]) r = { error: 'Cette couleur est déjà prise.' };
+                if (new Set(colors).size !== colors.length) r = { error: 'Cette couleur est déjà prise.' };
                 else { newSt = engine.createGame(colors); r = { ok: true }; }
               }
             } else if (a.type === 'roll') {
