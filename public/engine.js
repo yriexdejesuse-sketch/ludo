@@ -113,10 +113,9 @@
     return I.home[pos - 51];
   }
 
-  /* cellule VISUELLE : un pion arrivé (56) reste au bout de sa piste
-     (le centre est réservé aux dés affichés sur le plateau) */
+  /* cellule VISUELLE : 56 au centre (étape 2) - plus de confusion avec la case 55 */
   function visualCell(color, pos) {
-    if (pos === 56) return INFO[color].home[4];
+    if (pos === 56) return INFO[color].home[5];
     return cellAt(color, pos);
   }
 
@@ -131,6 +130,28 @@
       });
     });
     return res;
+  }
+  // Barrage : 2 pions sur sa case départ (pos 0) = infranchissable pour les adversaires
+  function countOnStart(state, owner) {
+    var pl = state.players.find(function(p){ return p.color===owner; });
+    if (!pl) return 0;
+    var c=0; pl.pawns.forEach(function(pos){ if(pos===0) c++; }); return c;
+  }
+  function isBlockedStart(state, absIdx, moverColor) {
+    for (var i=0;i<COLORS.length;i++){
+      var owner=COLORS[i];
+      if(owner===moverColor) continue;
+      if(INFO[owner].start===absIdx && countOnStart(state, owner)>=2) return true;
+    }
+    return false;
+  }
+  function isPathBlocked(state, moverColor, fromAbs, toAbs, steps, isForward) {
+    // vérifie chaque case traversée (destination incluse) pour un déplacement sur l'anneau
+    for(var s=1; s<=steps; s++){
+      var curAbs = isForward ? (fromAbs + s) % 52 : ((fromAbs - s) % 52 + 52) % 52;
+      if(isBlockedStart(state, curAbs, moverColor)) return true;
+    }
+    return false;
   }
 
   function createGame(colors) {
@@ -240,26 +261,38 @@
         /* depuis le « trou » derrière le départ : toujours sur l'anneau - stacking autorisé sur cases protégées (étoile/départ) */
         var fwdG = (51 + value) % 52;
         var rg = ringIdxOf(pl.color, fwdG);
-        var og = occupiedBy(state, rg, pl.color);
-        var isSafeG = !!SAFE[rg];
-        if (isSafeG) {
-          out.push({ pawn: i, to: fwdG, type: 'fwd', capture: false });
+        var fromAbs = ringIdxOf(pl.color, pos);
+        if (isPathBlocked(state, pl.color, fromAbs, rg, 1, true)) {
+          // barrage sur le chemin - bloqué
         } else {
-          out.push({ pawn: i, to: fwdG, type: 'fwd', capture: og.length > 0 });
+          var og = occupiedBy(state, rg, pl.color);
+          var isSafeG = !!SAFE[rg];
+          if (isSafeG) {
+            out.push({ pawn: i, to: fwdG, type: 'fwd', capture: false });
+          } else {
+            out.push({ pawn: i, to: fwdG, type: 'fwd', capture: og.length > 0 });
+          }
         }
       } else {
         var fwd = pos + value;
         if (fwd <= 56) {
           if (fwd <= 50) {
             var rf = ringIdxOf(pl.color, fwd);
-            var of = occupiedBy(state, rf, pl.color);
-            var isSafeF = !!SAFE[rf];
-            if (isSafeF) {
-              out.push({ pawn: i, to: fwd, type: 'fwd', capture: false });
+            var fromAbsF = ringIdxOf(pl.color, pos);
+            if (isPathBlocked(state, pl.color, fromAbsF, rf, value, true)) {
+              // barrage - aucun mouvement en avant qui traverse
             } else {
-              out.push({ pawn: i, to: fwd, type: 'fwd', capture: of.length > 0 });
+              var of = occupiedBy(state, rf, pl.color);
+              var isSafeF = !!SAFE[rf];
+              if (isSafeF) {
+                out.push({ pawn: i, to: fwd, type: 'fwd', capture: false });
+              } else {
+                out.push({ pawn: i, to: fwd, type: 'fwd', capture: of.length > 0 });
+              }
             }
-            addEntryMoves(out, state, pl.color, i, rf); /* bouche adverse ? entrée possible */
+            if (!isPathBlocked(state, pl.color, ringIdxOf(pl.color, pos), rf, value, true)) {
+              addEntryMoves(out, state, pl.color, i, rf); /* bouche adverse ? entrée possible */
+            }
           } else {
             var laneCapt = fwd <= 55 &&
               corridorAt(state, pl.color, fwd - 50, pl.color).some(function (o) { return o.color !== pl.color; });
