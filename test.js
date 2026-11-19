@@ -216,12 +216,12 @@ console.log('✔ aucun recul depuis la maison');
 /* 10. APRÈS UN MANGER : le pion qui a mangé ne rejoue plus ce tour (même direction) */
 {
   const st = L.createGame(['red', 'blue']);
-  st.phase = 'move'; st.dice = [1, 4]; st.dieUsed = [false, false];
-  st.players[0].pawns = [36, 10, -1, -1];  // 36 +1 -> bouche bleu + entree
+  st.phase = 'move'; st.dice = [3, 4]; st.dieUsed = [false, false];
+  st.players[0].pawns = [36, 10, -1, -1];  // 36 +3 -> bouche bleu (1) + cell2 =3 exact
   st.players[1].pawns = [52, -1, -1, -1];  // bleu en case2 de son couloir
   const mv = L.movesForDie(st, 0);
   const ent = mv.find(m => m.type === 'entree');
-  assert.ok(ent, 'entrée-manger proposée');
+  assert.ok(ent, 'entrée-manger proposée (comptage exact)');
   L.actionMove(st, ent.pawn, ent.to, 0);
   assert.strictEqual(st.eaten, 0, 'pion verrouillé après le manger');
   const mv2 = L.movesForDie(st, 1);
@@ -249,8 +249,8 @@ console.log('✔ arrivée à la maison : le tour continue avec l\'autre dé');
 /* 12. Après un manger : phase 'move' conservée si même direction */
 {
   const st = L.createGame(['red', 'blue']);
-  st.phase = 'move'; st.dice = [1, 4]; st.dieUsed = [false, false];
-  st.players[0].pawns = [36, 10, -1, -1];
+  st.phase = 'move'; st.dice = [3, 4]; st.dieUsed = [false, false];
+  st.players[0].pawns = [36, 10, -1, -1]; // exact 1+2=3
   st.players[1].pawns = [52, -1, -1, -1];
   const ent = L.movesForDie(st, 0).find(m => m.type === 'entree');
   L.actionMove(st, ent.pawn, ent.to, 0);
@@ -324,14 +324,14 @@ console.log('✔ arriver à la maison ne donne plus de jet supplémentaire');
 }
 console.log('✔ recul derrière la case de départ (le trou) + repartie depuis le trou');
 
-/* 16. Entrée dans le couloir adverse (en avançant) */
+/* 16. Entrée dans le couloir adverse (en avançant) - comptage exact */
 {
   const st = L.createGame(['red', 'blue']);
-  st.phase = 'move'; st.dice = [1, 4]; st.dieUsed = [false, false];
-  st.players[0].pawns = [36, 10, -1, -1];  // rouge : +1 -> bouche du bleu (abs38)
+  st.phase = 'move'; st.dice = [3, 4]; st.dieUsed = [false, false];
+  st.players[0].pawns = [36, 10, -1, -1];  // rouge : 1 pas jusqu'à bouche +2 dans maison =3
   st.players[1].pawns = [52, -1, -1, -1];  // bleu dans SON couloir (case2)
   const ent = L.movesForDie(st, 0).find(m => m.type === 'entree');
-  assert.ok(ent, 'entrée dans le couloir proposée (dé1)');
+  assert.ok(ent, 'entrée dans le couloir proposée (dé3 exact)');
   assert.strictEqual(ent.to, -42, 'cible = case2 du couloir du bleu');
   L.actionMove(st, ent.pawn, ent.to, 0);
   assert.strictEqual(st.players[1].pawns[0], -1, 'le pion bleu est mangé (retour en base)');
@@ -344,18 +344,18 @@ console.log('✔ recul derrière la case de départ (le trou) + repartie depuis 
 }
 console.log('✔ entrée dans le couloir adverse (en avançant)');
 
-/* 17. Entrée en RECUL, sur la dernière case (case5) */
+/* 17. Entrée en RECUL, sur la dernière case (case5) - comptage exact */
 {
   const st = L.createGame(['red', 'blue']);
-  st.phase = 'move'; st.dice = [3, 4]; st.dieUsed = [false, false];
-  st.players[0].pawns = [40, 10, -1, -1];  // -3 -> bouche du bleu (abs38) en reculant
-  st.players[1].pawns = [55, -1, -1, -1];  // bleu en case5 de son couloir
+  st.phase = 'move'; st.dice = [5, 4]; st.dieUsed = [false, false];
+  st.players[0].pawns = [40, 10, -1, -1];  // 41-3=38 bouche +2=5 exact
+  st.players[1].pawns = [52, -1, -1, -1];  // bleu en case2 (3+2=5)
   const ent = L.movesForDie(st, 0).find(m => m.type === 'entree');
-  assert.ok(ent, 'entrée par le recul proposée');
-  assert.strictEqual(ent.to, -45, 'cible = case5 du couloir du bleu');
+  assert.ok(ent, 'entrée par le recul proposée (exact)');
+  assert.strictEqual(ent.to, -42, 'cible = case2 du couloir du bleu');
   L.actionMove(st, ent.pawn, ent.to, 0);
-  assert.strictEqual(st.players[1].pawns[0], -1, 'mangé en case5');
-  assert.deepStrictEqual(L.intruderInfo(st.players[0].pawns[0]), { host: 'blue', cell: 5 });
+  assert.strictEqual(st.players[1].pawns[0], -1, 'mangé en case2');
+  assert.deepStrictEqual(L.intruderInfo(st.players[0].pawns[0]), { host: 'blue', cell: 2 });
 }
 console.log('✔ entrée dans le couloir en recul (n\'importe quelle case)');
 

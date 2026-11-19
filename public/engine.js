@@ -290,9 +290,9 @@
                 out.push({ pawn: i, to: fwd, type: 'fwd', capture: of.length > 0 });
               }
             }
-            if (!isPathBlocked(state, pl.color, ringIdxOf(pl.color, pos), rf, value, true)) {
-              addEntryMoves(out, state, pl.color, i, rf); /* bouche adverse ? entrée possible */
-            }
+            // Entrée dans maison adverse avec comptage exact
+            var fromAbsExact = ringIdxOf(pl.color, pos);
+            addExactEntryMoves(out, state, pl.color, i, fromAbsExact, value);
           } else {
             var laneCapt = fwd <= 55 &&
               corridorAt(state, pl.color, fwd - 50, pl.color).some(function (o) { return o.color !== pl.color; });
@@ -325,33 +325,47 @@
         if (ob.length > 0 && !SAFE[absB]) {
           out.push({ pawn: i, to: toB, type: 'bwd', capture: true });
         }
-        addEntryMoves(out, state, pl.color, i, absB); /* bouche adverse atteinte en recul ? entrée */
+        // Entrée adverse en recul - comptage exact
+        var fromAbsB = ringIdxOf(pl.color, pos === -2 ? 51 : pos);
+        if (pos === -2) fromAbsB = ringIdxOf(pl.color, -2);
+        else if (pos >=0) fromAbsB = ringIdxOf(pl.color, pos);
+        // fromAbsB déjà calculable via ringIdxOf
+        addExactEntryMoves(out, state, pl.color, i, ringIdxOf(pl.color, pos === -2 ? -2 : pos), value);
       }
     });
     return out;
   }
 
-  /* ENTRÉE DANS UN COULOIR ADVERSE : quand la case atteinte (en avant ou
-     en recul) est la bouche d'un adversaire qui a au moins un pion dans
-     son couloir (les5 cases avant sa maison), on peut à la place y ENTRER
-     et manger sur la case de son choix (n'importe laquelle des5) */
-  function addEntryMoves(out, state, color, pawnIdx, landAbs) {
-    COLORS.forEach(function (c) {
-      if (c === color) return;
-      if (INFO[c].mouth !== landAbs) return;
-      var cells = {};
-      state.players.forEach(function (p) {
-        p.pawns.forEach(function (pos) {
-          if (p.color === color) return;
-          var pi = intruderInfo(pos);
-          if (pi && pi.host === c) { cells[pi.cell] = true; return; }
-          if (p.color === c && pos >= 51 && pos <= 55) cells[pos - 50] = true;
-        });
-      });
-      Object.keys(cells).forEach(function (k) {
-        out.push({ pawn: pawnIdx, to: makeIntruderPos(c, +k), type: 'entree', capture: true });
-      });
+  /* ENTRÉE DANS UN COULOIR ADVERSE - COMPTAGE EXACT (étape 3) : le nombre de pas depuis ta position jusqu'au pion adverse compte exactement : distance anneau jusqu'à la bouche + profondeur dans le couloir (1..5) doit égaler la valeur du dé (ou somme) */
+  function addExactEntryMoves(out, state, color, pawnIdx, fromAbs, value) {
+    if (fromAbs < 0) return;
+    COLORS.forEach(function (host) {
+      if (host === color) return;
+      var mouthAbs = INFO[host].mouth;
+      // distance anneau jusqu'à la bouche en avant et en arrière
+      var distFwd = (mouthAbs - fromAbs + 52) % 52;
+      var distBwd = (fromAbs - mouthAbs + 52) % 52;
+      for (var cell = 1; cell <= 5; cell++) {
+        var occ = corridorAt(state, host, cell, color);
+        var hasEnemy = occ.some(function(o){ return o.color !== color; });
+        if (!hasEnemy) continue;
+        // avancer : anneau jusqu'à bouche + cell
+        if (distFwd + cell === value) {
+          // éviter doublon
+          var already = out.some(function(m){ return m.pawn===pawnIdx && m.to===makeIntruderPos(host, cell) && m.type==='entree'; });
+          if (!already) out.push({ pawn: pawnIdx, to: makeIntruderPos(host, cell), type: 'entree', capture: true });
+        }
+        // reculer : anneau en arrière jusqu'à bouche + cell
+        if (distBwd + cell === value) {
+          var already2 = out.some(function(m){ return m.pawn===pawnIdx && m.to===makeIntruderPos(host, cell) && m.type==='entree'; });
+          if (!already2) out.push({ pawn: pawnIdx, to: makeIntruderPos(host, cell), type: 'entree', capture: true });
+        }
+      }
     });
+  }
+  // Ancienne fonction gardée pour compat mais non utilisée - remplacée par addExactEntryMoves
+  function addEntryMoves(out, state, color, pawnIdx, landAbs) {
+    // déprécié : comptage exact utilisé maintenant
   }
 
   /* ---------- coups autorisés pour un dé donné ----------
