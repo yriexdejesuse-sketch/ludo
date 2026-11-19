@@ -438,14 +438,18 @@ console.log('✔ sortie du couloir = double6 + jet supplémentaire');
   assert.strictEqual(st.players[0].pawns[0], -1, 'intrus renvoyé en base');
   assert.strictEqual(st.stats.blue.ate, 1, 'bilan : bleu a mangé');
 
-  /* nouvelle règle : même seul, on peut rentrer dans sa maison pour manger l'intrus (dé == cellule) */
+  /* avec un seul pion, home_retour reste soumis à la règle stricte : il faut un autre pion pour l'autre dé */
   const s2 = L.createGame(['red', 'blue']);
   s2.phase = 'move'; s2.dice = [1, 4]; s2.dieUsed = [false, false];
   s2.turn = 1;
   s2.players[0].pawns = [-41, -1, -1, -1];
-  s2.players[1].pawns = [50, -1, -1, -1];     // seul pion, mais home_retour autorisé
+  s2.players[1].pawns = [50, -1, -1, -1];     // seul pion -> capture interdite si l'autre dé ne peut pas être joué
+  assert.strictEqual(L.movesForDie(s2, 0).filter(m => m.pawn === 0).length, 0,
+    'seul pion : le propriétaire ne peut pas manger si aucun autre pion pour l\'autre dé');
+  // avec un 2e pion, la capture redevient légale
+  s2.players[1].pawns = [50, 10, -1, -1];
   assert.strictEqual(L.movesForDie(s2, 0).filter(m => m.pawn === 0).length, 1,
-    'même seul, le propriétaire peut rentrer chez lui pour manger (dé == cellule)');
+    'avec un 2e pion jouable, le propriétaire peut rentrer chez lui pour manger');
 }
 console.log('✔ le propriétaire mange l\'intrus dans son couloir (règle stricte)');
 

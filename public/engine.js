@@ -307,7 +307,10 @@
             var hasIntruder = occHome.some(function (o) { return o.color !== pl.color; });
             if (hasIntruder) {
               var toHome = 50 + cell;
-              out.push({ pawn: i, to: toHome, type: 'home_retour', capture: true });
+              // éviter le doublon avec l'avancée normale déjà poussée ci-dessus (même case)
+              if (!out.some(function(m){ return m.pawn===i && m.to===toHome; })) {
+                out.push({ pawn: i, to: toHome, type: 'home_retour', capture: true });
+              }
             }
           }
         }
@@ -404,8 +407,6 @@
     var otherV = state.dice[other];
     return moves.filter(function (m) {
       if (!m.capture) return true;
-      // nouvelles captures spéciales toujours autorisées même avec un seul pion
-      if (m.type === 'home_retour' || m.type === 'sortie_mange') return true;
       var pl = state.players[state.turn];
       for (var i = 0; i < pl.pawns.length; i++) {
         if (i === m.pawn) continue;
