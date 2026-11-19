@@ -44,8 +44,13 @@ console.log('✔ 200 parties aléatoires terminées');
   assert.strictEqual(st.players[1].pawns[0], -1, 'pion bleu renvoyé à la base');
   assert.ok(st.log.some(l => l.includes('recule')));
   assert.strictEqual(st.dieUsed[0], true);
-  // Règle 6 : après un recul, on ne peut plus avancer → le dé 4 (qui n'a que de l'avant) n'est plus jouable, tour terminé
-  assert.strictEqual(st.phase, 'roll', 'après un recul, l\'avancée du dé 4 est interdite → tour terminé');
+  // ÉTAPE 1 FIX: après un recul, l'autre dé peut toujours avancer avec un autre pion
+  assert.strictEqual(st.phase, 'move', 'après un recul-manger, l\'autre dé reste jouable avec un autre pion');
+  assert.ok(L.movesForDie(st, 1).length > 0, 'dé 4 toujours jouable');
+  const mv2 = L.movesForDie(st, 1);
+  assert.ok(mv2.length > 0);
+  L.actionMove(st, mv2[0].pawn, mv2[0].to, 1);
+  assert.strictEqual(st.phase, 'roll', 'après les 2 dés, tour suivant');
   assert.strictEqual(st.turn, 1);
 }
 console.log('✔ recul pour manger');
@@ -59,9 +64,14 @@ console.log('✔ recul pour manger');
   const mv = L.movesForDie(st, 0);
   assert.ok(!mv.some(m => m.to === 16), 'capture interdite : aucun autre pion pour le dé 4');
   assert.ok(mv.some(m => m.type === 'fwd'), 'il doit rester l\'avancée classique');
-  // on avance, puis le dé 4 n'a aucun coup (avancée bloquée par l'étoile occupée) -> tour fini
+  // ÉTAPE 1 FIX: stacking sur étoile autorisé, donc dé 4 a un coup
   L.actionMove(st, 0, 22, 0);
-  assert.strictEqual(st.phase, 'roll', 'dé 4 sans coup -> tour terminé');
+  assert.strictEqual(st.phase, 'move', 'dé 4 a un coup (stacking sur étoile) -> tour continue');
+  const mv2s = L.movesForDie(st, 1);
+  assert.ok(mv2s.length > 0, 'dé 4 jouable via stacking');
+  assert.strictEqual(mv2s[0].capture, false, 'pas de capture sur étoile');
+  L.actionMove(st, mv2s[0].pawn, mv2s[0].to, 1);
+  assert.strictEqual(st.phase, 'roll', 'après les 2 dés, tour suivant');
   assert.strictEqual(st.turn, 1);
 }
 console.log('✔ règle stricte de capture (autre dé doit être jouable)');
@@ -122,7 +132,8 @@ console.log('✔ double 6 = relance, triple = perdu, simple 6 = rien');
   st.phase = 'move'; st.dice = [1, 2]; st.dieUsed = [false, false];
   st.players[0].pawns = [7, -1, -1, -1];   // rouge avant son étoile
   st.players[1].pawns = [21, -1, -1, -1];  // bleu posé sur l'étoile rouge (ring 9)
-  assert.strictEqual(L.movesForDie(st, 0).length, 0, 'impossible d\'atterrir sur l\'étoile occupée');
+  assert.strictEqual(L.movesForDie(st, 0).length, 1, 'atterrissage sur étoile occupée autorisé (stacking, sans capture)');
+  assert.strictEqual(L.movesForDie(st, 0)[0].capture, false, 'pas de capture sur étoile protégée');
   assert.ok(L.movesForDie(st, 1).length > 0, 'le dé 2 reste jouable ailleurs');
 }
 console.log('✔ cases protégées');
@@ -298,8 +309,12 @@ console.log('✔ arriver à la maison ne donne plus de jet supplémentaire');
   L.actionMove(st, bwd.pawn, -2, 0);
   assert.strictEqual(st.players[1].pawns[0], -1, 'jaune mangé sur le trou');
   assert.strictEqual(st.players[0].pawns[0], -2, 'rouge posé sur le trou');
-  // après un recul-manger, l'autre dé ne peut plus avancer (règle 6) → tour direct
-  assert.strictEqual(st.phase, 'roll', 'après un recul-manger, pas d\'avancée → tour terminé');
+  // ÉTAPE 1 FIX: après un recul-manger, l'autre dé peut avancer
+  assert.strictEqual(st.phase, 'move', 'après un recul-manger, l\'autre dé reste jouable');
+  assert.ok(L.movesForDie(st, 1).length > 0, 'dé 4 jouable après recul');
+  const mv2b = L.movesForDie(st, 1);
+  L.actionMove(st, mv2b[0].pawn, mv2b[0].to, 1);
+  assert.strictEqual(st.phase, 'roll', 'après les 2 dés, tour suivant');
   assert.strictEqual(st.turn, 1, 'tour à jaune');
   // on remet à rouge pour tester le déverrouillage du trou
   st.turn = 0; st.phase = 'move'; st.dice = [4, 2]; st.dieUsed = [false, false]; st.turnDir = null; st.eaten = null;

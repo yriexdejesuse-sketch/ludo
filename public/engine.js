@@ -184,7 +184,13 @@
         if (value === 6) {
           var r0 = INFO[pl.color].start;
           var opp0 = occupiedBy(state, r0, pl.color);
-          if (!(opp0.length > 0 && SAFE[r0])) {
+          var isSafe0 = !!SAFE[r0];
+          if (isSafe0) {
+            // stacking autorisé sur le départ (sauf futur barrage à 2 pions - étape 2)
+            out.push({ pawn: i, to: 0, type: 'out', capture: false });
+          } else if (opp0.length === 0) {
+            out.push({ pawn: i, to: 0, type: 'out', capture: false });
+          } else {
             out.push({ pawn: i, to: 0, type: 'out', capture: false });
           }
         }
@@ -231,11 +237,14 @@
 
       /* avancer */
       if (pos === -2) {
-        /* depuis le « trou » derrière le départ : toujours sur l'anneau */
+        /* depuis le « trou » derrière le départ : toujours sur l'anneau - stacking autorisé sur cases protégées (étoile/départ) */
         var fwdG = (51 + value) % 52;
         var rg = ringIdxOf(pl.color, fwdG);
         var og = occupiedBy(state, rg, pl.color);
-        if (!(og.length > 0 && SAFE[rg])) {
+        var isSafeG = !!SAFE[rg];
+        if (isSafeG) {
+          out.push({ pawn: i, to: fwdG, type: 'fwd', capture: false });
+        } else {
           out.push({ pawn: i, to: fwdG, type: 'fwd', capture: og.length > 0 });
         }
       } else {
@@ -244,7 +253,10 @@
           if (fwd <= 50) {
             var rf = ringIdxOf(pl.color, fwd);
             var of = occupiedBy(state, rf, pl.color);
-            if (!(of.length > 0 && SAFE[rf])) {
+            var isSafeF = !!SAFE[rf];
+            if (isSafeF) {
+              out.push({ pawn: i, to: fwd, type: 'fwd', capture: false });
+            } else {
               out.push({ pawn: i, to: fwd, type: 'fwd', capture: of.length > 0 });
             }
             addEntryMoves(out, state, pl.color, i, rf); /* bouche adverse ? entrée possible */
@@ -335,12 +347,8 @@
     if (state.eaten != null) {
       moves = moves.filter(function (m) { return m.pawn !== state.eaten; });
     }
-    // Règle 6 : jamais mixer avant/arrière dans le même jet
-    if (state.turnDir === 'fwd') {
-      moves = moves.filter(function (m) { return m.type !== 'bwd'; });
-    } else if (state.turnDir === 'bwd') {
-      moves = moves.filter(function (m) { return m.type === 'bwd'; });
-    }
+    // ÉTAPE 1 FIX: on autorise de mixer avant/arrière (2ème dé peut avancer après un recul-manger avec un autre pion)
+    // turnDir n'est plus filtrant
 
     var other = 1 - dieIndex;
     var otherPending = !state.dieUsed[other] && state.dice[other] != null;
@@ -509,11 +517,8 @@
     var col = pl.color;
     var v = isSum ? state.dice[0] + state.dice[1] : state.dice[dieIndex];
 
-    // direction du tour : jamais mixer avant/arrière
-    if (!state.turnDir) {
-      if (mv.type === 'bwd') state.turnDir = 'bwd';
-      else state.turnDir = 'fwd';
-    }
+    // direction du tour : mix autorisé (étape 1) - on garde trace mais ne bloque plus
+    // if (!state.turnDir) { if (mv.type === 'bwd') state.turnDir = 'bwd'; else state.turnDir = 'fwd'; }
     pl.pawns[pawnIdx] = mv.to;
     if (isSum) { state.dieUsed[0] = true; state.dieUsed[1] = true; }
     else if (mv.type === 'sortie') { state.dieUsed[0] = true; state.dieUsed[1] = true; }
