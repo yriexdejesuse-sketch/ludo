@@ -3,31 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Ludo — jeu à deux ou à quatre</title>
-<link rel="stylesheet" href="style.css?v=2026-11-13t">
+<title>LudoAfrik — Le Ludo africain en ligne</title>
+<meta name="description" content="Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
+<meta name="theme-color" content="#e0a82e">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="stylesheet" href="style.css?v=2026-11-14">
 </head>
 <body>
 <div id="app">
-  <header>
-    <h1>🎲 LUDO</h1>
-    <p class="tagline">Deux dés — contre l'ordinateur, à deux sur un écran, ou en ligne</p>
+  <!-- HEADER LudoAfrik -->
+  <header class="ludo-header">
+    <div class="brand">
+      <div class="brand-logo">🎲</div>
+      <div>LUDO <span style="color:var(--accent);">AFRIK</span><small>Le Ludo en ligne entre amis</small></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btnTheme" title="Clair / sombre">☀️</button>
+      <div class="lang-switch" id="btnLang">🌐 EN</div>
+    </div>
   </header>
 
-  <!-- retour visuel (jamais sur le plateau) + badge de couleur -->
   <div id="toast" class="toast"></div>
   <div id="myColorBadge" class="color-badge hidden"></div>
 
-  <!-- ================= MENU ================= -->
-  <section id="screen-menu" class="screen">
-    <div class="menu-cards">
+  <!-- ================= HERO — niveau ludoafrik.com/app ================= -->
+  <section id="screen-hero" class="screen">
+    <div class="hero">
+      <div class="hero-logo">🎲</div>
+      <h1>Le Ludo africain,<br>en ligne et entre amis.</h1>
+      <p>Ton XP est gardé si tu crées ton compte ensuite.<br>Choisis ton personnage juste après.</p>
+      <div class="hero-badges">
+        <span class="badge live">● 1 240 en ligne</span>
+        <span class="badge">⚡ Sans téléchargement</span>
+        <span class="badge">👥 2 à 4 joueurs</span>
+      </div>
+      <div class="hero-ctas">
+        <button class="cta-primary" id="btnPlayGuest">🎲 Jouer sans compte <span style="opacity:.7;">→</span></button>
+        <button class="cta-secondary" id="btnShowLogin">ou avec un compte — Connexion / Inscription</button>
+      </div>
+      <div class="hero-foot">Tu choisiras ton personnage juste après. <a href="#" id="linkRulesHero">Règles du jeu</a></div>
+    </div>
+
+    <!-- Choix rapide (existant) en dessous du hero, style LudoAfrik -->
+    <div class="menu-cards" style="margin-top:16px;">
       <button class="big-btn primary" id="btnAi">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
       <button class="big-btn" id="btnLocal">👥 Partie locale<br><small>2, 3 ou 4 joueurs sur le même écran</small></button>
       <button class="big-btn" id="btnSim">🔬 Simulateur entre ordinateurs<br><small>2, 3 ou 4 IA s'affrontent seules</small></button>
       <button class="big-btn" id="btnCreate">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
       <button class="big-btn" id="btnJoinShow">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
-      <button class="big-btn ghost" id="btnRules">📜 Règles du jeu</button>
     </div>
-    <div id="joinBox" class="card hidden">
+    <div id="joinBox" class="card hidden" style="margin-top:14px;">
       <h2>Rejoindre une partie</h2>
       <div class="join-col">
         <input id="joinName" maxlength="16" placeholder="Ton prénom ou pseudo" autocomplete="nickname">
@@ -40,21 +65,48 @@
     </div>
   </section>
 
+  <!-- ================= ECRAN CONNEXION (maquette LudoAfrik) ================= -->
+  <section id="screen-auth" class="screen hidden">
+    <div class="card center-text" style="max-width:420px;">
+      <h2 style="font-family:'Baloo 2',sans-serif;">Bienvenue sur LudoAfrik</h2>
+      <p class="hint">Pseudo automatique · ton XP est gardé si tu crées ton compte ensuite</p>
+      <div style="display:grid; gap:10px; margin:16px 0;">
+        <button class="cta-primary" id="btnGuestContinue">Continuer sans compte</button>
+        <div style="display:flex; align-items:center; gap:12px; color:var(--muted); font-size:.8rem;"><span style="flex:1; height:1px; background:var(--line);"></span> ou avec un compte <span style="flex:1; height:1px; background:var(--line);"></span></div>
+        <input placeholder="Email ou pseudo" style="text-align:center;">
+        <input placeholder="Mot de passe" type="password" style="text-align:center;">
+        <button class="big-btn primary" id="btnLoginFake">Se connecter</button>
+        <button class="big-btn ghost" id="btnBackHero">← Retour</button>
+        <p class="hint"><a href="#">Mot de passe oublié ?</a> · <a href="#">CGU</a> · <a href="#">Mentions légales</a></p>
+        <p class="hint">Édité par <b>SEEDVISION</b> — inspiré du niveau visuel ludoafrik.com/app</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MENU ORIGINAL (gardé pour compatibilité app.js) ================= -->
+  <section id="screen-menu" class="screen hidden">
+    <div class="menu-cards">
+      <button class="big-btn primary" id="btnAi2">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
+      <button class="big-btn" id="btnLocal2">👥 Partie locale<br><small>2, 3 ou 4 joueurs sur le même écran</small></button>
+      <button class="big-btn" id="btnSim2">🔬 Simulateur entre ordinateurs<br><small>2, 3 ou 4 IA s'affrontent seules</small></button>
+      <button class="big-btn" id="btnCreate2">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
+      <button class="big-btn" id="btnJoinShow2">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
+      <button class="big-btn ghost" id="btnRules">📜 Règles du jeu</button>
+    </div>
+  </section>
+
   <!-- ================= CHOIX (couleurs / mode) ================= -->
   <section id="screen-setup" class="screen hidden">
     <div class="card">
       <h2 id="setupTitle">Préparation de la partie</h2>
-
       <div class="pick-block">
         <h3 id="pick1Title">Ta couleur</h3>
         <div class="swatches" id="pick1"></div>
       </div>
-
       <div class="pick-block" id="pick2Block">
         <h3 id="pick2Title">Couleur du joueur 2</h3>
         <div class="swatches" id="pick2"></div>
       </div>
-
       <div class="pick-block hidden" id="localCountBlock">
         <h3>Nombre de joueurs</h3>
         <div class="seg" id="localCount">
@@ -63,14 +115,12 @@
           <button data-n="4">4 joueurs<br><small>sur le même écran</small></button>
         </div>
       </div>
-
       <div class="pick-block hidden" id="localPlayersBlock">
         <h3>Joueurs (noms et couleurs)</h3>
         <div id="localPlayers"></div>
         <p class="hint">Chacun choisit sa couleur — les couleurs doivent être différentes.</p>
         <p class="hint hidden" id="localExtra"></p>
       </div>
-
       <div class="pick-block hidden" id="aiCountBlock">
         <h3>Nombre de joueurs</h3>
         <div class="seg" id="aiCount">
@@ -79,7 +129,6 @@
           <button data-n="4">4 joueurs<br><small>toi + 3 ordinateurs</small></button>
         </div>
       </div>
-
       <div class="pick-block hidden" id="simCountBlock">
         <h3>Nombre de joueurs (simulateur)</h3>
         <div class="seg" id="simCount">
@@ -88,13 +137,11 @@
           <button data-n="4">4 joueurs<br><small>4 ordinateurs</small></button>
         </div>
       </div>
-
       <div class="pick-block hidden" id="simPlayersBlock">
         <h3>Ordinateurs (couleurs)</h3>
         <div id="simPlayers"></div>
         <p class="hint">Choisis les couleurs des IA — elles doivent être différentes.</p>
       </div>
-
       <div class="pick-block hidden" id="onlineCountBlock">
         <h3>Nombre de joueurs (en ligne)</h3>
         <div class="seg" id="onlineCount">
@@ -103,7 +150,6 @@
           <button data-n="4">4 joueurs<br><small>4 en ligne</small></button>
         </div>
       </div>
-
       <div class="pick-block hidden" id="onlineNameBlock">
         <h3>Ton nom</h3>
         <input id="onlineName" maxlength="16" placeholder="Ton prénom ou pseudo" autocomplete="nickname">
@@ -141,18 +187,13 @@
     <div class="game-layout">
       <div class="board-wrap">
         <svg id="board" viewBox="0 0 600 600" aria-label="Plateau de Ludo"></svg>
-
-        <!-- LES DEUX DÉS, AU MILIEU DU PLATEAU (les dés, pas de commentaire) -->
         <div id="diceOverlay">
           <div class="board-die" id="die0" title="Dé 1"></div>
           <div class="board-die" id="die1" title="Dé 2"></div>
         </div>
-
-        <!-- mini-choix près du pion (avancer / reculer-manger) -->
         <div id="miniChoice" class="mini-choice hidden"></div>
         <div id="simPauseOverlay" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.78);border-radius:18px;font-size:1.45rem;font-weight:800;z-index:7;pointer-events:none;backdrop-filter:blur(2px)">⏸️ En pause</div>
       </div>
-
       <aside class="panel">
         <div id="diceHint">👆 Clique pour lancer</div>
         <div id="turnBanner" class="turn-banner">—</div>
@@ -160,14 +201,11 @@
           <button id="simPauseBtn" class="big-btn small" style="flex:1">⏸️ Pause</button>
         </div>
         <div id="players" class="players"></div>
-
         <div class="log-wrap">
           <h3>Chronique</h3>
           <div id="log" class="log"></div>
         </div>
-
         <button id="finishBtn" class="big-btn warn hidden">🏁 Terminer la partie</button>
-
         <div class="mini-actions">
           <button class="big-btn ghost small" id="btnRules3">📜 Règles</button>
           <button class="big-btn ghost small" id="btnLeave">✕ Quitter</button>
@@ -175,6 +213,10 @@
       </aside>
     </div>
   </section>
+
+  <footer class="app-footer">
+    <a href="#">CGU</a> · <a href="#">CGV</a> · <a href="#">Mentions légales</a> · Édité par <b>SEEDVISION</b> — <span style="color:var(--accent);">Niveau visuel inspiré de ludoafrik.com/app</span>
+  </footer>
 </div>
 
 <!-- ================= MODALES ================= -->
@@ -188,14 +230,10 @@
       <li>Un <b>6</b> (sur un des deux dés) permet de <b>sortir de la base</b> ; tu peux enchaîner avec l'autre dé sur le pion sorti.</li>
       <li><b>Relance uniquement sur double 6</b> ; <b>trois double-6 de suite = tour perdu</b>.</li>
       <li>Atterrir sur un pion ennemi le <b>renvoie à sa base</b>.</li>
-      <li class="hl-rules"><b>🔁 Recul :</b> on peut reculer du nombre de points du dé
-        <b>uniquement pour manger</b> un pion ennemi. Sinon, on avance.</li>
-      <li class="hl-rules"><b>⚔️ Capture stricte :</b> tu ne peux manger avec un dé
-        <b>que si un autre pion peut jouer l'autre dé</b> (tant qu'il reste un dé).
-        Sinon : tu avances avec le pion que tu as.</li>
+      <li class="hl-rules"><b>🔁 Recul :</b> on peut reculer du nombre de points du dé <b>uniquement pour manger</b> un pion ennemi. Sinon, on avance.</li>
+      <li class="hl-rules"><b>⚔️ Capture stricte :</b> tu ne peux manger avec un dé <b>que si un autre pion peut jouer l'autre dé</b> (tant qu'il reste un dé). Sinon : tu avances avec le pion que tu as.</li>
       <li>Les <b>départs ⭘</b> et <b>étoiles ⭐</b> sont <b>protégés</b> : pas de capture dessus.</li>
-      <li><b>Premier à rentrer ses 4 pions = 1<sup>re</sup> place</b> 🥇 ;
-        la partie continue pour déterminer les places suivantes.</li>
+      <li><b>Premier à rentrer ses 4 pions = 1<sup>re</sup> place</b> 🥇 ; la partie continue pour déterminer les places suivantes.</li>
     </ul>
     <button class="big-btn primary" id="btnCloseRules">Compris !</button>
   </div>
@@ -213,9 +251,37 @@
   </div>
 </div>
 
-<script src="engine.js?v=2026-11-13t"></script>
-<script src="backends.js?v=2026-11-13t"></script>
-<script src="firebase-config.js?v=2026-11-13t"></script>
-<script src="app.js?v=2026-11-13t"></script>
+<script>
+// Thème clair/sombre persistant (comme LudoAfrik)
+try{
+  const s=localStorage.getItem('ludoafrik_theme');
+  if(s) document.documentElement.dataset.theme=s;
+  else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme='light';
+}catch(e){}
+document.getElementById('btnTheme').onclick=()=>{
+  const cur=document.documentElement.dataset.theme;
+  const nxt=cur==='light'?'dark':'light';
+  if(nxt==='dark') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=nxt;
+  try{localStorage.setItem('ludoafrik_theme', nxt);}catch(e){}
+  document.getElementById('btnTheme').textContent = nxt==='light'?'🌙':'☀️';
+};
+try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}
+// Hero → menu existant
+document.getElementById('btnPlayGuest').onclick=()=>{ document.getElementById('screen-hero').classList.add('hidden'); document.getElementById('screen-menu').classList.remove('hidden'); window.scrollTo(0,0); };
+document.getElementById('btnShowLogin').onclick=()=>{ document.getElementById('screen-hero').classList.add('hidden'); document.getElementById('screen-auth').classList.remove('hidden'); };
+document.getElementById('btnGuestContinue').onclick=()=>{ document.getElementById('screen-auth').classList.add('hidden'); document.getElementById('screen-menu').classList.remove('hidden'); };
+document.getElementById('btnBackHero').onclick=()=>{ document.getElementById('screen-auth').classList.add('hidden'); document.getElementById('screen-hero').classList.remove('hidden'); };
+document.getElementById('linkRulesHero').onclick=(e)=>{ e.preventDefault(); document.getElementById('modalRules').classList.remove('hidden'); };
+// Compat : dupliquer les IDs du hero vers les handlers existants de app.js
+['btnAi','btnLocal','btnSim','btnCreate','btnJoinShow'].forEach(id=>{
+  const heroBtn=document.getElementById(id);
+  const menuBtn=document.getElementById(id+'2');
+  if(heroBtn && menuBtn) heroBtn.onclick=()=>menuBtn.click();
+});
+</script>
+<script src="engine.js?v=2026-11-14"></script>
+<script src="backends.js?v=2026-11-14"></script>
+<script src="firebase-config.js?v=2026-11-14"></script>
+<script src="app.js?v=2026-11-14"></script>
 </body>
 </html>

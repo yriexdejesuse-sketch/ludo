@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13t';
+const APP_VERSION = 'v2026-11-14';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -971,9 +971,11 @@ function renderMyColor() {
 }
 function showScreen(name) {
   clearAuto();
-  ['menu', 'setup', 'lobby', 'game'].forEach(s =>
-    $('#screen-' + s).classList.toggle('hidden', s !== name));
-  if (name==='menu') setSimPaused(false);
+  ['hero', 'auth', 'menu', 'setup', 'lobby', 'game'].forEach(s =>{
+    const el=document.getElementById('screen-' + s);
+    if(el) el.classList.toggle('hidden', s !== name);
+  });
+  if (name==='menu' || name==='hero') setSimPaused(false);
   if (mode === 'online' && room.code && (name === 'lobby' || name === 'game')) startWatch();
   else stopWatch();
   renderMyColor();
@@ -1483,7 +1485,7 @@ function bind() {
   $('#btnJoin').onclick = () => { mode = 'online'; hotseat = false; joinOnline($('#joinCode').value, false); };
   $('#joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnJoin').click(); });
 
-  $('#btnBackMenu').onclick = () => showScreen('menu');
+  $('#btnBackMenu').onclick = () => showScreen('hero');
   $('#btnStart').onclick = () => {
     if (setupKind === 'ai') startAiGame();
     else if (setupKind === 'online') { mode = 'online'; hotseat = false; createOnline(); }
@@ -1618,6 +1620,6 @@ async function init() {
     await joinOnline(rc, true);
     return;
   }
-  showScreen('menu');
+  showScreen('hero');
 }
 init();
