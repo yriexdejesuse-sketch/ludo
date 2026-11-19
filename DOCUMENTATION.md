@@ -5,8 +5,8 @@
 > quelles règles sont implémentées (et pourquoi), et **comment modifier le
 > projet** sans casser le reste.
 >
-> Dernière mise à jour : novembre 2026 — l'état du code est celui décrit ici
-> (15 tests moteur + tests backends + scénario E2E au vert).
+> Dernière mise à jour : 19 novembre 2026 — **v2026-11-13t** — l'état du code est celui décrit ici
+> (20 tests moteur + tests backends + scénario E2E au vert).
 
 ---
 
@@ -130,8 +130,8 @@ seul (d'où les15 tests en une seconde).
 | `createGame(colors)` | crée l'état initial (voir §5.2) |
 | `actionRoll(state, rng?)` | lance les2 dés → phase `'move'` |
 | `actionMove(state, pawn, to, die)` | joue un coup (`die` = `0`, `1` ou `'sum'`) |
-| `movesForDie(state, i)` | coups légaux pour le dé i |
-| `movesForSum(state)` | coups légaux à la **somme** des2 dés (reculs seulement) |
+| `movesForDie(state, i)` | coups légaux pour le dé i (règle stricte : capture avec un dé seul exige un autre pion pour l'autre dé, `home_retour` inclus) |
+| `movesForSum(state)` | coups légaux à la **somme** des2 dés — **uniquement pour capturer** (recul, entrée, sortie_mange) ; sortie de base exclue (`filter capture`) |
 | `playableDice(state)` | dés encore jouables |
 | `finishNow(state)` | bouton « Terminer » → classement par progression |
 | `currentColor(state)` | couleur du joueur au trait |
@@ -205,7 +205,7 @@ cellule du couloir   = INFO[host].home[k-1]          // pour un pion piégé
 |---|---|
 | `rawMovesFor(state, value)` | génère **tous** les coups pour une valeur de dé : sortie (`out`), avancer (`fwd`), reculer-manger (`bwd`), depuis le trou |
 | `movesForDie` | applique les **règles strictes** (verrou du pion qui a mangé, protection des cases SAFE, interdit le recul-capture au dé simple pour un pion seul…) |
-| `movesForSum` | reculs-capture **avec la somme des2 dés** (filtre `type:'bwd'`) — autorisés même avec un pion seul |
+| `movesForSum` | captures **avec la somme des2 dés** (recul, entrée, sortie_mange — `filter capture===true`, sortie de base exclue) — autorisées même avec un pion seul car consomme les 2 dés d'un coup |
 | `actionMove` | applique le déplacement, gère capture (boucle sur les ennemis sur la case), verrou, arrivée, classement, fin de partie, statistiques |
 | `actionRoll` | tire les2 dés, réinitialise les verrous (`eaten`, `turnCaptured`, `turnArrived`) |
 | `endTurn` | passe la main — **branches de relance** (double6 / manger / maison) |
@@ -237,9 +237,9 @@ cellule du couloir   = INFO[host].home[k-1]          // pour un pion piégé
 5. **Règle stricte de capture** (règle maison du projet) :
    - manger avec un dé **seul** n'est possible **que si un autre pion du
      joueur peut encore jouer l'autre dé** ;
-   - **pion seul en jeu → pas de manger au dé simple** ;
-   - en revanche **la somme des2 dés peut manger** (recul combiné) si elle
-     tombe pile sur l'ennemi — autorisée même avec un pion seul.
+   - **pion seul en jeu → pas de manger au dé simple**, y compris `home_retour` (rentrer dans sa maison pour manger l'intrus reste soumis à la règle : il faut un autre pion pour l'autre dé, sinon coup interdit) ;
+   - en revanche **la somme des2 dés peut manger** (recul/entrée) si elle
+     tombe pile sur l'ennemi — autorisée même avec un pion seul car elle consomme les 2 dés d'un coup — **mais la somme ne permet jamais de sortir de base** (seul un `6` direct sort, pas `4+2=6`).
 6. **Après un manger, le pion qui a mangé ne rejoue plus du tout ce tour**
    (verrou `eaten`, déverrouillé au jet suivant).
 7. **Cases protégées** (étoiles) : départ et case+8 de chaque couleur →
@@ -267,9 +267,7 @@ cellule du couloir   = INFO[host].home[k-1]          // pour un pion piégé
     manger**), mange les pions du propriétaire qu'il atteint, **ne peut
     en sortir que par un double6** (→ réapparaît sur la bouche + jet
     supplémentaire ; le pion sorti ne rejoue plus ce tour). Le
-    propriétaire peut **manger l'intrus** dans son couloir (capture
-    normale : retour en base + jet supplémentaire). La règle stricte de
-    capture s'applique aussi là-bas.
+    propriétaire peut **manger l'intrus** dans son couloir depuis **n'importe où** si `dé == cellule` (téléport en `50+cell` → `home_retour`) : capture normale (retour en base) **soumise à la règle stricte** (il faut un autre pion pour l'autre dé, déduplication avec l'avancée normale déjà proposée).
 
 13. **Lobby en ligne** : chaque joueur écrit son **nom** (affiché dans
     les cartes du lobby/du jeu et dans la bannière du tour) et choisit sa
@@ -455,7 +453,7 @@ Les noms vivent dans `room.names` (hors `state`, le moteur n'y touche pas).
 |5|double6 relance / triple6 perdu / simple6 rien |
 |6|cases protégées |
 |7|**fin de partie** : à2 un vainqueur suffit ; à4 on continue tant qu'≥2 non finis ; « Terminer » |
-|8|somme des2 dés = recul-capture combiné |
+|8|somme des2 dés = capture uniquement (recul/entrée/sortie_mange, sortie de base exclue) |
 |9|aucun recul depuis la maison |
 |10|verrou du pion qui a mangé (déverrouillé au jet suivant) |
 |11|arrivée maison = tour qui continue avec l'autre dé |
@@ -467,7 +465,7 @@ Les noms vivent dans `room.names` (hors `state`, le moteur n'y touche pas).
 |17|entrée **en recul**, sur n'importe quelle case (case5) |
 |18|pion piégé : déplacements internes, recul = manger, pas de sortie |
 |19|**sortie = double6** + jet supplémentaire (un6 simple ne sort pas) |
-|20|le propriétaire **mange l'intrus** dans son couloir (+ règle stricte) |
+|20|le propriétaire **mange l'intrus** dans son couloir (`home_retour` dé==cell, dédupliqué, **soumis à la règle stricte même seul**) |
 
 ###10.2 `smoke.js` — E2E (JSDOM, vraie page, vrai serveur)
 
@@ -619,6 +617,12 @@ qui est en fait un choix assumé.
     `ludotest/shot_orient.js` (vert → `rotate(180deg)`, case verte en
     bas à gauche) + assertions dans `test_live.js` (hôte et ami reçoivent
     des orientations **différentes**).
+12. **v2026-11-13r — comptage exact maison adverse** : `public/engine.js` `addExactEntryMoves(fromAbs,value)` — `distFwd=(mouth-fromAbs+52)%52` / `distBwd=(fromAbs-mouth+52)%52` vérifie `dist+cell==value` pour chaque `cell 1..5` occupée ; `addEntryMoves` dépréciée ; `node test.js` 200 parties + tests 16/17 mis à jour (dés `1,4→3,4` pour respecter `1+2=3`).
+
+13. **v2026-11-13s — historique bloqué** : `movesForSum` ne renvoyait que `rawMovesFor(sum)` donc `4+2=6` sortait de base via somme → tour restait chez Vert sans `Aucun coup possible` mais `onPawnClick` bloquait (`capture` seul) ; corrigé en `return all.filter(m=>m.capture)` (somme = uniquement pour capturer, jamais pour `out`) → Vert `4+2` passe bien à `Aucun coup possible` et rend la main à Jaune ; `index.html`/`app.js` bump `r→s`.
+
+14. **v2026-11-13t — home_retour strict** : `public/engine.js` `movesForDie` avait `if (m.type==='home_retour'||m.type==='sortie_mange') return true` → même seul on pouvait rentrer dans sa maison pour manger ; supprimé → `home_retour` respecte la règle stricte (il faut un autre pion pour l'autre dé, sinon coup interdit) ; déduplication `!out.some(pawn&&to)` avec l'avancée normale ; `test.js` 20e test mis à jour : `seul pion → 0 coup` / `avec 2e pion → 1 coup` ; bump `s→t`.
+
 11. **Round14ter** : la pastille `#diceHint` (« 👆 Clique pour lancer »)
     est **sortie du plateau** — elle vit désormais dans `.panel` (jamais
     de commentaire sur le plateau, mobile comme bureau). Correctif

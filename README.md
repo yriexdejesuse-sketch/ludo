@@ -125,7 +125,7 @@ sont dans **`MISE_EN_LIGNE.md`**.
 - un 6 sort de la base (enchaînement possible avec l'autre dé) ;
   **relance uniquement sur double 6** (manger ou arriver ne relance plus) ; **3 double-6 de suite = tour perdu** ; sortir du couloir adverse par double 6 **consomme les 2 dés** → 1 seul jet supplémentaire
 - **recul uniquement pour manger sur l'anneau** (mini-choix près du pion), jamais depuis sa propre maison ; le jeu **calcule et propose à chaque lancer** tout manger en arrière possible (avec l'un des deux dés ou la **somme des deux dés** — la somme peut désormais être jouée **en avant comme en arrière**, en un seul coup) ; **recul derrière sa propre ligne de départ** : l'anneau est un cercle — un pion qui vient de sortir peut reculer sur la case « trou » située juste avant son départ et y manger un ennemi
-- **couloir adverse** : quand un pion atterrit sur la bouche d'un adversaire dont un pion est dans son couloir (les5 cases avant sa maison), on peut **entrer dans le couloir et le manger** — en avant ou en recul, sur la case de son choix ; le pion entré s'y déplace **librement en avant comme en arrière** (ex : 2 = +2 ou -2) et **ne peut en sortir que par double 6 ou en mangeant dehors** (depuis la bouche, à ±valeur sur l'anneau) ; le propriétaire peut, depuis **n'importe où**, **rentrer dans sa maison pour manger l'intrus** si son dé vaut exactement le numéro de la cellule (ex : intrus en 2, tu fais 2 → tu téléportes en 52 et tu manges)
+- **couloir adverse** : quand un pion atterrit sur la bouche d'un adversaire dont un pion est dans son couloir (les5 cases avant sa maison), on peut **entrer dans le couloir et le manger** — en avant ou en recul, sur la case de son choix (**comptage exact** : `distance anneau jusqu'à la bouche + cellule 1..5 == valeur du dé/somme`) ; le pion entré s'y déplace **librement en avant comme en arrière** (ex : 2 = +2 ou -2) et **ne peut en sortir que par double 6 ou en mangeant dehors** (depuis la bouche, à ±valeur sur l'anneau) ; le propriétaire peut, depuis **n'importe où**, **rentrer dans sa maison pour manger l'intrus** si son dé vaut exactement le numéro de la cellule (ex : intrus en 2, tu fais 2 → tu téléportes en 52 et tu manges) — **soumis à la règle stricte** (il faut un autre pion pour l'autre dé)
 - **jamais mixer avant/arrière dans le même jet** : soit tu avances (avec les 2 dés séparés ou la somme en avant), soit tu recules (avec les 2 dés ou la somme en arrière), jamais 1 dé en avant + 1 dé en arrière
 - **simulateur** : **2, 3 ou 4 ordinateurs s'affrontent seuls** — choisis leur nombre et leurs couleurs, lance, ils jouent jusqu'au bout (parfait pour tester les règles)
 - **partie locale** : **2, 3 ou 4 joueurs** sur le même écran — **chacun tape son nom et choisit sa couleur** (échange automatique si 2 joueurs prennent la même couleur) ; le plateau affiche les noms dans les cartes et le journal
@@ -149,9 +149,10 @@ sont dans **`MISE_EN_LIGNE.md`**.
   l'écran te montre ta couleur — en ligne et contre l'ordinateur
   (« Ta couleur : Rouge »), les deux couleurs en partie locale
 - **règles du manger** : **capture stricte** (un autre pion doit pouvoir
-  jouer l'autre dé — sinon un seul pion en jeu = pas de manger) ;
-  **après un manger, le pion qui a mangé ne rejoue plus** du tout ce tour ;
-  départs ⭘ et étoiles ⭐ protégés
+  jouer l'autre dé — sinon un seul pion en jeu = pas de manger, y compris
+  `home_retour` : rentrer dans sa maison pour manger l'intrus exige aussi un
+  autre pion pour l'autre dé) ; **après un manger, le pion qui a mangé ne rejoue plus** du tout ce tour ;
+  départs ⭘ et étoiles ⭐ protégés ; **la somme ne sert jamais à sortir de base** (seul un `6` direct sort, pas `4+2=6`)
 - 1er à rentrer ses 4 pions gagne ; la partie continue **tant qu'au moins
   deux joueurs n'ont pas fini** — dès qu'il n'en reste qu'un seul, il prend
   la dernière place et **la partie s'arrête** (donc à deux, un vainqueur
