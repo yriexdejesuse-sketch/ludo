@@ -671,7 +671,7 @@
       return { ok: true };
     }
 
-    if (!playableDice(state).length) {
+    if (!playableDice(state).length && !movesForSum(state).length) {
       endTurn(state);
       trimLog(state);
       return { ok: true };
