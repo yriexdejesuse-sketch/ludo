@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-13r';
+const APP_VERSION = 'v2026-11-13s';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -443,14 +443,16 @@ function startRollAnimation() {
     rollAnim = false;
     Snd.settle();
     renderDice(); renderPanel(); scheduleAi();
-    /* à chaque lancer : le jeu calcule et PROPOSE tout recul possible */
+    /* à chaque lancer : le jeu calcule et PROPOSE tout recul/somme possible */
     if (G && G.phase === 'move' && started && canAct()) {
       const hasBwd = (legal.sum || []).some(m => m.capture) ||
         (legal[0] || []).some(m => m.type === 'bwd') ||
         (legal[1] || []).some(m => m.type === 'bwd');
+      const hasSum = (legal.sum || []).length > 0;
       const hasEntry = (legal[0] || []).some(m => m.type === 'entree') ||
         (legal[1] || []).some(m => m.type === 'entree');
       if (hasBwd) toast('♻️ Manger en arrière possible — clique sur le pion concerné !');
+      else if (hasSum) toast('♻️ Somme des 2 dés utilisable — clique sur un pion !');
       else if (hasEntry) toast('🚪 Entrée dans le couloir adverse possible — clique sur le pion !');
     }
     maybeAutoSinglePawn(); /* zéro clic si un seul pion en jeu */
@@ -790,7 +792,13 @@ function onPawnClick(color, idx) {
   const candidates = p.filter(d => (legal[d] || []).some(m => m.pawn === idx));
   if (!candidates.length) {
     /* aucun dé seul ne le peut : la somme des 2 dés est le seul choix → évident */
-    if (sumMs.length === 1 && sumMs[0].capture) { executeMove('sum', sumMs[0]); return; }
+    if (sumMs.length === 1) { executeMove('sum', sumMs[0]); return; }
+    if (sumMs.length > 1) {
+      const optsTmp = sumMs.map(m => ({ m, die: 'sum' }));
+      if (optsTmp.length === 1) { executeMove('sum', optsTmp[0].m); return; }
+      showMiniChoice('sum', optsTmp);
+      return;
+    }
     toast('Ce pion ne peut pas bouger pour l\'instant.');
     return;
   }
@@ -810,7 +818,7 @@ function onPawnClick(color, idx) {
     candidates.forEach(d => (legal[d] || [])
       .filter(m => m.pawn === idx)
       .forEach(m => optsAll.push({ m, die: d })));
-    if (sumMs.length === 1 && sumMs[0].capture) optsAll.push({ m: sumMs[0], die: 'sum' });
+    sumMs.forEach(m => optsAll.push({ m, die: 'sum' }));
     if (optsAll.length === 1) executeMove(optsAll[0].die, optsAll[0].m);
     else showMiniChoice(candidates[0], optsAll);
     return;
@@ -829,8 +837,8 @@ function onPawnClick(color, idx) {
       .filter(m => m.pawn === idx && m.type === 'bwd')
       .forEach(m => opts.push({ m, die: other }));
   }
-  /* …et la somme des deux dés (seulement si capture) */
-  if (sumMs.length === 1 && sumMs[0].capture) opts.push({ m: sumMs[0], die: 'sum' });
+  /* …et la somme des deux dés */
+  sumMs.forEach(m => opts.push({ m, die: 'sum' }));
 
   if (changed) renderPanel();          /* le dé sélectionné vient de basculer */
   if (opts.length === 1) executeMove(opts[0].die, opts[0].m);

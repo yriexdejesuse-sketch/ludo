@@ -428,14 +428,15 @@
 
   /* ---------- SOMME DES DEUX DÉS ----------
      Les deux dés ensemble : soit en avant, soit en arrière (jamais mixer).
-     On les consomme d'un seul coup. */
+     Uniquement pour manger (recul ou entrée) — pas pour sortir de base. */
   function movesForSum(state) {
     if (state.over || state.phase !== 'move') return [];
     if (state.dieUsed[0] || state.dieUsed[1]) return [];
     if (state.dice[0] == null || state.dice[1] == null) return [];
     var v = state.dice[0] + state.dice[1];
     var all = rawMovesFor(state, v);
-    return all;
+    // somme = seulement pour capturer (recul, entrée, sortie_mange) ; la sortie de base (out) reste sur un dé seul
+    return all.filter(function(m){ return m.capture; });
   }
 
   function advance(state) {
