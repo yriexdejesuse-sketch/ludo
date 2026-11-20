@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-18b';
+const APP_VERSION = 'v2026-11-20';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -122,9 +122,43 @@ const Snd = (() => {
       [392, 523, 659, 784].forEach((f, i) => tone(f, 0.25, 'triangle', 0.14, i * 0.12));
       [659, 784, 1047].forEach((f, i) => tone(f, 0.45, 'sine', 0.14, 0.6 + i * 0.13));
     },
-    click() { tone(1150, 0.05, 'square', 0.05); }
+    click() { tone(1150, 0.05, 'square', 0.05); },
+    shopBuy(){ [880,1100,1320].forEach((f,i)=>tone(f,0.18,'sine',0.15,i*0.07)); },
+    coin(){ tone(1200,0.12,'triangle',0.18); tone(1800,0.12,'sine',0.12,0.08); }
   };
 })();
+// mute wrapper + haptics + confetti
+(function(){
+  const _orig = Snd;
+  const isMuted = ()=> document.documentElement.dataset.sound==='off';
+  ['roll','settle','step','capture','home','finish','win','click','shopBuy','coin'].forEach(k=>{
+    const fn=_orig[k]; _orig[k]=function(){ if(isMuted()) return; return fn.apply(this, arguments); };
+  });
+})();
+function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms||20); }catch(e){} }
+function confettiBurst(){
+  const c=document.getElementById('confetti'); if(!c) return;
+  c.classList.remove('hidden'); c.width=innerWidth; c.height=innerHeight;
+  const ctx=c.getContext('2d'); const parts=[...Array(120)].map(()=>({x:Math.random()*c.width, y:-10, vx:(Math.random()-0.5)*8, vy:Math.random()*6+4, r:Math.random()*6+3, col:`hsl(${35+Math.random()*25},100%,55%)`, rot:Math.random()*360, vr:(Math.random()-0.5)*12}));
+  let t=0; (function loop(){
+    t++; ctx.clearRect(0,0,c.width,c.height);
+    parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.rot+=p.vr; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180); ctx.fillStyle=p.col; ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2); ctx.restore(); });
+    if(t<160) requestAnimationFrame(loop); else { ctx.clearRect(0,0,c.width,c.height); c.classList.add('hidden'); }
+  })();
+}
+function captureShake(){ const b=document.getElementById('board'); if(!b) return; b.classList.remove('capture-shake'); void b.offsetWidth; b.classList.add('capture-shake'); b.addEventListener('animationend',()=>b.classList.remove('capture-shake'),{once:true}); }
+function updateOnlineBar(online, pingMs){
+  const bar=document.getElementById('onlineBar'); if(!bar) return;
+  if(mode!=='online'){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  bar.classList.toggle('offline', !online);
+  const txt=document.getElementById('onlineBarText');
+  const ping=document.getElementById('onlinePing');
+  if(txt) txt.textContent = online ? '● En ligne — temps réel' : '○ Reconnexion…';
+  if(ping) ping.textContent = online && pingMs ? ` ${pingMs}ms` : '';
+}
+let _lastPing=0;
+function trackPing(start){ _lastPing = Date.now()-start; updateOnlineBar(true, _lastPing); }
 
 /* ============================================================
    PLATEAU (SVG statique)
@@ -355,13 +389,13 @@ function animateDiff(oldS, newS, after) {
   let active = 0;
   ops.forEach(t => {
     active++;
-    if (t.to === -1 && t.from >= 0) Snd.capture();
+    if (t.to === -1 && t.from >= 0) { Snd.capture(); haptic(30); captureShake(); }
     runTransition(t, () => {
-      if (t.to === 56) Snd.home();
+      if (t.to === 56) { Snd.home(); haptic(25); const el=pawnEl(t.color,t.idx); el.classList.add('home-bounce'); setTimeout(()=>el.classList.remove('home-bounce'),700); }
       active--;
       if (active <= 0) {
         animating = false;
-        syncPawns();
+        syncPawns(); applySkinsToBoard();
         const q = queuedCommit; queuedCommit = null;
         if (q) q(); else { after && after(); }
       }
@@ -390,8 +424,15 @@ function setFace(el, n) {
     el.appendChild(p);
   });
 }
+function applyDiceSkins(){
+  let skin='dice_classic';
+  try{ if(window.SyroAuth && SyroAuth.getEq) skin=SyroAuth.getEq().dice || skin; else { const eq=JSON.parse(localStorage.getItem('syro_eq')||'{}'); skin=eq.dice||skin; } }catch(e){}
+  document.documentElement.dataset.diceSkin = skin||'dice_classic';
+  [$('#die0'),$('#die1')].forEach(el=>{ if(!el) return; el.classList.remove('skin-crystal','skin-gold'); if(skin==='dice_crystal') el.classList.add('skin-crystal'); if(skin==='dice_gold') el.classList.add('skin-gold'); });
+}
 function renderDice() {
   if (rollAnim) return;
+  applyDiceSkins();
   const els = [$('#die0'), $('#die1')];
   els.forEach((el, i) => {
     el.className = 'board-die';
@@ -971,15 +1012,80 @@ function renderMyColor() {
 }
 function showScreen(name) {
   clearAuto();
-  ['hero', 'auth', 'menu', 'setup', 'lobby', 'game'].forEach(s =>{
+  ['hero', 'auth', 'menu', 'setup', 'lobby', 'game', 'shop', 'leaderboard'].forEach(s =>{
     const el=document.getElementById('screen-' + s);
     if(el) el.classList.toggle('hidden', s !== name);
   });
+  if(name==='shop') renderShop();
+  if(name==='leaderboard') renderLeaderboard();
   if (name==='menu' || name==='hero') setSimPaused(false);
   if (mode === 'online' && room.code && (name === 'lobby' || name === 'game')) startWatch();
   else stopWatch();
   renderMyColor();
   updateSimPauseUI();
+  // scroll top + online bar
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(name!=='game' && name!=='lobby') updateOnlineBar(true);
+}
+let _shopCat='pion';
+function renderShop(){
+  const grid=document.getElementById('shopGrid'); if(!grid || !window.SyroAuth) return;
+  const coinsBtn=document.getElementById('shopCoinsBig'); if(coinsBtn) coinsBtn.textContent=(SyroAuth.getCoins()||0)+' 🪙';
+  document.querySelectorAll('#shopTabs button').forEach(b=> b.classList.toggle('sel', b.dataset.cat===_shopCat));
+  const inv=SyroAuth.getInv()||[]; const eq=SyroAuth.getEq()||{};
+  const items=SyroAuth.SHOP_CATALOG.filter(x=>x.cat===_shopCat);
+  grid.innerHTML = items.map(it=>{
+    const owned = it.price===0 || inv.includes(it.id);
+    const catKey = it.cat==='pion'?'pawn': it.cat==='plateau'?'board': it.cat==='de'?'dice':'sound';
+    const equipped = eq[catKey]===it.id;
+    return `<div class="shop-card ${owned?'owned':''} ${equipped?'equipped':''}">
+      <div class="sc-prev">${it.preview}</div>
+      <h4>${it.name}</h4>
+      <p>${it.desc}</p>
+      <div class="sc-price">${it.price===0?'Gratuit':it.price+' 🪙'}${owned?'<span style="color:#22c55e"> ✓ possédé</span>':''}${equipped?'<br><span style="color:var(--accent)">● équipé</span>':''}</div>
+      <div class="sc-actions">${!owned ? `<button class="buy" data-buy="${it.id}">Acheter</button>` : (equipped ? `<span style="font-size:.8rem; color:var(--accent); font-weight:800">Équipé</span>` : `<button class="equip" data-equip="${it.id}">Équiper</button>`)}</div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('[data-buy]').forEach(b=> b.onclick=async()=>{
+    try{ await SyroAuth.buyItem(b.dataset.buy); Snd.shopBuy(); haptic(30); toast('Acheté ✓ — '+b.dataset.buy); renderShop(); }
+    catch(e){ toast(e.message); }
+  });
+  grid.querySelectorAll('[data-equip]').forEach(b=> b.onclick=async()=>{
+    try{ await SyroAuth.equipItem(b.dataset.equip); Snd.coin(); haptic(20); toast('Équipé ✓'); renderShop(); applySkinsToBoard(); }
+    catch(e){ toast(e.message); }
+  });
+}
+function applySkinsToBoard(){
+  const eq = window.SyroAuth ? SyroAuth.getEq() : {};
+  const boardSkin = eq.board || 'board_classic';
+  document.documentElement.dataset.boardSkin = boardSkin;
+  // pawn skins via body class
+  document.querySelectorAll('.pawn').forEach(p=>{
+    p.classList.remove('pawn-skin-neon','pawn-skin-gold','pawn-skin-fire');
+    const ps = eq.pawn || 'pawn_classic';
+    if(ps==='pawn_neon') p.classList.add('pawn-skin-neon');
+    if(ps==='pawn_gold') p.classList.add('pawn-skin-gold');
+    if(ps==='pawn_fire') p.classList.add('pawn-skin-fire');
+  });
+  if(window.SyroAuth) SyroAuth.renderHeader();
+}
+async function renderLeaderboard(){
+  const box=document.getElementById('leaderboardList'); if(!box) return;
+  box.innerHTML='<p class="hint">Chargement…</p>';
+  try{
+    const rows=await SyroAuth.getLeaderboard(50);
+    if(!rows.length){ box.innerHTML='<p class="hint">Pas encore de joueurs — sois le premier !</p>'; return; }
+    const mePseudo = (()=>{ try{ return (SyroAuth.getProfile()&&SyroAuth.getProfile().pseudo) || localStorage.getItem('syro_pseudo'); }catch(e){ return '' }})();
+    box.innerHTML = rows.map((r,i)=>{
+      const medal = i===0?'🥇' : i===1?'🥈' : i===2?'🥉' : (i+1)+'.';
+      const isMe = r.pseudo===mePseudo;
+      return `<div class="lb-row ${i<3?'top'+(i+1):''} ${isMe?'me':''}">
+        <div class="lb-rank">${medal}</div>
+        <div class="lb-info"><b>${esc(r.pseudo)}</b><small>Lv${r.level} • ${r.games_won||0} victoires • ${r.games_played||0} parties</small></div>
+        <div class="lb-xp">${r.xp} XP<br><small style="color:var(--muted)">${r.coins||0}🪙</small></div>
+      </div>`;
+    }).join('');
+  }catch(e){ box.innerHTML='<p class="error">Erreur classement : '+esc(e.message)+'</p>'; }
 }
 function checkOver() {
   if (G && G.over && !overShown) {
@@ -998,10 +1104,13 @@ function showOver() {
   if(window.SyroAuth){
     const myColor = (mode==='online'||mode==='ai') ? you : (G.players[0]&&G.players[0].color);
     const myRank = G.players.find(p=>p.color===myColor)?.rank;
+    const isWin=myRank===1;
     if(myRank===1) SyroAuth.addXp(50,'Victoire');
     else if(myRank===2) SyroAuth.addXp(30,'2e place');
     else if(myRank===3) SyroAuth.addXp(15,'3e place');
     else SyroAuth.addXp(5,'Participation');
+    try{ SyroAuth.addWin(isWin); }catch(e){}
+    confettiBurst(); haptic(50);
   }
 }
 /* bilan des captures : le plus violent (pions mangés) et le plus violenté
@@ -1625,6 +1734,35 @@ function bind() {
     else { stopWatch(); showScreen('hero'); }
   };
 
+  // Nav header neuve v2026-11-20
+  const navShop = document.getElementById('btnNavShop'); if(navShop) navShop.onclick=()=> showScreen('shop');
+  const navBoard = document.getElementById('btnNavBoard'); if(navBoard) navBoard.onclick=()=> showScreen('leaderboard');
+  const brandHome = document.getElementById('brandHome'); if(brandHome) brandHome.onclick=()=> showScreen('hero');
+  const heroShop = document.getElementById('heroShopBtn'); if(heroShop) heroShop.onclick=()=> showScreen('shop');
+  const heroBoard = document.getElementById('heroBoardBtn'); if(heroBoard) heroBoard.onclick=()=> showScreen('leaderboard');
+  const shopBack = document.getElementById('btnShopBack'); if(shopBack) shopBack.onclick=()=> showScreen('hero');
+  const boardBack = document.getElementById('btnBoardBack'); if(boardBack) boardBack.onclick=()=> showScreen('hero');
+  const boardRefresh = document.getElementById('btnBoardRefresh'); if(boardRefresh) boardRefresh.onclick=()=> renderLeaderboard();
+  document.querySelectorAll('#shopTabs button').forEach(b=> b.onclick=()=>{ _shopCat=b.dataset.cat; renderShop(); });
+  const btnSound = document.getElementById('btnSound'); if(btnSound) btnSound.onclick=()=>{
+    const isOff=document.documentElement.dataset.sound==='off';
+    if(isOff){ delete document.documentElement.dataset.sound; localStorage.setItem('syro_sound','on'); btnSound.textContent='🔊'; toast('Son activé'); }
+    else { document.documentElement.dataset.sound='off'; localStorage.setItem('syro_sound','off'); btnSound.textContent='🔇'; toast('Son coupé'); }
+  };
+  // Online ping tracker
+  const _origPost = window.postAction; // will be defined later, wrap applyServer instead
+  // hook fetch for ping
+  const _fetchOrig = window.fetch;
+  if(_fetchOrig){
+    const origFetch=window.fetch;
+    window.fetch = async function(u,o){
+      const s=Date.now();
+      const r=await origFetch(u,o);
+      try{ if(String(u).includes('/api/rooms')) trackPing(s); }catch(e){}
+      return r;
+    };
+  }
+
   // Palier 2 — Auth SYRO (onglets premium)
   let authMode = 'login';
   function setAuthMode(m){
@@ -1690,7 +1828,7 @@ async function init() {
   buildBoard();
   bind();
   // Palier 2 : auth + XP
-  if(window.SyroAuth) SyroAuth.init();
+  if(window.SyroAuth) { SyroAuth.init(); setTimeout(()=>{ try{ applySkinsToBoard(); }catch(e){} }, 800); }
   const _ub = document.getElementById('syroUserBadge');
   if(_ub) _ub.onclick = ()=> showScreen('auth');
   /* backend de partie en ligne : Firebase si configuré, sinon le serveur (Arena) */
@@ -1745,10 +1883,29 @@ async function init() {
   window.addEventListener('popstate', () => {
     const p = new URLSearchParams(location.search).get('room');
     if (!p && mode === 'online' && !document.querySelector('#screen-game').classList.contains('hidden')) {
-      // il a quitté le lien → on le libère vraiment
       stopWatch();
       room = { code:null, token:null };
     }
   });
+  // Fluidité online : reconnexion auto + barre état
+  let _onlineWatchdog=null;
+  function startOnlineWatchdog(){
+    if(_onlineWatchdog) clearInterval(_onlineWatchdog);
+    _onlineWatchdog=setInterval(async()=>{
+      if(mode!=='online' || !room.code) return;
+      if(!navigator.onLine){ updateOnlineBar(false); return; }
+      // si watch bloqué >5s sans tick, force refresh
+      try{ const s=Date.now(); const r=await Backend.getState(room.code, room.token); if(r&&!r.error){ applyServer(r,false); trackPing(s); } else if(r&&r.error) updateOnlineBar(false); }catch(e){ updateOnlineBar(false); }
+    }, 3000);
+  }
+  const _origStartWatch = startWatch;
+  startWatch = async function(){ const r=await _origStartWatch.apply(this, arguments); updateOnlineBar(navigator.onLine!==false); startOnlineWatchdog(); return r; };
+  const _origStopWatch = stopWatch;
+  stopWatch = function(){ if(_onlineWatchdog){ clearInterval(_onlineWatchdog); _onlineWatchdog=null; } updateOnlineBar(true); return _origStopWatch.apply(this, arguments); };
+  window.addEventListener('online', ()=> updateOnlineBar(true));
+  window.addEventListener('offline', ()=> updateOnlineBar(false));
+  // PWA : save beforeinstallprompt
+  let _deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); _deferredPrompt=e; });
 }
 init();

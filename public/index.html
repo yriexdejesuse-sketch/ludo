@@ -7,25 +7,29 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-18b">
+<link rel="stylesheet" href="style.css?v=2026-11-20">
 </head>
 <body>
 <div id="app">
   <!-- HEADER SYRO GAMES -->
   <header class="ludo-header">
-    <div class="brand">
+    <div class="brand" id="brandHome" style="cursor:pointer;">
       <div class="brand-logo">🎲</div>
       <div>SYRO <span style="color:var(--accent);">GAMES</span><small>Le Ludo en ligne entre amis</small></div>
     </div>
     <div class="header-actions">
+      <button class="icon-btn" id="btnNavShop" title="Boutique">🛒<span class="nav-badge" id="shopCoinsBadge">0 🪙</span></button>
+      <button class="icon-btn" id="btnNavBoard" title="Classement">🏆</button>
       <div class="syro-user" id="syroUserBadge" title="Profil SYRO"> <span style="opacity:.6">...</span></div>
       <button class="icon-btn" id="btnTheme" title="Clair / sombre">☀️</button>
-      <div class="lang-switch" id="btnLang">🌐 EN</div>
+      <button class="icon-btn" id="btnSound" title="Son ON/OFF" style="font-size:.95rem">🔊</button>
     </div>
   </header>
 
+  <div id="onlineBar" class="online-bar hidden"><span class="dot"></span> <span id="onlineBarText">En ligne</span><span id="onlinePing" class="ping"></span></div>
   <div id="toast" class="toast"></div>
   <div id="myColorBadge" class="color-badge hidden"></div>
+  <canvas id="confetti" class="confetti-canvas hidden"></canvas>
 
   <!-- ================= HERO — niveau ludoafrik.com/app ================= -->
   <section id="screen-hero" class="screen">
@@ -43,6 +47,15 @@
         <button class="cta-secondary" id="btnShowLogin">ou avec un compte — Connexion / Inscription</button>
       </div>
       <div class="hero-foot">Tu choisiras ton personnage juste après. <a href="#" id="linkRulesHero">Règles du jeu</a></div>
+      <div class="hero-extra">
+        <button class="badge" id="heroBoardBtn" style="cursor:pointer;">🏆 Classement</button>
+        <button class="badge" id="heroShopBtn" style="cursor:pointer;">🛒 Boutique</button>
+      </div>
+    </div>
+    <div class="hero-features">
+      <div class="feat"><span>⚡</span><b>Sans lag</b><small>Temps réel Supabase</small></div>
+      <div class="feat"><span>🎨</span><b>Skins</b><small>Pions & plateaux</small></div>
+      <div class="feat"><span>📱</span><b>Mobile</b><small>100% tactile</small></div>
     </div>
 
   </section>
@@ -83,6 +96,32 @@
       <div style="height:1px; background:var(--line); margin:14px 0;"></div>
       <button class="big-btn ghost" id="btnBackHero" style="width:100%;">← Retour</button>
       <p class="hint" style="margin-top:10px;"><a href="#">Mot de passe oublié ?</a> · <a href="#">CGU</a> · <a href="#">Mentions légales</a></p>
+    </div>
+  </section>
+
+  <!-- ================= BOUTIQUE ================= -->
+  <section id="screen-shop" class="screen hidden">
+    <div class="shop-head">
+      <h2>🛒 Boutique SYRO</h2>
+      <p class="hint">Débloque des skins avec tes <b id="shopCoinsBig">0 🪙</b> — gagne des 🪙 en jouant !</p>
+      <div class="shop-tabs" id="shopTabs">
+        <button data-cat="pion" class="sel">♟ Pions</button>
+        <button data-cat="plateau">🎨 Plateau</button>
+        <button data-cat="de">🎲 Dés</button>
+        <button data-cat="son">🔊 Sons</button>
+      </div>
+    </div>
+    <div id="shopGrid" class="shop-grid"></div>
+    <div class="row center" style="margin-top:14px"><button class="big-btn ghost" id="btnShopBack">← Retour</button></div>
+  </section>
+
+  <!-- ================= CLASSEMENT ================= -->
+  <section id="screen-leaderboard" class="screen hidden">
+    <div class="card" style="max-width:640px">
+      <h2>🏆 Classement SYRO</h2>
+      <p class="hint">Top joueurs par XP — mis à jour en temps réel</p>
+      <div id="leaderboardList" class="leaderboard-list"><p class="hint">Chargement…</p></div>
+      <div class="row center"><button class="big-btn ghost" id="btnBoardBack">← Retour</button><button class="big-btn primary small" id="btnBoardRefresh">↻ Actualiser</button></div>
     </div>
   </section>
 
@@ -281,13 +320,16 @@ document.getElementById('btnTheme').onclick=()=>{
   document.getElementById('btnTheme').textContent = nxt==='light'?'🌙':'☀️';
 };
 try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}
+// Son ON/OFF
+try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.documentElement.dataset.sound='off'; }catch(e){}
+const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-18b"></script>
-<script src="backends.js?v=2026-11-18b"></script>
-<script src="firebase-config.js?v=2026-11-18b"></script>
-<script src="supabase-config.js?v=2026-11-18b"></script>
-<script src="syro-supabase.js?v=2026-11-18b"></script>
-<script src="app.js?v=2026-11-18b"></script>
+<script src="engine.js?v=2026-11-20"></script>
+<script src="backends.js?v=2026-11-20"></script>
+<script src="firebase-config.js?v=2026-11-20"></script>
+<script src="supabase-config.js?v=2026-11-20"></script>
+<script src="syro-supabase.js?v=2026-11-20"></script>
+<script src="app.js?v=2026-11-20"></script>
 </body>
 </html>

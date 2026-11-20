@@ -346,6 +346,63 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
 .hl-rules{background:rgba(224,168,46,.12);padding:7px 10px;border-radius:10px;list-style:none;margin-left:-20px; border:1px solid rgba(224,168,46,0.18);}
 .ranking{padding-left:26px;font-size:1.15rem;line-height:2}
 
+/* ===== SYRO v2026-11-20 — boutique / classement / fluidité / polish ===== */
+.online-bar{position:sticky; top:61px; z-index:39; display:flex; align-items:center; gap:8px; justify-content:center; padding:6px 12px; font-size:.78rem; font-weight:700; background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.25); border-radius:999px; margin:0 auto 10px; max-width:420px; color:#15803d;}
+.online-bar.hidden{display:none !important}
+.online-bar.offline{background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.25); color:#b91c1c}
+.online-bar .dot{width:8px; height:8px; border-radius:50%; background:#22c55e; animation:onlinePulse 1.2s infinite}
+.online-bar.offline .dot{background:#ef4444; animation:none}
+@keyframes onlinePulse{0%,100%{opacity:1; transform:scale(1)}50%{opacity:.6; transform:scale(1.2)}}
+.online-bar .ping{margin-left:auto; opacity:.7; font-size:.7rem}
+.confetti-canvas{position:fixed; inset:0; pointer-events:none; z-index:60; width:100%; height:100%}
+.shop-head{text-align:center; margin-bottom:14px}
+.shop-tabs{display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap}
+.shop-tabs button{appearance:none; border:1.5px solid var(--line); background:var(--card); color:var(--muted); padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer; font-size:.85rem}
+.shop-tabs button.sel{background:var(--accent); color:#422c0e; border-color:var(--accent)}
+.shop-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; max-width:760px; margin:0 auto}
+.shop-card{background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:14px; text-align:center; transition:.15s; position:relative; overflow:hidden}
+.shop-card:hover{transform:translateY(-3px); box-shadow:0 12px 28px rgba(0,0,0,.12); border-color:var(--accent)}
+.shop-card.owned{border-color:#22c55e; background:linear-gradient(180deg, rgba(34,197,94,.08), var(--card))}
+.shop-card.equipped{border-color:var(--accent); box-shadow:0 0 0 2px rgba(224,168,46,.35)}
+.shop-card .sc-prev{font-size:2rem; margin-bottom:6px}
+.shop-card h4{margin:4px 0 2px; font-family:'Baloo 2',sans-serif; font-size:1rem}
+.shop-card p{margin:0; font-size:.78rem; color:var(--muted)}
+.shop-card .sc-price{margin-top:8px; font-weight:800; color:var(--accent)}
+.shop-card .sc-actions{display:flex; gap:6px; margin-top:10px; justify-content:center}
+.shop-card .sc-actions button{flex:1; padding:7px 8px; border-radius:10px; border:1.5px solid var(--line); background:var(--bg2); font-weight:800; cursor:pointer; font-size:.8rem}
+.shop-card .sc-actions button.buy{background:var(--accent); color:#422c0e; border-color:var(--accent)}
+.shop-card .sc-actions button.equip{background:#22c55e; color:#fff; border-color:#22c55e}
+.leaderboard-list{display:grid; gap:8px; margin:12px 0}
+.lb-row{display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg2); border:1.5px solid var(--line); border-radius:12px}
+.lb-row.me{border-color:var(--accent); background:rgba(224,168,46,.12)}
+.lb-rank{width:28px; height:28px; display:grid; place-items:center; font-weight:800; background:var(--card); border-radius:50%; border:1.5px solid var(--line); font-size:.85rem}
+.lb-row.top1 .lb-rank{background:linear-gradient(135deg,#ffd700,#ffb700); color:#422c0e; border-color:#e0a82e}
+.lb-info{flex:1}
+.lb-info b{display:block; font-size:.92rem}
+.lb-info small{color:var(--muted)}
+.lb-xp{font-weight:800; color:var(--accent)}
+.hero-extra{display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap}
+.hero-features{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px}
+.hero-features .feat{background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:10px; text-align:center}
+.hero-features .feat span{font-size:1.3rem}
+.hero-features .feat b{display:block; font-size:.85rem}
+.hero-features .feat small{color:var(--muted); font-size:.72rem}
+#btnNavShop .nav-badge{font-size:.68rem; background:var(--accent); color:#422c0e; padding:2px 6px; border-radius:999px; margin-left:4px; font-weight:800}
+.pawn-skin-neon{filter:drop-shadow(0 0 8px #06b6d4) drop-shadow(0 0 14px #3b82f6)}
+.pawn-skin-gold circle:first-child{fill:#facc15 !important; stroke:#eab308 !important}
+.pawn-skin-fire{animation:fireFlick 0.4s infinite alternate}
+@keyframes fireFlick{from{filter:drop-shadow(0 0 6px #f97316)} to{filter:drop-shadow(0 0 12px #ef4444)}}
+[data-board-skin="board_neon"] #board{filter:contrast(1.1) saturate(1.2)}
+[data-board-skin="board_savanna"] #board{background:#fdf6e3}
+[data-board-skin="board_ocean"] #board{background:#e0f2fe}
+.board-die.skin-crystal{background:rgba(255,255,255,.85); backdrop-filter:blur(4px); border-color:#93c5fd}
+.board-die.skin-gold{background:linear-gradient(135deg,#fef3c7,#fde68a); border-color:#e0a82e}
+.capture-shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-4px,2px)}50%{transform:translate(4px,-2px)}75%{transform:translate(-2px,-1px)}}
+.home-bounce{animation:bounce .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bounce{0%{transform:scale(1)}40%{transform:scale(1.25)}60%{transform:scale(.9)}100%{transform:scale(1)}}
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0}
+
 /* footer */
 .app-footer{
   text-align:center; margin-top:24px; padding:16px 0; border-top:1px solid var(--line);
@@ -357,13 +414,26 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
 @media (max-width:760px){
   .game-layout{display:block}
   .panel{margin-top:18px}
-  .ludo-header{padding:8px 12px;}
+  .ludo-header{padding:8px 12px; gap:6px}
+  .ludo-header .header-actions{gap:6px}
+  .ludo-header .icon-btn{width:34px; height:34px; font-size:.95rem}
+  .syro-user{padding:5px 8px; max-width:140px}
+  .syro-user .u-txt b{max-width:80px; font-size:.78rem}
   .brand{font-size:1.15rem;}
   .hero h1{font-size:1.55rem;}
   .hero{padding:22px 16px; border-radius:20px;}
+  .hero-features{grid-template-columns:1fr}
   .code-big{font-size:2rem}
   .board-die{width:40px;height:40px}
-  #board{border-radius:16px;}
+  #board{border-radius:16px; touch-action:manipulation}
+  .shop-grid{grid-template-columns:repeat(2,1fr)}
+  .panel{padding:12px}
+  .mini-choice{transform:translate(-50%,-125%) scale(.92)}
+}
+@media (max-width:760px) and (orientation:landscape){
+  .game-layout{display:flex}
+  .board-wrap{flex:0 1 52vw}
+  .panel{flex:1; max-height:92vh; overflow:auto}
 }
 @media (max-width:430px){
   .board-die{width:34px;height:34px;padding:4px;border-width:2px}
