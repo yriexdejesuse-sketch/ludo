@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-17d">
+<link rel="stylesheet" href="style.css?v=2026-11-18">
 </head>
 <body>
 <div id="app">
@@ -274,10 +274,11 @@ document.getElementById('btnTheme').onclick=()=>{
 try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-17d"></script>
-<script src="backends.js?v=2026-11-17d"></script>
-<script src="firebase-config.js?v=2026-11-17d"></script>
-<script src="auth.js?v=2026-11-17d"></script>
-<script src="app.js?v=2026-11-17d"></script>
+<script src="engine.js?v=2026-11-18"></script>
+<script src="backends.js?v=2026-11-18"></script>
+<script src="firebase-config.js?v=2026-11-18"></script>
+<script src="supabase-config.js?v=2026-11-18"></script>
+<script src="syro-supabase.js?v=2026-11-18"></script>
+<script src="app.js?v=2026-11-18"></script>
 </body>
 </html>
