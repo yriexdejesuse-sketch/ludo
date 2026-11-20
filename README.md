@@ -60,3 +60,50 @@ Voir `MISE_EN_LIGNE.md` pour refaire une mise en ligne.
 - **56 = maison finale intouchable**.
 - **Capture stricte** : manger avec un dé exige un autre pion pour l'autre dé. Somme = uniquement pour capturer.
 - Partie continue tant que 2 joueurs non classés. Bilan : plus violent / plus violenté.
+
+### Détail des règles avec exemples
+
+| Situation | Ce qui se passe | Exemple |
+|---|---|---|
+| **Sortir de base** | Il faut un **6** sur un dé. Tu peux enchaîner l'autre dé sur le pion sorti. | Tu fais 6+2 → sors en 0 puis avance de 2 |
+| **Double 6** | Tu rejoues. **3 double-6 de suite = tour perdu** | 6+6 → relance, encore 6+6 → relance, encore 6+6 → perdu |
+| **Étoile ⭐** | Case coffre-fort : 2 pions dessus = côte à côte, **personne n'est mangé** | Rouge sur étoile, Bleu fait 1 → s'empile, ne mange pas |
+| **Manger en reculant** | Si l'adversaire est à 3 derrière toi et tu fais 3 → tu recules et le manges | Rouge en 20, Jaune en 17, tu fais 3 → recul + capture |
+| **Somme 3+2=5** | Uniquement pour manger (recul ou entrée couloir), jamais pour sortir | 1 pion seul + 4+2=6 → pas de sortie, tour passe |
+| **Même pion qui mixe** | Interdit : avance avec dé 1 puis recule avec dé 2 sur **même pion** → bloqué | Pion A avance de 2, même pion A veut reculer de 3 → refusé |
+| **5 dernières cases** | En 51, 52, 53, 54, 55 tu peux manger **devant ET derrière** | En 53, ennemi en 51 (couloir) ou en 50 (anneau) → tu peux reculer de 2 ou 3 pour manger |
+
+## 🗺️ Schéma du jeu
+
+```mermaid
+graph TD
+    HERO[Hero SYRO<br/>Jouer sans compte / Connexion] --> MENU[Menu<br/>Local / vs IA / Simu / Online]
+    MENU --> SETUP[Setup<br/>Couleurs + Noms + 2/3/4 joueurs]
+    SETUP --> LOBBY[Lobby Online<br/>Code + Lien + Choix couleur]
+    LOBBY --> GAME[Plateau<br/>2 dés + Pions + Chronique]
+    SETUP --> GAME
+    GAME --> OVER[Podium<br/>1er/2e/3e + Bilan captures]
+
+    GAME <--> ENGINE[(engine.js<br/>Règles strictes)]
+    GAME <--> BACKEND[(backends.js<br/>Firebase temps réel)]
+```
+
+> `engine.js` ne touche jamais au DOM — `app.js` ne contient jamais de règle — c'est ce qui rend le jeu testable (20 tests en 0,4s).
+
+## 🎬 Vidéo démo
+
+**30s pour comprendre :**
+
+[![SYRO GAMES Démo](https://img.shields.io/badge/▶_Voir_la_démo-YouTube-e0a82e?style=for-the-badge)](https://yriexdejesuse-sketch.github.io/ludo/)
+
+> 🎥 *Vidéo à venir : partie à 3 en ligne (Rouge vs Jaune vs Bleu) — sortie au 6, capture en recul, empilement sur étoile, victoire + bilan.*
+> En attendant : lance une partie locale à 3 pour voir le plateau pivoter sur chaque couleur.
+
+### Aperçu
+
+```
+[ SYRO GAMES Header + Hero badges live ]
+[ 🎲 Jouer sans compte ] → [ Menu 5 modes ] → [ Setup 3 joueurs ] → [ Plateau SVG 600x600 + 2 dés + Panel ]
+                                                    ↓
+                                          [ Tour : Rouge joue + Chronique + Bilan ]
+```
