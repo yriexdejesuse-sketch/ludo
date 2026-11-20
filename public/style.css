@@ -289,10 +289,11 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
 @keyframes hintBlink{0%,100%{opacity:1}50%{opacity:.75}}
 #diceHint.hide{display:none}
 
-/* mini-choix près du pion */
+/* mini-choix près du pion — z-index > header (40) pour ne jamais passer dessous */
 .mini-choice{
-  position:absolute;z-index:8;transform:translate(-50%,-135%);
+  position:absolute;z-index:50;transform:translate(-50%,-135%);
   display:flex;flex-direction:column;gap:6px;pointer-events:auto;
+  max-width:min(92vw, 320px);
 }
 .mini-choice button{
   background:var(--text);color:var(--bg2);border:2px solid var(--accent);border-radius:12px;

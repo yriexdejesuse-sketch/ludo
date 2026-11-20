@@ -589,28 +589,43 @@ function showMiniChoice(die, opts) {
     };
   });
   el.classList.remove('hidden');
-  // Fix plateau collé en haut : recaler le menu dans l'écran (jamais hors viewport)
+  // Position initiale : au-dessus du pion (défaut)
+  el.style.transform = 'translate(-50%, -135%)';
+  el.style.maxHeight = '42vh'; el.style.overflowY = 'auto'; el.style.zIndex = '50';
+  // Fix : le pion en haut était caché sous le header sticky (z-index 40)
   requestAnimationFrame(()=>{
-    const r=el.getBoundingClientRect();
-    const pad=8;
-    let dx=0, dy=0;
-    if(r.top < pad) dy = pad - r.top;
-    if(r.bottom > innerHeight - pad) dy = (innerHeight - pad) - r.bottom;
-    if(r.left < pad) dx = pad - r.left;
-    if(r.right > innerWidth - pad) dx = (innerWidth - pad) - r.right;
-    if(dx||dy){
-      const curLeft=parseFloat(el.style.left)||0;
-      const curTop=parseFloat(el.style.top)||0;
-      // convertir px shift en % approximatif (boardWrap width ~ viewport)
-      const wrap=document.querySelector('.board-wrap'); const w=wrap?wrap.clientWidth:600;
-      el.style.left = `calc(${curLeft}% + ${dx}px)`;
-      el.style.top = `calc(${curTop}% + ${dy}px)`;
-      // si vraiment en haut, forcer sous le pion
-      if(my < 100) el.style.transform='translate(-50%, 12%)';
-      else el.style.transform='translate(-50%, -135%)';
+    const header = document.querySelector('.ludo-header');
+    const headerBottom = header ? header.getBoundingClientRect().bottom + 8 : 8;
+    const boardWrap = document.querySelector('.board-wrap');
+    const boardRect = boardWrap ? boardWrap.getBoundingClientRect() : null;
+    let r = el.getBoundingClientRect();
+    const pad = 8;
+    // Si pas assez de place au-dessus (pion en haut) → passer en dessous
+    const needBelow = (my < 130) || (r.top < headerBottom + 6);
+    if(needBelow){
+      el.style.transform = 'translate(-50%, 14%)';
+      // re-mesurer après flip
+      r = el.getBoundingClientRect();
     }
-    // s'assurer scroll possible sur petit écran
-    el.style.maxHeight='42vh'; el.style.overflowY='auto';
+    // Clamp horizontal + vertical pour rester visible (viewport + board)
+    requestAnimationFrame(()=>{
+      const r2 = el.getBoundingClientRect();
+      let dx = 0, dy = 0;
+      const leftLimit = boardRect ? boardRect.left + pad : pad;
+      const rightLimit = boardRect ? boardRect.right - pad : innerWidth - pad;
+      if(r2.left < leftLimit) dx = leftLimit - r2.left;
+      if(r2.right > rightLimit) dx = rightLimit - r2.right;
+      if(r2.top < headerBottom) dy = headerBottom - r2.top;
+      if(r2.bottom > innerHeight - pad) dy = (innerHeight - pad) - r2.bottom;
+      // Ne pas sortir du board par le haut non plus
+      if(boardRect && r2.top < boardRect.top + pad) dy = Math.max(dy, (boardRect.top + pad) - r2.top);
+      if(dx||dy){
+        const curLeft = parseFloat(el.style.left)||0;
+        const curTop = parseFloat(el.style.top)||0;
+        if(dx) el.style.left = `calc(${curLeft}% + ${dx}px)`;
+        if(dy) el.style.top = `calc(${curTop}% + ${dy}px)`;
+      }
+    });
   });
   $('#hl').innerHTML = '';
   opts.forEach(o => addMarker(color, o.m));
