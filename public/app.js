@@ -385,6 +385,46 @@ function runTransition(t, done) {
   };
   step();
 }
+// --- ZOLEM FLUIDE : glisse de l'attaquant + envol du mangé chevauché ---
+function runFluidCapture(attackers, captured, onDone){
+  // attaquants : glisse fluide (pas de hop saccadé) + léger scale à l'impact
+  attackers.forEach(t=>{
+    const el = pawnEl(t.color, t.idx);
+    const toPt = (t.to===-1? baseSlot(t.color,t.idx) : t.from===-1? cellCenter(t.color,t.to) : cellCenter(t.color,t.to));
+    // si c'était un hop, on force un seul glisse pour le manger (fluide)
+    el.style.transition = 'transform 360ms cubic-bezier(0.22,1,0.36,1)';
+    el.style.transform = `translate(${toPt[0]}px,${toPt[1]}px)`;
+    // petit bump au moment de l'impact
+    setTimeout(()=>{ el.style.transition='transform 120ms cubic-bezier(0.34,1.56,0.64,1)'; el.style.transform=`translate(${toPt[0]}px,${toPt[1]}px) scale(1.08)`; setTimeout(()=>{ el.style.transform=`translate(${toPt[0]}px,${toPt[1]}px) scale(1)`; el.style.transition=''; },130); }, 270);
+  });
+  // déclenche son + shake pile à l'impact (70% du glisse)
+  setTimeout(()=>{ if(captured.length){ playTomScream(); haptic(30); captureShake(); } }, 240);
+  // mangés : s'écrasent puis s'envolent vers la base (chevauché, pas après)
+  setTimeout(()=>{
+    if(!captured.length){ onDone(); return; }
+    let left=captured.length;
+    captured.forEach(t=>{
+      const el = pawnEl(t.color, t.idx);
+      const base = baseSlot(t.color, t.idx);
+      // 1) hit : écrase + fade rapide sur place
+      el.style.transition = 'transform 140ms cubic-bezier(0.4,0,0.2,1), opacity 140ms ease';
+      // garde sa position actuelle visuelle (elle n'a pas bougé) puis scale down
+      const cur = el.style.transform || '';
+      // on force l'échelle sur place
+      el.style.transform = cur.replace(/scale\([^)]+\)/g,'').trim() + ' scale(0.65)';
+      el.style.opacity = '0.55';
+      el.style.filter = 'brightness(1.2)';
+      setTimeout(()=>{
+        // 2) envol vers la base
+        el.style.transition = 'transform 440ms cubic-bezier(0.33,0,0.2,1), opacity 320ms ease, filter 300ms ease';
+        el.style.transform = `translate(${base[0]}px,${base[1]}px) scale(1)`;
+        el.style.opacity = '1';
+        el.style.filter = '';
+        setTimeout(()=>{ el.style.transition=''; if(--left<=0) onDone(); }, 460);
+      }, 150);
+    });
+  }, 220);
+}
 function animateDiff(oldS, newS, after) {
   const ops = [];
   newS.players.forEach(p => {
@@ -397,32 +437,33 @@ function animateDiff(oldS, newS, after) {
   });
   if (!ops.length) { syncPawns(); after && after(); return; }
   animating = true;
-  let active = 0;
-  // Séparer attaquant vs mangé : attaquant d'abord, mangé après (pas désordonné)
   const attackers = ops.filter(t=> t.to!==-1);
   const captured = ops.filter(t=> t.to===-1);
-  function runBatch(batch, cb){
+  // cas ZOLEM (manger) → anim fluide chevauchée, sinon anim normale séquentielle
+  if(captured.length && attackers.length){
+    runFluidCapture(attackers, captured, ()=>{
+      // arrivée maison éventuelle
+      attackers.forEach(t=>{ if(t.to===56){ Snd.home(); haptic(25); const el=pawnEl(t.color,t.idx); el.classList.add('home-bounce'); setTimeout(()=>el.classList.remove('home-bounce'),700); } });
+      animating=false; syncPawns(); applySkinsToBoard();
+      const q=queuedCommit; queuedCommit=null; if(q) q(); else after&&after();
+    });
+    return;
+  }
+  // pas de capture : anim classique
+  let active = 0;
+  const runBatch=(batch, cb)=>{
     if(!batch.length) return cb();
     let active=batch.length;
     batch.forEach(t=>{
-      if(t.to===-1) { playTomScream(); haptic(30); captureShake(); }
       runTransition(t, ()=>{
         if(t.to===56){ Snd.home(); haptic(25); const el=pawnEl(t.color,t.idx); el.classList.add('home-bounce'); setTimeout(()=>el.classList.remove('home-bounce'),700); }
         if(--active<=0) cb();
       });
     });
-  }
-  animating=true;
-  runBatch(attackers, ()=>{
-    if(captured.length){
-      setTimeout(()=> runBatch(captured, ()=>{
-        animating=false; syncPawns(); applySkinsToBoard();
-        const q=queuedCommit; queuedCommit=null; if(q) q(); else after&&after();
-      }), 120);
-    } else {
-      animating=false; syncPawns(); applySkinsToBoard();
-      const q=queuedCommit; queuedCommit=null; if(q) q(); else after&&after();
-    }
+  };
+  runBatch(attackers.length? attackers : captured, ()=>{
+    animating=false; syncPawns(); applySkinsToBoard();
+    const q=queuedCommit; queuedCommit=null; if(q) q(); else after&&after();
   });
 }
 
