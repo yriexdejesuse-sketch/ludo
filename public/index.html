@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-17b">
+<link rel="stylesheet" href="style.css?v=2026-11-17c">
 </head>
 <body>
 <div id="app">
@@ -49,23 +49,31 @@
 
   <!-- ================= ECRAN CONNEXION (maquette LudoAfrik) ================= -->
   <section id="screen-auth" class="screen hidden">
-    <div class="card center-text" style="max-width:420px;">
-      <h2 style="font-family:'Baloo 2',sans-serif;">Bienvenue sur SYRO GAMES</h2>
-      <p class="hint">Pseudo automatique · ton XP est gardé si tu crées ton compte ensuite</p>
-      <div style="display:grid; gap:10px; margin:16px 0;">
-        <button class="cta-primary" id="btnGuestContinue">Continuer sans compte</button>
-        <div style="display:flex; align-items:center; gap:12px; color:var(--muted); font-size:.8rem;"><span style="flex:1; height:1px; background:var(--line);"></span> ou avec un compte <span style="flex:1; height:1px; background:var(--line);"></span></div>
-        <input id="authEmail" placeholder="Email" type="email" autocomplete="email" style="text-align:center;">
-        <input id="authPassword" placeholder="Mot de passe" type="password" autocomplete="current-password" style="text-align:center;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
-          <button class="big-btn primary" id="btnLogin">Se connecter</button>
-          <button class="big-btn" id="btnSignup">Créer compte</button>
-        </div>
-        <p id="authError" class="error" style="min-height:1em"></p>
-        <button class="big-btn ghost" id="btnBackHero">← Retour</button>
-        <p class="hint"><a href="#">Mot de passe oublié ?</a> · <a href="#">CGU</a> · <a href="#">Mentions légales</a></p>
-        <p class="hint"><b>SYRO GAMES</b> — ton XP est gardé à la création</p>
+    <div class="card center-text" style="max-width:420px; padding:26px 22px;">
+      <h2 style="font-family:'Baloo 2',sans-serif; margin-bottom:4px;">Bienvenue sur SYRO GAMES</h2>
+      <p class="hint" style="margin-bottom:14px;">Pseudo automatique · ton XP est gardé si tu crées ton compte ensuite</p>
+      <button class="cta-primary" id="btnGuestContinue" style="width:100%; margin-bottom:14px;">Continuer sans compte</button>
+      <div style="display:flex; align-items:center; gap:12px; color:var(--muted); font-size:.8rem; margin:8px 0 12px;"><span style="flex:1; height:1px; background:var(--line);"></span> ou avec un compte <span style="flex:1; height:1px; background:var(--line);"></span></div>
+
+      <!-- Onglets premium : Connexion / Inscription -->
+      <div class="auth-tabs" id="authTabs">
+        <button class="auth-tab active" data-tab="login">Se connecter</button>
+        <button class="auth-tab" data-tab="signup">Créer un compte</button>
       </div>
+
+      <!-- Formulaire unique : le bouton change selon l'onglet -->
+      <div id="authForm" style="display:grid; gap:10px; margin-top:12px;">
+        <p id="authTabHint" class="hint" style="margin:2px 0 4px; min-height:1.2em;">Déjà un compte ? Connecte-toi pour retrouver ton XP.</p>
+        <input id="authEmail" placeholder="Adresse email" type="email" autocomplete="email">
+        <input id="authPassword" placeholder="Mot de passe (6 car. min)" type="password" autocomplete="current-password">
+        <button class="cta-primary" id="btnAuthPrimary" style="margin-top:4px;">Se connecter →</button>
+        <p id="authError" class="error" style="min-height:1.2em; margin-top:2px;"></p>
+        <p class="hint" id="authSwitchHint">Pas encore de compte ? <a href="#" id="linkToSignup">Créer un compte</a></p>
+      </div>
+
+      <div style="height:1px; background:var(--line); margin:14px 0;"></div>
+      <button class="big-btn ghost" id="btnBackHero" style="width:100%;">← Retour</button>
+      <p class="hint" style="margin-top:10px;"><a href="#">Mot de passe oublié ?</a> · <a href="#">CGU</a> · <a href="#">Mentions légales</a></p>
     </div>
   </section>
 
@@ -266,10 +274,10 @@ document.getElementById('btnTheme').onclick=()=>{
 try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-17b"></script>
-<script src="backends.js?v=2026-11-17b"></script>
-<script src="firebase-config.js?v=2026-11-17b"></script>
-<script src="auth.js?v=2026-11-17b"></script>
-<script src="app.js?v=2026-11-17b"></script>
+<script src="engine.js?v=2026-11-17c"></script>
+<script src="backends.js?v=2026-11-17c"></script>
+<script src="firebase-config.js?v=2026-11-17c"></script>
+<script src="auth.js?v=2026-11-17c"></script>
+<script src="app.js?v=2026-11-17c"></script>
 </body>
 </html>

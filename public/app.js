@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-17b';
+const APP_VERSION = 'v2026-11-17c';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -1625,31 +1625,59 @@ function bind() {
     else { stopWatch(); showScreen('hero'); }
   };
 
-  // Palier 2 — Auth SYRO
-  const doAuth = async (type)=>{
+  // Palier 2 — Auth SYRO (onglets premium)
+  let authMode = 'login';
+  function setAuthMode(m){
+    authMode = m;
+    document.querySelectorAll('.auth-tab').forEach(b=> b.classList.toggle('active', b.dataset.tab===m));
+    const hint = document.getElementById('authTabHint');
+    const btn = document.getElementById('btnAuthPrimary');
+    const sw = document.getElementById('authSwitchHint');
+    if(m==='login'){
+      if(hint) hint.textContent='Déjà un compte ? Connecte-toi pour retrouver ton XP.';
+      if(btn) btn.textContent='Se connecter →';
+      if(sw) sw.innerHTML='Pas encore de compte ? <a href=\"#\" id=\"linkToSignup\">Créer un compte</a>';
+    } else {
+      if(hint) hint.textContent='Nouveau chez SYRO ? Crée ton compte — ton XP invité sera gardé.';
+      if(btn) btn.textContent='Créer mon compte →';
+      if(sw) sw.innerHTML='Déjà un compte ? <a href=\"#\" id=\"linkToLogin\">Se connecter</a>';
+    }
+    // rebind links
+    const l1=document.getElementById('linkToSignup'); if(l1) l1.onclick=(e)=>{e.preventDefault(); setAuthMode('signup');};
+    const l2=document.getElementById('linkToLogin'); if(l2) l2.onclick=(e)=>{e.preventDefault(); setAuthMode('login');};
+    const err=document.getElementById('authError'); if(err) err.textContent='';
+  }
+  document.querySelectorAll('.auth-tab').forEach(b=> b.onclick=()=> setAuthMode(b.dataset.tab));
+  // init
+  setAuthMode('login');
+  const doAuth = async ()=>{
     const email = document.getElementById('authEmail')?.value.trim();
     const pass = document.getElementById('authPassword')?.value.trim();
     const errEl = document.getElementById('authError');
     if(errEl) errEl.textContent='';
     if(!email || !pass){ if(errEl) errEl.textContent='Email + mot de passe requis (6 car. min)'; return; }
-    const btnL = document.getElementById('btnLogin'), btnS=document.getElementById('btnSignup');
-    if(btnL) btnL.disabled=true; if(btnS) btnS.disabled=true;
+    const btn = document.getElementById('btnAuthPrimary');
+    if(btn) btn.disabled=true;
     if(errEl) errEl.textContent='Chargement...';
     try{
-      if(type==='login') await SyroAuth.signInEmail(email, pass);
+      if(authMode==='login') await SyroAuth.signInEmail(email, pass);
       else await SyroAuth.signUpEmail(email, pass);
       if(errEl) errEl.textContent='';
-      toast(type==='login'?'Connecté ✓':'Compte créé ✓ — XP gardé');
+      toast(authMode==='login'?'Connecté ✓':'Compte créé ✓ — XP gardé');
       showScreen('hero');
     }catch(e){
       const msg = (window.SyroAuth && SyroAuth.friendlyError) ? SyroAuth.friendlyError(e) : (e.message||'Erreur');
       if(errEl) errEl.textContent = msg;
     }finally{
-      if(btnL) btnL.disabled=false; if(btnS) btnS.disabled=false;
+      if(btn) btn.disabled=false;
     }
   };
-  if($('#btnLogin')) $('#btnLogin').onclick = ()=> doAuth('login');
-  if($('#btnSignup')) $('#btnSignup').onclick = ()=> doAuth('signup');
+  if($('#btnAuthPrimary')) $('#btnAuthPrimary').onclick = doAuth;
+  // Enter key
+  ['authEmail','authPassword'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') doAuth(); });
+  });
 
   $('#board').addEventListener('click', () => hideMini());
   document.addEventListener('click', () => Snd.unlock(), { passive: true });

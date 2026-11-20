@@ -1,4 +1,4 @@
-/* SYRO GAMES — Auth + XP (Palier 2) v2026-11-17bb */
+/* SYRO GAMES — Auth + XP (Palier 2) v2026-11-17cb */
 'use strict';
 window.SyroAuth = (function(){
   let app=null, auth=null, db=null, apiFS=null, authMod=null, user=null, profile=null;
