@@ -1,165 +1,75 @@
-# 🎲 Ludo — jeu en ligne à deux ou à quatre
+# 🎲 SYRO GAMES — Le Ludo en ligne à 2, 3 ou 4 joueurs
 
-## ▶ Le jeu est déjà en ligne : https://yriexdejesuse-sketch.github.io/ludo/
+## ▶ Joue direct : https://yriexdejesuse-sketch.github.io/ludo/
 
-Ouvre le lien : l'onglet affiche la **version** (ex. `(v2026-11-13d)`) —
-si elle manque, rafraîchis avec **Ctrl+Maj+R**.
+Ouvre le lien : l'onglet affiche **SYRO GAMES (v2026-11-16)**.
+Si tu vois une ancienne version, fais **Ctrl+Maj+R**.
 
-Jeu de Ludo complet : **local à 2, 3 ou 4 joueurs** (même écran),
-**contre l'ordinateur** (2 ou 4 joueurs), ou **en ligne avec un ami**
-(partage d'un code / lien).
+Jeu complet : **local 2/3/4 joueurs** (même écran), **vs ordinateur**, **en ligne** avec un code/lien. Thème SYRO clair/sombre, plateau qui pivote sur ta couleur.
 
-## 🎮 Jouer en ligne à deux
+## 🔒 Tes données sont-elles en sécurité ?
 
-1. **Toi** : « Créer une partie » → choisis ta couleur + tape ton nom →
-   « Lancer » → tu reçois un **code** (ex. `5AU2H`) et un **lien**
-   `…?room=CODE`.
-2. **Ton ami** : il ouvre **ton lien** (ou tape le code sur la page
-   d'accueil) → il arrive dans le lobby.
-3. **Toi, l'hôte** : clique **« ▶ Lancer la partie »** quand il est
-   prêt — **rien ne démarre tout seul**.
+**En 2 phrases :** 
+- **Aujourd'hui (dev)** les portes sont ouvertes (`allow read, write: if true`) — c'est fait exprès pour tester vite.
+- **Dès qu'on active les comptes (Palier 2) on verrouille tout :** ton mot de passe est chiffré par Google, et seul toi peux toucher ton XP. Personne ne peut te le voler ou le modifier.
 
-Mises à jour **temps réel** (aucun rafraîchissement), plateau orienté
-sur la couleur de chaque joueur, commentaires dans les cases des
-joueurs concernés.
+Détail simple :
+- Mots de passe → jamais stockés en clair, Firebase les hache automatiquement
+- XP → incrémenté (+10 capture, +50 victoire), pas modifiable à la main
+- Connexion en HTTPS partout, projet `ludo-yriex-zbv338` hébergé en Europe
+
+## 🎮 Jouer en ligne
+
+1. **Toi** : Créer une partie en ligne → couleur + pseudo → Lancer → tu reçois un **code** `5AU2H` et un **lien** `?room=CODE`
+2. **Ton ami** : ouvre ton lien → il arrive au lobby
+3. **Toi (hôte)** : clique **▶ Lancer la partie** — rien ne démarre tout seul
+
+Mises à jour **instantanées** (Firestore temps réel), tu quittes → le lien se nettoie, tu peux direct relancer une autre partie.
 
 ## Contenu
 
 ```
 ludo/
-├── server.js                 # serveur optionnel (Arena / local)
-├── package.json
+├── server.js                 # serveur local (optionnel)
 ├── README.md                 # ce fichier
-├── DOCUMENTATION.md          # règles internes, décisions, historique
-├── MISE_EN_LIGNE.md          # guide complet de mise en ligne
-├── test.js                   # tests du moteur de règles
-├── test_backends.js          # tests du backend en ligne
-├── site-github-pages.zip     # copie du site pour GitHub Pages
-└── public/                   # ← le site lui-même (servi par Pages)
-    ├── index.html            # l'interface
-    ├── style.css
-    ├── app.js                # interface, animations, sons, IA, orientation
-    ├── engine.js             # moteur de règles (partagé)
-    ├── backends.js           # partie en ligne : Firebase OU le serveur
-    └── firebase-config.js    # ✅ déjà rempli (projet ludo-yriex-zbv338)
+├── DOCUMENTATION.md          # règles + archi + historique complet
+├── MISE_EN_LIGNE.md          # guide mise en ligne
+├── test.js                   # tests moteur (20 tests)
+└── public/                   # le site (servi par GitHub Pages)
+    ├── index.html            # SYRO GAMES v2026-11-16
+    ├── style.css             # thème SYRO clair/sombre
+    ├── app.js                # interface + sons + IA
+    ├── engine.js             # moteur de règles strictes
+    ├── backends.js           # online : Firebase (Pages) ou serveur (local)
+    └── firebase-config.js    # projet ludo-yriex-zbv338 (déjà rempli)
 ```
 
-## Lancer le jeu sur ton ordinateur
+## Lancer en local
 
 ```bash
-node server.js        # ou : npm start
-# puis ouvrir http://localhost:3000
+node server.js  # http://localhost:3000
 ```
 
-Aucune dépendance : `npm install` n'est même pas nécessaire.
+## 🌐 Mise en ligne — déjà fait ✓
 
----
-
-# 🌐 Mise en ligne — c'est déjà fait ✓
-
-Tout est déjà configuré et hébergé dans ce dépôt :
-
-| | État actuel |
+| | État |
 |---|---|
-| **Site** | GitHub Pages sert la branche **`gh-pages`** (contenu de `public/` à la racine) → l'URL ci-dessus ; redéployée à chaque mise à jour |
-| **Base de données** | Firebase **Firestore**, projet **`ludo-yriex-zbv338`** (gratuit) |
-| **Config** | `public/firebase-config.js` **déjà rempli** — ne pas l'écraser |
-| **Règles Firestore** | ouvertes sur `/rooms/{code}` (le jeu est prévu entre amis) |
+| **Site** | GitHub Pages branche `gh-pages` → URL ci-dessus |
+| **Base** | Firebase Firestore `ludo-yriex-zbv338` |
+| **Config** | `firebase-config.js` déjà rempli |
+| **Règles actuelles** | `allow read, write: if true` sur `/rooms` (dev) → verrouillage prévu Palier 2 |
 
-Les étapes détaillées (recréer un projet, règles, config, déploiement)
-sont dans **`MISE_EN_LIGNE.md`**.
+Refaire une mise en ligne : voir `MISE_EN_LIGNE.md`.
 
-### Résumé — si tu veux refaire ta propre mise en ligne
+## 📜 Règles v2026-11-16 (SYRO strict)
 
-1. **Firebase** (gratuit,5 min) : **console.firebase.google.com** →
-   *Ajouter un projet* → **Build → Firestore Database → Créer une base**
-   → « Démarrer en mode test » → onglet **Règles** →
-
-   ```
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /rooms/{roomId} {
-         allow read, write: if true;
-       }
-     }
-   }
-   ```
-
-   → **Publier**. Puis **Paramètres du projet → Vos applications →
-   Web (</>)** → copier l'objet `firebaseConfig`.
-2. **Config** : colle-le dans `public/firebase-config.js`
-   (`window.FIREBASE_CONFIG = { … }`) — *dans ce dépôt, c'est déjà
-   rempli*. Détection automatique : **config remplie → Firebase** /
-   **config vide → le serveur** (mode Arena) — les deux coexistent.
-3. **GitHub Pages** (gratuit) : dépôt GitHub → **Settings → Pages →
-   Deploy from a branch** → soit la branche **`gh-pages`** avec le
-   contenu de `public/` à la racine (**comme ici**), soit `main` avec
-   `public/` déplacé à la racine → 1-2 min →
-   `https://ton-nom.github.io/nom-du-depot/`.
-4. **Partager** : tu crées la partie, tu envoies le **lien** à ton ami,
-   il rejoint, **tu lances** 🎉.
-
-## Les autres options (résumé)
-
-| Option | Lien à partager | Coût | Remarque |
-|---|---|---|---|
-| **A. Aperçu Arena** | lien de l'aperçu en direct | gratuit | marche tant que la session est ouverte |
-| **B. Render.com** | `https://ton-jeu.onrender.com` | gratuit | exécute `server.js` ; veille ~15 min |
-| **C. Oracle Cloud VM** | `https://ton-domaine` | gratuit (Always Free) | allumé 24h/24, un peu technique |
-| **D. VPS payant** | domaine au choix | ~2-7 €/mois | le plus simple côté admin |
-| **E. Firebase + Pages** ✅ | `https://ton-nom.github.io/...` | gratuit | **sans serveur, permanent** — **c'est ce qui est utilisé ici** |
-
----
-
-## Règles implémentées
-
-- 2 dés ; chaque dé = un déplacement ; **choix évidents simplifiés**
-  (2e dé automatique après le 1er coup, bascule automatique de dé si le pion
-  n'est jouable que par l'autre dé ; clic sur un pion = **menu libellé** de
-  tous ses coups, jamais de refus ; **mode zéro clic : avec un seul pion en
-  jeu, le jeu joue les deux dés tout seul — mais uniquement quand il n'y a
-  AUCUN choix : si un6 sort, le jeu s'arrête et c'est à toi de décider
-  (sortir un nouveau pion ou avancer ton pion en jeu)** ; idem pour une
-  éventuelle capture à la somme des2 dés)
-- un 6 sort de la base (enchaînement possible avec l'autre dé) ;
-  **relance uniquement sur double 6** (manger ou arriver ne relance plus) ; **3 double-6 de suite = tour perdu** ; sortir du couloir adverse par double 6 **consomme les 2 dés** → 1 seul jet supplémentaire
-- **recul uniquement pour manger sur l'anneau** (mini-choix près du pion), jamais depuis sa propre maison ; le jeu **calcule et propose à chaque lancer** tout manger en arrière possible (avec l'un des deux dés ou la **somme des deux dés** — la somme peut désormais être jouée **en avant comme en arrière**, en un seul coup) ; **recul derrière sa propre ligne de départ** : l'anneau est un cercle — un pion qui vient de sortir peut reculer sur la case « trou » située juste avant son départ et y manger un ennemi
-- **couloir adverse** : quand un pion atterrit sur la bouche d'un adversaire dont un pion est dans son couloir (les5 cases avant sa maison), on peut **entrer dans le couloir et le manger** — en avant ou en recul, sur la case de son choix (**comptage exact** : `distance anneau jusqu'à la bouche + cellule 1..5 == valeur du dé/somme`) ; le pion entré s'y déplace **librement en avant comme en arrière** (ex : 2 = +2 ou -2) et **ne peut en sortir que par double 6 ou en mangeant dehors** (depuis la bouche, à ±valeur sur l'anneau) ; le propriétaire peut, depuis **n'importe où**, **rentrer dans sa maison pour manger l'intrus** si son dé vaut exactement le numéro de la cellule (ex : intrus en 2, tu fais 2 → tu téléportes en 52 et tu manges) — **soumis à la règle stricte** (il faut un autre pion pour l'autre dé)
-- **jamais mixer avant/arrière dans le même jet** : soit tu avances (avec les 2 dés séparés ou la somme en avant), soit tu recules (avec les 2 dés ou la somme en arrière), jamais 1 dé en avant + 1 dé en arrière
-- **simulateur** : **2, 3 ou 4 ordinateurs s'affrontent seuls** — choisis leur nombre et leurs couleurs, lance, ils jouent jusqu'au bout (parfait pour tester les règles)
-- **partie locale** : **2, 3 ou 4 joueurs** sur le même écran — **chacun tape son nom et choisit sa couleur** (échange automatique si 2 joueurs prennent la même couleur) ; le plateau affiche les noms dans les cartes et le journal
-- **en ligne** : chacun écrit **son nom** (affiché dans les cartes du
-  lobby/du jeu) et choisit **sa couleur** dans le lobby — **rien ne
-  démarre tout seul : c'est l'hôte qui donne le top** (« ▶ Lancer la
-  partie ») quand les deux joueurs sont prêts ; « Rejouer » ramène au
-  lobby (l'hôte relancera)
-- **commentaires hors plateau** : plus **aucun** message flottant sur le
-  plateau (en mobile ils gênaient le clic sur les pions) — **tout** part
-  dans **la case du joueur concerné** : le dernier message du journal qui
-  le cite, mais aussi les erreurs et les invites («6 ! à toi de choisir »
- …) ; une petite barre n'apparaît que dans les menus (jamais sur un
-  plateau) ; la pastille « 👆 Clique pour lancer » vit dans le
-  **panneau** sous le plateau, plus jamais dessus
-- **plateau orienté sur toi** : le plateau **pivote** pour que ta case
-  de départ soit **en bas à gauche de ton écran** (rouge -90°, vert
-  180°, jaune +90°, bleu0°) — en ligne et contre l'ordinateur : ta
-  couleur ; en local : le joueur1
-- **badge de couleur** : une pastille fixe **en bas à gauche** de
-  l'écran te montre ta couleur — en ligne et contre l'ordinateur
-  (« Ta couleur : Rouge »), les deux couleurs en partie locale
-- **règles du manger** : **capture stricte** (un autre pion doit pouvoir
-  jouer l'autre dé — sinon un seul pion en jeu = pas de manger, y compris
-  `home_retour` : rentrer dans sa maison pour manger l'intrus exige aussi un
-  autre pion pour l'autre dé) ; **après un manger, le pion qui a mangé ne rejoue plus** du tout ce tour ;
-  départs ⭘ et étoiles ⭐ protégés ; **la somme ne sert jamais à sortir de base** (seul un `6` direct sort, pas `4+2=6`)
-- 1er à rentrer ses 4 pions gagne ; la partie continue **tant qu'au moins
-  deux joueurs n'ont pas fini** — dès qu'il n'en reste qu'un seul, il prend
-  la dernière place et **la partie s'arrête** (donc à deux, un vainqueur
-  suffit) ; à la fin, un **bilan** affiche le plus violent (pions mangés)
-  et le plus violenté (pions perdus), avec le tableau des captures
-- **dés vraiment aléatoires** : chaque jet utilise
-  `crypto.getRandomValues()` (entropie matérielle du navigateur) — le
-  résultat ne dépend d'aucun état ni d'aucun historique du jeu ; repli
-  automatique sur `Math.random` si l'API est indisponible
-- sons : lancer des dés, pas du pion, capture, maison, fin de partie
+- **2 dés** : chaque dé = un déplacement (même pion ou 2 pions). Choix auto si évident, menu si plusieurs coups.
+- **Sortie** : il faut un **6 direct** (pas 4+2=6). Enchaînement possible avec l'autre dé.
+- **Relance** : uniquement sur **double 6** (3 double-6 = tour perdu). Manger ou arriver ne relance plus.
+- **Étoiles ⭐ + départs ⭘ = protégés à 100%** : on peut s'y empiler mais jamais manger dessus, même en reculant ou avec la somme.
+- **Recul = uniquement pour manger** (partout : anneau + couloir 51-55). Avancer toujours possible.
+- **Même pion ne peut pas avancer puis reculer** dans le même tour. 2 pions différents oui.
+- **5 dernières cases (51-55)** : peuvent manger en avant ET en arrière (vers le couloir ou l'anneau).
+- **Maison 56 = intouchable**, intrus dans couloir adverse avance/recule libre, sortie par double 6 uniquement.
+- **Capture stricte** : manger avec un dé exige qu'un autre pion puisse jouer l'autre dé. Somme des 2 dés = uniquement pour capturer.
+- Partie continue tant qu'il reste 2 joueurs non classés. Bilan final : plus violent / plus violenté.
