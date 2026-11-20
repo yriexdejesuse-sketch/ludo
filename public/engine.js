@@ -1,21 +1,17 @@
 /* ============================================================
    Moteur de jeu Ludo — DEUX DÉS (partagé navigateur + serveur, UMD)
-   Règles :
+   Règles SYRO GAMES v2026-11-15 :
    - 2 à 4 joueurs, 4 pions chacun
-   - deux dés : chaque dé donne un déplacement (mêmes pions ou différents)
-   - il faut un 6 (sur un des deux dés) pour sortir de la base ;
-     on peut enchaîner avec l'autre dé sur le pion que l'on vient de sortir
-   - relance UNIQUEMENT sur DOUBLE 6 (manger ou arriver ne donne plus de relance) ;
-     trois double-6 de suite = tour perdu
-   - atterrir sur un pion ennemi le renvoie à sa base
-   - RECOULEMENT : sur l'anneau, reculer UNIQUEMENT pour manger ; dans le couloir adverse, avance ET recule LIBRES
-   - SORTIE DE COULOIR : double 6 consomme les 2 dés (1 seul jet supp.) ; intrus peut aussi sortir en mangeant dehors ; propriétaire peut entrer dans sa maison pour manger l'intrus si dé == cellule
-   - JAMAIS mixer avant/arrière dans le même jet (somme = tout en avant OU tout en arrière)
-   - RÈGLE STRICTE DE CAPTURE : manger dehors avec un dé n'est possible que si un AUTRE pion peut encore jouer l'autre dé
-   - APRÈS UN MANGER : le pion qui vient de manger ne rejoue plus du tout ce tour
-   - cases de départ et cases étoillées = protégées
-   - pions alliés empilables ; 1er à rentrer ses 4 pions gagne,
-     la partie continue pour les places suivantes
+   - deux dés : chaque dé donne un déplacement (même pion ou différents)
+   - il faut un 6 (sur un des deux dés) pour sortir de la base
+   - relance UNIQUEMENT sur DOUBLE 6 ; trois double-6 = tour perdu
+   - atterrir sur pion ennemi le renvoie à sa base SAUF sur case protégée
+   - ⭐ ÉTOILES + DÉPARTS = 100% protégés — jamais mangeable, même en reculant, même avec la somme
+   - RECUL : UNIQUEMENT pour manger (partout sur le plateau, y compris les 5 dernières cases 51-55)
+   - AVANCE/RECUL dans le même tour : AUTORISÉ mais PAS avec le même pion (dir différente = pion différent)
+   - MAISON : un pion dans ton couloir 51-55 ne peut être mangé QUE depuis le couloir ou l'anneau par comptage exact — plus de saut magique depuis n'importe où
+   - Intrus dans couloir adverse : avance + recule libres à l'intérieur
+   - 56 = maison finale = intouchable
    ============================================================ */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -23,7 +19,6 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  /* Parcours de 52 cases (sens horaire) — coordonnées [x, y] grille 15x15 */
   var RING = [
     [0,6],[1,6],[2,6],[3,6],[4,6],[5,6],
     [6,5],[6,4],[6,3],[6,2],[6,1],[6,0],
@@ -60,17 +55,12 @@
     SAFE[(s + 8) % 52] = true;
   });
 
-  /* position logique : -1 = base, -2 = case « trou » derrière le départ,
-     0..50 = anneau, 51..56 = maison */
   function ringIdxOf(color, pos) {
-    if (pos === -2) return (INFO[color].start + 51) % 52; /* le trou = juste avant le départ */
+    if (pos === -2) return (INFO[color].start + 51) % 52;
     if (pos < 0 || pos > 50) return -1;
     return (INFO[color].start + pos) % 52;
   }
 
-  /* pion piégé dans le couloir adverse :
-     pos = -(10 * (index du propriétaire + 1) + case), case = 1..5
-     ex. dans le couloir du rouge (index0) : -11..-15 ; bleu (index3) : -41..-45 */
   function intruderInfo(pos) {
     if (typeof pos !== 'number' || pos > -11 || pos < -45) return null;
     var hostIdx = Math.floor((-pos) / 10) - 1;
@@ -83,8 +73,6 @@
     return -(10 * (COLORS.indexOf(host) + 1) + cell);
   }
 
-  /* tous les pions présents sur une case d'un couloir (propriétaire +
-     intrus), alliés de ma couleur compris (ils bloquent) */
   function corridorAt(state, host, cell, myColor) {
     var res = [];
     state.players.forEach(function (p) {
@@ -99,21 +87,19 @@
         }
       });
     });
-    return res; /* alliés compris : ils bloquent la case */
+    return res;
   }
 
-  /* position logique -> cellule [x,y] ; -1 = base */
   function cellAt(color, pos) {
     var I = INFO[color];
     if (pos === -2) return RING[(I.start + 51) % 52];
     var it = intruderInfo(pos);
-    if (it) return INFO[it.host].home[it.cell - 1]; /* debout dans le couloir adverse */
+    if (it) return INFO[it.host].home[it.cell - 1];
     if (pos < 0) return null;
     if (pos <= 50) return RING[(I.start + pos) % 52];
     return I.home[pos - 51];
   }
 
-  /* cellule VISUELLE : 56 au centre (étape 2) - plus de confusion avec la case 55 */
   function visualCell(color, pos) {
     if (pos === 56) return INFO[color].home[5];
     return cellAt(color, pos);
@@ -131,7 +117,6 @@
     });
     return res;
   }
-  // Barrage : 2 pions sur sa case départ (pos 0) = infranchissable pour les adversaires
   function countOnStart(state, owner) {
     var pl = state.players.find(function(p){ return p.color===owner; });
     if (!pl) return 0;
@@ -146,7 +131,6 @@
     return false;
   }
   function isPathBlocked(state, moverColor, fromAbs, toAbs, steps, isForward) {
-    // vérifie chaque case traversée (destination incluse) pour un déplacement sur l'anneau
     for(var s=1; s<=steps; s++){
       var curAbs = isForward ? (fromAbs + s) % 52 : ((fromAbs - s) % 52 + 52) % 52;
       if(isBlockedStart(state, curAbs, moverColor)) return true;
@@ -160,14 +144,14 @@
         return { color: c, pawns: [-1, -1, -1, -1], rank: null };
       }),
       turn: 0,
-      phase: 'roll',        // roll | move | over
+      phase: 'roll',
       dice: [null, null],
       dieUsed: [false, false],
-      sixStreak: 0,         // double-6 consécutifs dans le tour
-      eaten: null,          // pion qui a mangé ce tour : il ne joue plus
-      turnCaptured: false,  // conservé pour compat, plus de relance
-      turnArrived: false,   // conservé pour compat
-      turnDir: null,       // 'fwd' | 'bwd' | null — interdit de mixer avant/arrière dans le même jet
+      sixStreak: 0,
+      eaten: null,
+      turnCaptured: false,
+      turnArrived: false,
+      pawnDir: {}, // SYRO 2026-11-15 : pion -> 'fwd'|'bwd' pour interdire même pion qui fait les 2 sens
       ranks: [],
       stats: colors.reduce(function (o, c) { o[c] = { ate: 0, lost: 0 }; return o; }, {}),
       log: ['Partie de Ludo ! Deux dés, bonne chance.'],
@@ -200,49 +184,35 @@
       if (pawnFilter != null && i !== pawnFilter) return;
       if (pos === 56) return;
 
-      /* sortie de base : seulement avec un 6 */
       if (pos === -1) {
         if (value === 6) {
           var r0 = INFO[pl.color].start;
-          var opp0 = occupiedBy(state, r0, pl.color);
-          var isSafe0 = !!SAFE[r0];
-          if (isSafe0) {
-            // stacking autorisé sur le départ (sauf futur barrage à 2 pions - étape 2)
-            out.push({ pawn: i, to: 0, type: 'out', capture: false });
-          } else if (opp0.length === 0) {
-            out.push({ pawn: i, to: 0, type: 'out', capture: false });
-          } else {
-            out.push({ pawn: i, to: 0, type: 'out', capture: false });
-          }
+          // sortie de base : étoiles/départs protégés ne bloquent pas la sortie, mais on ne mange pas dessus
+          out.push({ pawn: i, to: 0, type: 'out', capture: false, dir: 'fwd' });
         }
         return;
       }
 
-      /* pion piégé dans un couloir adverse : il s'y déplace (avant
-         normalement, recul UNIQUEMENT pour manger) ; il ne peut jamais
-         en sortir tout seul (sortie = double6, voir movesForDie) */
       var it = intruderInfo(pos);
       if (it) {
-        // Intrus dans le couloir adverse : avance ET recule LIBRES (sauf sortir)
         var fC = it.cell + value;
         if (fC <= 5) {
           var occF = corridorAt(state, it.host, fC, pl.color);
           if (occF.length === 0) {
-            out.push({ pawn: i, to: makeIntruderPos(it.host, fC), type: 'fwd', capture: false });
+            out.push({ pawn: i, to: makeIntruderPos(it.host, fC), type: 'fwd', capture: false, dir: 'fwd' });
           } else if (occF.some(function (o) { return o.color !== pl.color; })) {
-            out.push({ pawn: i, to: makeIntruderPos(it.host, fC), type: 'fwd', capture: true });
+            out.push({ pawn: i, to: makeIntruderPos(it.host, fC), type: 'fwd', capture: true, dir: 'fwd' });
           }
         }
         var bC = it.cell - value;
         if (bC >= 1) {
           var occB = corridorAt(state, it.host, bC, pl.color);
           if (occB.length === 0) {
-            out.push({ pawn: i, to: makeIntruderPos(it.host, bC), type: 'bwd', capture: false });
+            out.push({ pawn: i, to: makeIntruderPos(it.host, bC), type: 'bwd', capture: false, dir: 'bwd' });
           } else if (occB.some(function (o) { return o.color !== pl.color; })) {
-            out.push({ pawn: i, to: makeIntruderPos(it.host, bC), type: 'bwd', capture: true });
+            out.push({ pawn: i, to: makeIntruderPos(it.host, bC), type: 'bwd', capture: true, dir: 'bwd' });
           }
         }
-        // Sortie en mangeant dehors (sans double 6) : depuis la bouche, à ±value sur l'anneau
         var mouthAbs = INFO[it.host].mouth;
         [mouthAbs + value, mouthAbs - value].forEach(function (absT) {
           var a = ((absT % 52) + 52) % 52;
@@ -250,136 +220,144 @@
           if (occ.length > 0 && !SAFE[a]) {
             var offT = ((a - INFO[pl.color].start) % 52 + 52) % 52;
             var toT = (offT === 51) ? -2 : offT;
-            out.push({ pawn: i, to: toT, type: 'sortie_mange', capture: true });
+            out.push({ pawn: i, to: toT, type: 'sortie_mange', capture: true, dir: a === mouthAbs + value ? 'fwd' : 'bwd' });
           }
         });
         return;
       }
 
-      /* avancer */
+      // CAS COULOIR FINAL 51-55 (les 5 dernières cases avant maison)
+      if (pos >= 51 && pos <= 55) {
+        // AVANCER dans couloir / vers maison
+        var fwd = pos + value;
+        if (fwd <= 56) {
+          if (fwd <= 55) {
+            var laneCaptF = corridorAt(state, pl.color, fwd - 50, pl.color).some(function (o) { return o.color !== pl.color; });
+            out.push({ pawn: i, to: fwd, type: 'fwd', capture: laneCaptF, dir: 'fwd' });
+          } else {
+            // fwd == 56 maison -> pas de capture
+            out.push({ pawn: i, to: fwd, type: 'fwd', capture: false, dir: 'fwd' });
+          }
+        }
+        // RECULER depuis couloir : UNIQUEMENT pour manger, comme partout ailleurs
+        var toB = pos - value;
+        if (toB >= 51) {
+          // reste dans couloir
+          var occC = corridorAt(state, pl.color, toB - 50, pl.color);
+          if (occC.some(function(o){ return o.color !== pl.color; })) {
+            out.push({ pawn: i, to: toB, type: 'bwd', capture: true, dir: 'bwd' });
+          }
+        } else if (toB >= 0 && toB <= 50) {
+          // retombe sur l'anneau
+          var absB2 = ringIdxOf(pl.color, toB);
+          if (absB2 >= 0 && !SAFE[absB2]) {
+            var ob2 = occupiedBy(state, absB2, pl.color);
+            if (ob2.length > 0) out.push({ pawn: i, to: toB, type: 'bwd', capture: true, dir: 'bwd' });
+          }
+          // entrée adverse en recul depuis couloir aussi possible
+          var fromAbsCor = ringIdxOf(pl.color, pos >=51 ? pos : pos); // pos 51-55 -> pas sur anneau, on approxime par mouth
+          // pour le couloir, l'abs de départ est la bouche
+          var mouthForCor = INFO[pl.color].mouth;
+          // distance anneau jusqu'à bouche adverse depuis la bouche
+          addExactEntryMoves(out, state, pl.color, i, mouthForCor, value);
+        } else if (toB === -2 || toB < 0) {
+          // recul très grand depuis couloir jusqu'au trou -> on autorise si capture sur le trou (rare)
+          var absHole = (INFO[pl.color].start + 51) % 52;
+          if (!SAFE[absHole]) {
+            var obH = occupiedBy(state, absHole, pl.color);
+            if (obH.length > 0 && toB === -2) out.push({ pawn: i, to: -2, type: 'bwd', capture: true, dir: 'bwd' });
+          }
+        }
+        // entrée dans couloir adverse depuis le couloir (comptage exact)
+        // on utilise la bouche comme point de départ pour le calcul
+        addExactEntryMoves(out, state, pl.color, i, INFO[pl.color].mouth, value);
+        return;
+      }
+
+      // CAS ANNEAU normal (0-50 et -2 trou)
       if (pos === -2) {
-        /* depuis le « trou » derrière le départ : toujours sur l'anneau - stacking autorisé sur cases protégées (étoile/départ) */
         var fwdG = (51 + value) % 52;
         var rg = ringIdxOf(pl.color, fwdG);
         var fromAbs = ringIdxOf(pl.color, pos);
-        if (isPathBlocked(state, pl.color, fromAbs, rg, 1, true)) {
-          // barrage sur le chemin - bloqué
-        } else {
+        if (!isPathBlocked(state, pl.color, fromAbs, rg, 1, true)) {
           var og = occupiedBy(state, rg, pl.color);
           var isSafeG = !!SAFE[rg];
           if (isSafeG) {
-            out.push({ pawn: i, to: fwdG, type: 'fwd', capture: false });
+            out.push({ pawn: i, to: fwdG, type: 'fwd', capture: false, dir: 'fwd' });
           } else {
-            out.push({ pawn: i, to: fwdG, type: 'fwd', capture: og.length > 0 });
+            out.push({ pawn: i, to: fwdG, type: 'fwd', capture: og.length > 0, dir: 'fwd' });
           }
         }
       } else {
-        var fwd = pos + value;
-        if (fwd <= 56) {
-          if (fwd <= 50) {
-            var rf = ringIdxOf(pl.color, fwd);
+        var fwd2 = pos + value;
+        if (fwd2 <= 56) {
+          if (fwd2 <= 50) {
+            var rf = ringIdxOf(pl.color, fwd2);
             var fromAbsF = ringIdxOf(pl.color, pos);
-            if (isPathBlocked(state, pl.color, fromAbsF, rf, value, true)) {
-              // barrage - aucun mouvement en avant qui traverse
-            } else {
-              var of = occupiedBy(state, rf, pl.color);
+            if (!isPathBlocked(state, pl.color, fromAbsF, rf, value, true)) {
+              var ofw = occupiedBy(state, rf, pl.color);
               var isSafeF = !!SAFE[rf];
               if (isSafeF) {
-                out.push({ pawn: i, to: fwd, type: 'fwd', capture: false });
+                out.push({ pawn: i, to: fwd2, type: 'fwd', capture: false, dir: 'fwd' });
               } else {
-                out.push({ pawn: i, to: fwd, type: 'fwd', capture: of.length > 0 });
+                out.push({ pawn: i, to: fwd2, type: 'fwd', capture: ofw.length > 0, dir: 'fwd' });
               }
             }
-            // Entrée dans maison adverse avec comptage exact
             var fromAbsExact = ringIdxOf(pl.color, pos);
             addExactEntryMoves(out, state, pl.color, i, fromAbsExact, value);
           } else {
-            var laneCapt = fwd <= 55 &&
-              corridorAt(state, pl.color, fwd - 50, pl.color).some(function (o) { return o.color !== pl.color; });
-            out.push({ pawn: i, to: fwd, type: 'fwd', capture: laneCapt });
-          }
-        }
-        // Propriétaire mange l'intrus DANS SA MAISON depuis n'importe où : dé == cellule
-        if (pos >= -2 && pos <= 50) {
-          for (var cell = 1; cell <= 5; cell++) {
-            if (value !== cell) continue;
-            var occHome = corridorAt(state, pl.color, cell, pl.color);
-            var hasIntruder = occHome.some(function (o) { return o.color !== pl.color; });
-            if (hasIntruder) {
-              var toHome = 50 + cell;
-              // éviter le doublon avec l'avancée normale déjà poussée ci-dessus (même case)
-              if (!out.some(function(m){ return m.pawn===i && m.to===toHome; })) {
-                out.push({ pawn: i, to: toHome, type: 'home_retour', capture: true });
-              }
-            }
+            var laneCapt = fwd2 <= 55 &&
+              corridorAt(state, pl.color, fwd2 - 50, pl.color).some(function (o) { return o.color !== pl.color; });
+            out.push({ pawn: i, to: fwd2, type: 'fwd', capture: laneCapt, dir: 'fwd' });
           }
         }
       }
 
-      /* reculer : UNIQUEMENT si ça mange un pion ennemi non protégé.
-         L'anneau est un CERCLE : on peut reculer derrière sa case de
-         départ (la case « trou », -2), jamais depuis la maison. */
+      // RECUL sur anneau : UNIQUEMENT si ça mange un pion ennemi non protégé
       if (pos <= 50) {
         var rel = (pos === -2) ? 51 : pos;
         var absB = ((INFO[pl.color].start + rel - value) % 52 + 52) % 52;
         var off = ((absB - INFO[pl.color].start) % 52 + 52) % 52;
-        var toB = (off === 51) ? -2 : off; /*51 = le trou */
+        var toBw = (off === 51) ? -2 : off;
         var ob = occupiedBy(state, absB, pl.color);
         if (ob.length > 0 && !SAFE[absB]) {
-          out.push({ pawn: i, to: toB, type: 'bwd', capture: true });
+          out.push({ pawn: i, to: toBw, type: 'bwd', capture: true, dir: 'bwd' });
         }
-        // Entrée adverse en recul - comptage exact
-        var fromAbsB = ringIdxOf(pl.color, pos === -2 ? 51 : pos);
-        if (pos === -2) fromAbsB = ringIdxOf(pl.color, -2);
-        else if (pos >=0) fromAbsB = ringIdxOf(pl.color, pos);
-        // fromAbsB déjà calculable via ringIdxOf
-        addExactEntryMoves(out, state, pl.color, i, ringIdxOf(pl.color, pos === -2 ? -2 : pos), value);
+        var fromAbsB = ringIdxOf(pl.color, pos === -2 ? -2 : pos);
+        addExactEntryMoves(out, state, pl.color, i, fromAbsB, value);
       }
     });
     return out;
   }
 
-  /* ENTRÉE DANS UN COULOIR ADVERSE - COMPTAGE EXACT (étape 3) : le nombre de pas depuis ta position jusqu'au pion adverse compte exactement : distance anneau jusqu'à la bouche + profondeur dans le couloir (1..5) doit égaler la valeur du dé (ou somme) */
   function addExactEntryMoves(out, state, color, pawnIdx, fromAbs, value) {
     if (fromAbs < 0) return;
     COLORS.forEach(function (host) {
       if (host === color) return;
       var mouthAbs = INFO[host].mouth;
-      // distance anneau jusqu'à la bouche en avant et en arrière
       var distFwd = (mouthAbs - fromAbs + 52) % 52;
       var distBwd = (fromAbs - mouthAbs + 52) % 52;
       for (var cell = 1; cell <= 5; cell++) {
         var occ = corridorAt(state, host, cell, color);
         var hasEnemy = occ.some(function(o){ return o.color !== color; });
         if (!hasEnemy) continue;
-        // avancer : anneau jusqu'à bouche + cell
         if (distFwd + cell === value) {
-          // éviter doublon
-          var already = out.some(function(m){ return m.pawn===pawnIdx && m.to===makeIntruderPos(host, cell) && m.type==='entree'; });
-          if (!already) out.push({ pawn: pawnIdx, to: makeIntruderPos(host, cell), type: 'entree', capture: true });
+          var already = out.some(function(m){ return m.pawn===pawnIdx && m.to===makeIntruderPos(host, cell) && m.dir==='fwd'; });
+          if (!already) out.push({ pawn: pawnIdx, to: makeIntruderPos(host, cell), type: 'entree', capture: true, dir: 'fwd' });
         }
-        // reculer : anneau en arrière jusqu'à bouche + cell
         if (distBwd + cell === value) {
-          var already2 = out.some(function(m){ return m.pawn===pawnIdx && m.to===makeIntruderPos(host, cell) && m.type==='entree'; });
-          if (!already2) out.push({ pawn: pawnIdx, to: makeIntruderPos(host, cell), type: 'entree', capture: true });
+          var already2 = out.some(function(m){ return m.pawn===pawnIdx && m.to===makeIntruderPos(host, cell) && m.dir==='bwd'; });
+          if (!already2) out.push({ pawn: pawnIdx, to: makeIntruderPos(host, cell), type: 'entree', capture: true, dir: 'bwd' });
         }
       }
     });
   }
-  // Ancienne fonction gardée pour compat mais non utilisée - remplacée par addExactEntryMoves
-  function addEntryMoves(out, state, color, pawnIdx, landAbs) {
-    // déprécié : comptage exact utilisé maintenant
-  }
 
-  /* ---------- coups autorisés pour un dé donné ----------
-     RÈGLE STRICTE : une capture n'est permise que si un AUTRE pion
-     peut jouer l'autre dé (tant que celui-ci n'est pas encore utilisé). */
   function movesForDie(state, dieIndex) {
     if (state.over || state.phase !== 'move' || state.dieUsed[dieIndex]) return [];
     var v = state.dice[dieIndex];
     if (v == null) return [];
     var moves = rawMovesFor(state, v);
-    /* SORTIE D'UN COULOIR par double 6 : consomme LES DEUX dés, 1 seul jet supplémentaire */
     if (state.dice[0] === 6 && state.dice[1] === 6 && v === 6) {
       var plS = state.players[state.turn];
       plS.pawns.forEach(function (pos, i) {
@@ -389,32 +367,34 @@
         var re = ringIdxOf(plS.color, exitPos);
         var oe = occupiedBy(state, re, plS.color);
         if (!(oe.length > 0 && SAFE[re])) {
-          moves.push({ pawn: i, to: exitPos, type: 'sortie', capture: oe.length > 0 });
+          moves.push({ pawn: i, to: exitPos, type: 'sortie', capture: oe.length > 0, dir: 'fwd' });
         }
       });
     }
-    /* pion qui a déjà mangé ce tour : plus aucun coup pour lui */
     if (state.eaten != null) {
       moves = moves.filter(function (m) { return m.pawn !== state.eaten; });
     }
-    // ÉTAPE 1 FIX: on autorise de mixer avant/arrière (2ème dé peut avancer après un recul-manger avec un autre pion)
-    // turnDir n'est plus filtrant
-
+    // SYRO 2026-11-15 : même pion ne peut pas faire fwd puis bwd (ou inverse) dans le même tour
+    if (state.pawnDir) {
+      moves = moves.filter(function(m){
+        var d = state.pawnDir[m.pawn];
+        if (!d) return true;
+        return m.dir === d;
+      });
+    }
     var other = 1 - dieIndex;
     var otherPending = !state.dieUsed[other] && state.dice[other] != null;
     if (!otherPending) return moves;
-
     var otherV = state.dice[other];
     return moves.filter(function (m) {
       if (!m.capture) return true;
       var pl = state.players[state.turn];
       for (var i = 0; i < pl.pawns.length; i++) {
         if (i === m.pawn) continue;
-        /* le pion qui a mangé ne peut pas non plus « sauver » l'autre dé */
         if (state.eaten != null && i === state.eaten) continue;
         if (rawMovesFor(state, otherV, i).length > 0) return true;
       }
-      return false; /* aucun autre pion pour l'autre dé -> capture interdite */
+      return false;
     });
   }
 
@@ -427,24 +407,34 @@
     return res;
   }
 
-  /* ---------- SOMME DES DEUX DÉS ----------
-     Les deux dés ensemble : soit en avant, soit en arrière (jamais mixer).
-     Uniquement pour manger (recul ou entrée) — pas pour sortir de base. */
   function movesForSum(state) {
     if (state.over || state.phase !== 'move') return [];
     if (state.dieUsed[0] || state.dieUsed[1]) return [];
     if (state.dice[0] == null || state.dice[1] == null) return [];
+    // SYRO 2026-11-15 : somme ne peut pas mixer si le même pion a déjà une direction
+    if (state.pawnDir && Object.keys(state.pawnDir).length) {
+      // si un pion a déjà joué, la somme avec ce même pion doit respecter sa dir
+      // (géré via filtrage ci-dessous)
+    }
     var v = state.dice[0] + state.dice[1];
     var all = rawMovesFor(state, v);
-    // somme = seulement pour capturer (recul, entrée, sortie_mange) ; la sortie de base (out) reste sur un dé seul
-    return all.filter(function(m){ return m.capture; });
+    var filtered = all.filter(function(m){ return m.capture; });
+    if (state.pawnDir) {
+      filtered = filtered.filter(function(m){
+        var d = state.pawnDir[m.pawn];
+        if (!d) return true;
+        return m.dir === d;
+      });
+    }
+    // somme : on ne garde que les captures (recul/entree) — pas de sortie de base
+    return filtered.filter(function(m){ return m.type !== 'out'; });
   }
 
   function advance(state) {
     var n = state.players.length;
     var guard = 0;
     state.sixStreak = 0;
-    state.turnDir = null;
+    state.pawnDir = {};
     do {
       state.turn = (state.turn + 1) % n;
       guard++;
@@ -459,10 +449,9 @@
   function endTurn(state) {
     var wasDouble = state.dice[0] === 6 && state.dice[1] === 6;
     if (wasDouble && state.sixStreak > 0 && state.sixStreak < 3) {
-      /* seule relance : double 6 */
       state.phase = 'roll';
       state.dieUsed = [true, true];
-      state.turnDir = null;
+      state.pawnDir = {};
       state.log.push('Double 6 — jet supplémentaire !');
       trimLog(state);
       return;
@@ -495,10 +484,6 @@
     state.phase = 'over';
   }
 
-  /* ---------- actions ---------- */
-
-  /* VRAI hasard : entropie matérielle du navigateur (crypto.getRandomValues),
-     indépendant de tout état du jeu — repli sur Math.random si indisponible */
   function sysRandom() {
     try {
       if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
@@ -506,7 +491,7 @@
         crypto.getRandomValues(a);
         return a[0] / 4294967296;
       }
-    } catch (e) { /* repli ci-dessous */ }
+    } catch (e) { }
     return Math.random();
   }
 
@@ -522,9 +507,9 @@
     state.dice = [d1, d2];
     state.dieUsed = [false, false];
     state.eaten = null;
+    state.pawnDir = {};
     state.turnCaptured = false;
     state.turnArrived = false;
-    state.turnDir = null;
     state.rev++;
     state.log.push(INFO[pl.color].label + ' lance : ' + d1 + ' + ' + d2 + (dbl ? ' — double 6 !' : ''));
 
@@ -566,13 +551,14 @@
     var col = pl.color;
     var v = isSum ? state.dice[0] + state.dice[1] : state.dice[dieIndex];
 
-    // direction du tour : mix autorisé (étape 1) - on garde trace mais ne bloque plus
-    // if (!state.turnDir) { if (mv.type === 'bwd') state.turnDir = 'bwd'; else state.turnDir = 'fwd'; }
     pl.pawns[pawnIdx] = mv.to;
     if (isSum) { state.dieUsed[0] = true; state.dieUsed[1] = true; }
     else if (mv.type === 'sortie') { state.dieUsed[0] = true; state.dieUsed[1] = true; }
     else state.dieUsed[dieIndex] = true;
     if (mv.to === 56) state.turnArrived = true;
+    // mémorise la direction de ce pion pour ce tour (anti-mix même pion)
+    if (!state.pawnDir) state.pawnDir = {};
+    state.pawnDir[pawnIdx] = mv.dir || (mv.type === 'bwd' ? 'bwd' : 'fwd');
     state.rev++;
 
     var msg;
@@ -584,14 +570,11 @@
       INFO[intruderInfo(mv.to).host].label;
     else if (mv.type === 'sortie') msg = INFO[col].label + ' sort du couloir grâce au double 6 !';
     else if (mv.type === 'sortie_mange') msg = INFO[col].label + ' sort du couloir en mangeant dehors !';
-    else if (mv.type === 'home_retour') msg = INFO[col].label + ' rentre dans sa maison pour manger l\'intrus !';
-    else msg = INFO[col].label + (isSum && state.turnDir === 'bwd' ? ' recule de ' + v + ' (somme)' : ' avance de ' + v);
+    else msg = INFO[col].label + (isSum && mv.dir === 'bwd' ? ' recule de ' + v + ' (somme)' : ' avance de ' + v);
 
     var caps = [];
     var mvIt = intruderInfo(mv.to);
     if (mvIt) {
-      /* debout dans un couloir (entrée ou déplacement) : tout ennemi
-         sur la case est mangé (le propriétaire ou un autre intrus) */
       state.players.forEach(function (p) {
         if (p.color === col) return;
         p.pawns.forEach(function (pos, i) {
@@ -608,7 +591,6 @@
         });
       });
     } else if (mv.to >= 51 && mv.to <= 55) {
-      /* le propriétaire avance dans SON couloir : il peut manger un intrus */
       state.players.forEach(function (p) {
         if (p.color === col) return;
         p.pawns.forEach(function (pos, i) {
@@ -619,22 +601,27 @@
           }
         });
       });
-    } else if (mv.to <= 50) {
+    } else if (mv.to <= 50 || mv.to === -2) {
       var ri = ringIdxOf(col, mv.to);
-      state.players.forEach(function (p) {
-        if (p.color === col) return;
-        p.pawns.forEach(function (pos, i) {
-          if ((pos === -2 || (pos >= 0 && pos <= 50)) && ringIdxOf(p.color, pos) === ri) {
-            p.pawns[i] = -1;
-            caps.push(p.color);
-          }
+      if (ri >= 0 && !SAFE[ri]) {
+        state.players.forEach(function (p) {
+          if (p.color === col) return;
+          p.pawns.forEach(function (pos, i) {
+            var checkRi = -1;
+            if (pos === -2 || (pos >= 0 && pos <= 50)) checkRi = ringIdxOf(p.color, pos);
+            if (checkRi === ri) {
+              p.pawns[i] = -1;
+              caps.push(p.color);
+            }
+          });
         });
-      });
+      } else if (ri >= 0 && SAFE[ri]) {
+        // étoile/départ protégé : on ne mange jamais, même si on atterrit dessus
+      }
     }
     if (caps.length) {
-      state.eaten = pawnIdx; /* le pion qui mange ne rejoue plus ce tour */
-      state.turnCaptured = true; /* manger → jet supplémentaire en fin de tour */
-      /* bilan des captures : qui mange, qui se fait manger */
+      state.eaten = pawnIdx;
+      state.turnCaptured = true;
       if (!state.stats) state.stats = {};
       if (!state.stats[col]) state.stats[col] = { ate: 0, lost: 0 };
       state.stats[col].ate += caps.length;
@@ -647,7 +634,7 @@
     } else {
       state.log.push(msg);
     }
-    if (mv.type === 'sortie' || mv.type === 'sortie_mange' || mv.type === 'home_retour') {
+    if (mv.type === 'sortie' || mv.type === 'sortie_mange') {
       state.eaten = pawnIdx;
     }
 
@@ -666,9 +653,6 @@
     }
 
     if (done) {
-      /* le joueur a fini. La partie ne continue que s'il reste au moins
-         DEUX joueurs sans classement ; s'il n'en reste qu'un seul, il prend
-         la dernière place et la partie s'arrête (à2 : un vainqueur suffit). */
       var un = state.players.filter(function (p) { return !p.rank; });
       if (un.length <= 1) {
         if (un.length === 1) {
@@ -693,7 +677,6 @@
       return { ok: true };
     }
 
-    /* il reste un dé jouable : phase 'move' inchangée */
     trimLog(state);
     return { ok: true };
   }
