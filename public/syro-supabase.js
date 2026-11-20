@@ -1,4 +1,4 @@
-/* SYRO GAMES — Supabase Auth + XP + Boutique + Leaderboard v2026-11-20 */
+/* SYRO GAMES — Supabase Auth + XP + Boutique + Leaderboard v2026-11-20c */
 'use strict';
 window.SyroAuth = (function(){
   let supa=null, user=null, profile=null;
@@ -55,21 +55,12 @@ window.SyroAuth = (function(){
     el.title = user ? (user.email||pseudo) : '';
     renderShopHeader();
     applyEquipped();
-    // Hero premium : si connecté, on ne propose plus "sans compte"
-    const heroCta = document.getElementById('btnPlayGuest');
-    const heroLogin = document.getElementById('btnShowLogin');
-    const heroSub = document.querySelector('#screen-hero .hero p');
-    if(heroCta && heroLogin){
-      if(user && profile){
-        heroCta.textContent = '🎲 Jouer maintenant →';
-        heroCta.onclick = () => (window.showScreen ? showScreen('menu') : location.reload());
-        heroLogin.textContent = '👤 Mon compte — ' + pseudo;
-        heroLogin.onclick = () => (window.showScreen ? showScreen('auth') : null);
-        if(heroSub) heroSub.innerHTML = `Bienvenue <b>${pseudo}</b> — Lv${lvl} • ${xp} XP • ${coins} 🪙<br>Choisis ton mode et joue !`;
-      } else {
-        heroCta.innerHTML = '🎲 Jouer sans compte <span style="opacity:.7;">→</span>';
-        if(heroSub) heroSub.innerHTML = `Ton XP est gardé si tu crées ton compte ensuite.<br>Choisis ton personnage juste après.`;
-      }
+    renderDashboard();
+    // Hero : si connecté on le cache complètement (dashboard à la place)
+    const hero = document.getElementById('screen-hero');
+    const dash = document.getElementById('screen-dashboard');
+    if(user && profile){
+      // on ne fait rien ici, showScreen gère; juste préparer le hero CTA pour le cas où on y repasse
     }
   }
   function renderShopHeader(){
@@ -134,6 +125,30 @@ window.SyroAuth = (function(){
       info.innerHTML = `Connecté en tant que <b>${profile.pseudo}</b> (${user.email||'—'})<br><span style="color:var(--accent)">Lv${profile.level} • ${profile.xp} XP • ${profile.coins||0} 🪙</span> — ton XP est sauvegardé.`;
     }
   }
+  function renderDashboard(){
+    const isLogged = !!(user && profile);
+    const dashName = document.getElementById('dashName');
+    const dashSub = document.getElementById('dashSub');
+    const dashFill = document.getElementById('dashXpFill');
+    const dashNext = document.getElementById('dashXpNext');
+    const dPlayed = document.getElementById('dashStatPlayed');
+    const dWon = document.getElementById('dashStatWon');
+    const dCoins = document.getElementById('dashStatCoins');
+    const dShopHint = document.getElementById('dashShopHint');
+    if(!dashName) return;
+    if(isLogged){
+      const xp=profile.xp||0; const coins=profile.coins||0; const lvl=profile.level||levelFromXp(xp);
+      const next = xpForNext(xp); const pct = Math.round(((100-next)/100)*100);
+      dashName.textContent = `Bienvenue, ${profile.pseudo} 👋`;
+      dashSub.textContent = `Lv${lvl} • ${xp} XP • ${coins} 🪙 — prêt à jouer ?`;
+      if(dashFill) dashFill.style.width = pct + '%';
+      if(dashNext) dashNext.textContent = `+${next} XP pour Lv${lvl+1}`;
+      if(dPlayed) dPlayed.textContent = profile.games_played||0;
+      if(dWon) dWon.textContent = profile.games_won||0;
+      if(dCoins) dCoins.textContent = coins + ' 🪙';
+      if(dShopHint) dShopHint.textContent = coins + ' 🪙';
+    }
+  }
   async function init(){
     try{
       await ensureSupa();
@@ -149,7 +164,7 @@ window.SyroAuth = (function(){
         if(!localStorage.getItem('syro_eq')) localStorage.setItem('syro_eq', JSON.stringify({pawn:'pawn_classic', board:'board_classic', dice:'dice_classic', sound:'sound_pop'}));
       }
       renderHeader(); renderAuthState();
-      applyEquipped();
+      applyEquipped(); renderDashboard();
       readyCbs.forEach(cb=>cb(user,profile));
       supa.auth.onAuthStateChange(async (ev, sess)=>{
         if(sess && sess.user){
@@ -283,5 +298,5 @@ window.SyroAuth = (function(){
     user=null; profile=null; renderHeader(); renderAuthState(); applyEquipped();
   }
   function onReady(cb){ if(user||profile) cb(user,profile); else readyCbs.push(cb); }
-  return { init, onReady, addXp, addWin, getLeaderboard, buyItem, equipItem, SHOP_CATALOG, signInEmail, signUpEmail, signOut, levelFromXp, getUser:()=>user, getProfile:()=>profile, renderHeader, renderShopHeader, friendlyError, ensureSupa, getCoins:()=> profile ? (profile.coins||0) : getLocalCoins(), getInv:()=> profile ? (profile.inventory||[]) : getLocalInv(), getEq:()=> profile ? (profile.equipped||{}) : getLocalEq() };
+  return { init, onReady, addXp, addWin, getLeaderboard, buyItem, equipItem, SHOP_CATALOG, signInEmail, signUpEmail, signOut, levelFromXp, getUser:()=>user, getProfile:()=>profile, renderHeader, renderShopHeader, renderDashboard, friendlyError, ensureSupa, getCoins:()=> profile ? (profile.coins||0) : getLocalCoins(), getInv:()=> profile ? (profile.inventory||[]) : getLocalInv(), getEq:()=> profile ? (profile.equipped||{}) : getLocalEq() };
 })();

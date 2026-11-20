@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-20';
+const APP_VERSION = 'v2026-11-20c';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -1013,10 +1013,11 @@ function renderMyColor() {
 function showScreen(name) {
   window.showScreen = showScreen;
   clearAuto();
-  ['hero', 'auth', 'menu', 'setup', 'lobby', 'game', 'shop', 'leaderboard'].forEach(s =>{
+  ['hero', 'dashboard', 'auth', 'menu', 'setup', 'lobby', 'game', 'shop', 'leaderboard'].forEach(s =>{
     const el=document.getElementById('screen-' + s);
     if(el) el.classList.toggle('hidden', s !== name);
   });
+  if(name==='dashboard' && window.SyroAuth) SyroAuth.renderDashboard();
   if(name==='shop') renderShop();
   if(name==='leaderboard') renderLeaderboard();
   if (name==='menu' || name==='hero') setSimPaused(false);
@@ -1732,18 +1733,28 @@ function bind() {
   $('#btnOverMenu').onclick = () => {
     $('#modalOver').classList.add('hidden');
     if (mode === 'online') quitOnlineToHome();
-    else { stopWatch(); showScreen('hero'); }
+    else { const logged=window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser(); if(logged) showScreen('dashboard'); else showScreen('hero'); }
   };
 
-  // Nav header neuve v2026-11-20
+  function goHome(){
+    const logged = window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser();
+    if(logged) showScreen('dashboard'); else showScreen('hero');
+  }
+  // Nav header neuve v2026-11-20c
   const navShop = document.getElementById('btnNavShop'); if(navShop) navShop.onclick=()=> showScreen('shop');
   const navBoard = document.getElementById('btnNavBoard'); if(navBoard) navBoard.onclick=()=> showScreen('leaderboard');
-  const brandHome = document.getElementById('brandHome'); if(brandHome) brandHome.onclick=()=> showScreen('hero');
+  const brandHome = document.getElementById('brandHome'); if(brandHome) brandHome.onclick=()=> goHome();
   const heroShop = document.getElementById('heroShopBtn'); if(heroShop) heroShop.onclick=()=> showScreen('shop');
   const heroBoard = document.getElementById('heroBoardBtn'); if(heroBoard) heroBoard.onclick=()=> showScreen('leaderboard');
-  const shopBack = document.getElementById('btnShopBack'); if(shopBack) shopBack.onclick=()=> showScreen('hero');
-  const boardBack = document.getElementById('btnBoardBack'); if(boardBack) boardBack.onclick=()=> showScreen('hero');
+  const shopBack = document.getElementById('btnShopBack'); if(shopBack) shopBack.onclick=()=> goHome();
+  const boardBack = document.getElementById('btnBoardBack'); if(boardBack) boardBack.onclick=()=> goHome();
   const boardRefresh = document.getElementById('btnBoardRefresh'); if(boardRefresh) boardRefresh.onclick=()=> renderLeaderboard();
+  const dashPlay = document.getElementById('dashPlay'); if(dashPlay) dashPlay.onclick=()=> showScreen('menu');
+  const dashOnline = document.getElementById('dashOnline'); if(dashOnline) dashOnline.onclick=()=> { setupKind='online'; renderSetup(); showScreen('setup'); };
+  const dashBot = document.getElementById('dashBot'); if(dashBot) dashBot.onclick=()=> { setupKind='ai'; renderSetup(); showScreen('setup'); };
+  const dashShop = document.getElementById('dashShop'); if(dashShop) dashShop.onclick=()=> showScreen('shop');
+  const dashBoardBtn = document.getElementById('dashBoard'); if(dashBoardBtn) dashBoardBtn.onclick=()=> showScreen('leaderboard');
+  const dashSettings = document.getElementById('dashSettings'); if(dashSettings) dashSettings.onclick=()=> showScreen('auth');
   document.querySelectorAll('#shopTabs button').forEach(b=> b.onclick=()=>{ _shopCat=b.dataset.cat; renderShop(); });
   const btnSound = document.getElementById('btnSound'); if(btnSound) btnSound.onclick=()=>{
     const isOff=document.documentElement.dataset.sound==='off';
@@ -1871,7 +1882,14 @@ async function init() {
     await joinOnline(rc, true);
     return;
   }
-  showScreen('hero');
+  // Accueil intelligent : connecté → dashboard, invité → hero
+  setTimeout(()=>{
+    const logged = window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser();
+    if(logged) showScreen('dashboard'); else showScreen('hero');
+  }, 600);
+  // si login arrive après (async), on bascule auto
+  if(window.SyroAuth) SyroAuth.onReady(()=>{ const u=SyroAuth.getUser(); if(u && document.getElementById('screen-hero') && !document.getElementById('screen-hero').classList.contains('hidden')) showScreen('dashboard'); });
+  else showScreen('hero');
 
   // FLUIDITÉ : si l'utilisateur revient sur l'onglet, on re-sync sans refresh manuel
   document.addEventListener('visibilitychange', () => {

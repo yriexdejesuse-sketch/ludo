@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-20">
+<link rel="stylesheet" href="style.css?v=2026-11-20c">
 </head>
 <body>
 <div id="app">
@@ -58,6 +58,37 @@
       <div class="feat"><span>📱</span><b>Mobile</b><small>100% tactile</small></div>
     </div>
 
+  </section>
+
+  <!-- ================= DASHBOARD CONNECTÉ (après login) ================= -->
+  <section id="screen-dashboard" class="screen hidden">
+    <div class="dash">
+      <div class="dash-head">
+        <div class="dash-ava">🎮</div>
+        <div class="dash-welcome">
+          <h1 id="dashName">Bienvenue, Syro_5231 👋</h1>
+          <p id="dashSub" class="hint">Lv1 • 0 XP • 0 🪙 — prêt à jouer ?</p>
+          <div class="xp-bar"><div id="dashXpFill" class="xp-fill" style="width:0%"></div></div>
+          <small id="dashXpNext" class="hint">+100 XP pour Lv2</small>
+        </div>
+        <button class="icon-btn" id="dashSettings" title="Mon compte">⚙️</button>
+      </div>
+      <div class="dash-stats">
+        <div class="dstat"><b id="dashStatPlayed">0</b><small>Parties</small></div>
+        <div class="dstat"><b id="dashStatWon">0</b><small>Victoires</small></div>
+        <div class="dstat"><b id="dashStatRank">—</b><small>Classement</small></div>
+        <div class="dstat"><b id="dashStatCoins">0 🪙</b><small>Coins</small></div>
+      </div>
+      <div class="dash-actions">
+        <button class="cta-primary" id="dashPlay">🎲 Jouer maintenant →</button>
+        <div class="dash-grid">
+          <button class="big-btn" id="dashOnline">🌐 En ligne<br><small>avec un ami</small></button>
+          <button class="big-btn" id="dashBot">🤖 Solo<br><small>vs ordinateur</small></button>
+          <button class="big-btn" id="dashShop">🛒 Boutique<br><small id="dashShopHint">0 🪙</small></button>
+          <button class="big-btn" id="dashBoard">🏆 Classement<br><small>top joueurs</small></button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ================= ECRAN CONNEXION (maquette LudoAfrik) ================= -->
@@ -325,11 +356,11 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-20"></script>
-<script src="backends.js?v=2026-11-20"></script>
-<script src="firebase-config.js?v=2026-11-20"></script>
-<script src="supabase-config.js?v=2026-11-20"></script>
-<script src="syro-supabase.js?v=2026-11-20"></script>
-<script src="app.js?v=2026-11-20"></script>
+<script src="engine.js?v=2026-11-20c"></script>
+<script src="backends.js?v=2026-11-20c"></script>
+<script src="firebase-config.js?v=2026-11-20c"></script>
+<script src="supabase-config.js?v=2026-11-20c"></script>
+<script src="syro-supabase.js?v=2026-11-20c"></script>
+<script src="app.js?v=2026-11-20c"></script>
 </body>
 </html>
