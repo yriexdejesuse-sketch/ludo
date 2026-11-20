@@ -55,6 +55,22 @@ window.SyroAuth = (function(){
     el.title = user ? (user.email||pseudo) : '';
     renderShopHeader();
     applyEquipped();
+    // Hero premium : si connecté, on ne propose plus "sans compte"
+    const heroCta = document.getElementById('btnPlayGuest');
+    const heroLogin = document.getElementById('btnShowLogin');
+    const heroSub = document.querySelector('#screen-hero .hero p');
+    if(heroCta && heroLogin){
+      if(user && profile){
+        heroCta.textContent = '🎲 Jouer maintenant →';
+        heroCta.onclick = () => (window.showScreen ? showScreen('menu') : location.reload());
+        heroLogin.textContent = '👤 Mon compte — ' + pseudo;
+        heroLogin.onclick = () => (window.showScreen ? showScreen('auth') : null);
+        if(heroSub) heroSub.innerHTML = `Bienvenue <b>${pseudo}</b> — Lv${lvl} • ${xp} XP • ${coins} 🪙<br>Choisis ton mode et joue !`;
+      } else {
+        heroCta.innerHTML = '🎲 Jouer sans compte <span style="opacity:.7;">→</span>';
+        if(heroSub) heroSub.innerHTML = `Ton XP est gardé si tu crées ton compte ensuite.<br>Choisis ton personnage juste après.`;
+      }
+    }
   }
   function renderShopHeader(){
     const coins = profile ? (profile.coins||0) : getLocalCoins();
@@ -104,8 +120,15 @@ window.SyroAuth = (function(){
     const connected = document.getElementById('authConnected');
     const info = document.getElementById('authConnectedInfo');
     const isLogged = !!(user && profile);
+    const guestBtn = document.getElementById('btnGuestContinue');
+    const orSep = document.getElementById('authOrSep');
+    const welcomeHint = document.querySelector('#screen-auth .hint');
     if(form) form.classList.toggle('hidden', isLogged);
     if(tabs) tabs.classList.toggle('hidden', isLogged);
+    if(guestBtn) guestBtn.classList.toggle('hidden', isLogged);
+    if(orSep) orSep.classList.toggle('hidden', isLogged);
+    if(welcomeHint && isLogged) welcomeHint.classList.add('hidden');
+    else if(welcomeHint) welcomeHint.classList.remove('hidden');
     if(connected) connected.classList.toggle('hidden', !isLogged);
     if(isLogged && info){
       info.innerHTML = `Connecté en tant que <b>${profile.pseudo}</b> (${user.email||'—'})<br><span style="color:var(--accent)">Lv${profile.level} • ${profile.xp} XP • ${profile.coins||0} 🪙</span> — ton XP est sauvegardé.`;
@@ -122,8 +145,8 @@ window.SyroAuth = (function(){
         if(!localStorage.getItem('syro_pseudo')) localStorage.setItem('syro_pseudo', genPseudo());
         if(!localStorage.getItem('syro_xp')) localStorage.setItem('syro_xp','0');
         if(!localStorage.getItem('syro_coins')) localStorage.setItem('syro_coins','0');
-        if(!localStorage.getItem('syro_inv')) localStorage.setItem('syro_inv', JSON.stringify(['pawn_classic','board_classic','dice_classic']));
-        if(!localStorage.getItem('syro_eq')) localStorage.setItem('syro_eq', JSON.stringify({pawn:'pawn_classic', board:'board_classic', dice:'dice_classic'}));
+        if(!localStorage.getItem('syro_inv')) localStorage.setItem('syro_inv', JSON.stringify(['pawn_classic','board_classic','dice_classic','sound_pop']));
+        if(!localStorage.getItem('syro_eq')) localStorage.setItem('syro_eq', JSON.stringify({pawn:'pawn_classic', board:'board_classic', dice:'dice_classic', sound:'sound_pop'}));
       }
       renderHeader(); renderAuthState();
       applyEquipped();

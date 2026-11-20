@@ -1011,6 +1011,7 @@ function renderMyColor() {
   el.classList.toggle('hidden', !html);
 }
 function showScreen(name) {
+  window.showScreen = showScreen;
   clearAuto();
   ['hero', 'auth', 'menu', 'setup', 'lobby', 'game', 'shop', 'leaderboard'].forEach(s =>{
     const el=document.getElementById('screen-' + s);
