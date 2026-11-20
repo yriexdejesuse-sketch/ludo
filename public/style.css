@@ -42,6 +42,14 @@ body::before{
 }
 .brand small{display:block; font-family:'Nunito',sans-serif; font-weight:600; font-size:.7rem; color:var(--muted); letter-spacing:0.04em; margin-top:-4px;}
 .header-actions{display:flex; align-items:center; gap:8px;}
+.syro-user{
+  display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; border:1.5px solid var(--line);
+  background:var(--card); cursor:pointer; max-width:180px;
+}
+.syro-user .u-ava{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#e0a82e,#f59e0b);display:grid;place-items:center;font-size:.9rem;flex:none}
+.syro-user .u-txt{display:flex;flex-direction:column; line-height:1}
+.syro-user .u-txt b{font-size:.82rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px}
+.syro-user .u-txt small{font-size:.68rem; color:var(--muted); font-weight:700}
 .icon-btn{
   width:38px; height:38px; border-radius:999px; border:1.5px solid var(--line); background:var(--card);
   display:grid; place-items:center; cursor:pointer; font-size:1.1rem; color:var(--text); transition:.15s;

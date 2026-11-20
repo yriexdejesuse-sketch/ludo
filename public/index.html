@@ -18,6 +18,7 @@
       <div>SYRO <span style="color:var(--accent);">GAMES</span><small>Le Ludo en ligne entre amis</small></div>
     </div>
     <div class="header-actions">
+      <div class="syro-user" id="syroUserBadge" title="Profil SYRO"> <span style="opacity:.6">...</span></div>
       <button class="icon-btn" id="btnTheme" title="Clair / sombre">☀️</button>
       <div class="lang-switch" id="btnLang">🌐 EN</div>
     </div>
@@ -54,12 +55,16 @@
       <div style="display:grid; gap:10px; margin:16px 0;">
         <button class="cta-primary" id="btnGuestContinue">Continuer sans compte</button>
         <div style="display:flex; align-items:center; gap:12px; color:var(--muted); font-size:.8rem;"><span style="flex:1; height:1px; background:var(--line);"></span> ou avec un compte <span style="flex:1; height:1px; background:var(--line);"></span></div>
-        <input placeholder="Email ou pseudo" style="text-align:center;">
-        <input placeholder="Mot de passe" type="password" style="text-align:center;">
-        <button class="big-btn primary" id="btnLoginFake">Se connecter</button>
+        <input id="authEmail" placeholder="Email" type="email" autocomplete="email" style="text-align:center;">
+        <input id="authPassword" placeholder="Mot de passe" type="password" autocomplete="current-password" style="text-align:center;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+          <button class="big-btn primary" id="btnLogin">Se connecter</button>
+          <button class="big-btn" id="btnSignup">Créer compte</button>
+        </div>
+        <p id="authError" class="error" style="min-height:1em"></p>
         <button class="big-btn ghost" id="btnBackHero">← Retour</button>
         <p class="hint"><a href="#">Mot de passe oublié ?</a> · <a href="#">CGU</a> · <a href="#">Mentions légales</a></p>
-        <p class="hint"><b>SYRO GAMES</b></p>
+        <p class="hint"><b>SYRO GAMES</b> — ton XP est gardé à la création</p>
       </div>
     </div>
   </section>
@@ -261,9 +266,10 @@ document.getElementById('btnTheme').onclick=()=>{
 try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-15"></script>
-<script src="backends.js?v=2026-11-15"></script>
-<script src="firebase-config.js?v=2026-11-15"></script>
-<script src="app.js?v=2026-11-15"></script>
+<script src="engine.js?v=2026-11-16"></script>
+<script src="backends.js?v=2026-11-16"></script>
+<script src="firebase-config.js?v=2026-11-16"></script>
+<script src="auth.js?v=2026-11-17"></script>
+<script src="app.js?v=2026-11-16"></script>
 </body>
 </html>

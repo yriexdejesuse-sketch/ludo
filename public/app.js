@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-16';
+const APP_VERSION = 'v2026-11-17';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -995,6 +995,14 @@ function showOver() {
     `<li>${MEDAL[i + 1] || (i + 1) + '.'} <span class="chip" style="background:${HEX[c]}"></span> <b style="color:${HEX[c]}">${esc(nameOf(c))}</b></li>`).join('');
   renderBilan();
   $('#modalOver').classList.remove('hidden');
+  if(window.SyroAuth){
+    const myColor = (mode==='online'||mode==='ai') ? you : (G.players[0]&&G.players[0].color);
+    const myRank = G.players.find(p=>p.color===myColor)?.rank;
+    if(myRank===1) SyroAuth.addXp(50,'Victoire');
+    else if(myRank===2) SyroAuth.addXp(30,'2e place');
+    else if(myRank===3) SyroAuth.addXp(15,'3e place');
+    else SyroAuth.addXp(5,'Participation');
+  }
 }
 /* bilan des captures : le plus violent (pions mangés) et le plus violenté
    (pions perdus), plus le tableau complet */
@@ -1617,6 +1625,25 @@ function bind() {
     else { stopWatch(); showScreen('hero'); }
   };
 
+  // Palier 2 — Auth SYRO
+  const doAuth = async (type)=>{
+    const email = document.getElementById('authEmail')?.value.trim();
+    const pass = document.getElementById('authPassword')?.value.trim();
+    const errEl = document.getElementById('authError');
+    if(errEl) errEl.textContent='';
+    if(!email || !pass){ if(errEl) errEl.textContent='Email + mot de passe requis'; return; }
+    try{
+      if(type==='login') await SyroAuth.signInEmail(email, pass);
+      else await SyroAuth.signUpEmail(email, pass);
+      toast(type==='login'?'Connecté ✓':'Compte créé ✓ — XP gardé');
+      showScreen('hero');
+    }catch(e){
+      if(errEl) errEl.textContent = e.message || 'Erreur';
+    }
+  };
+  if($('#btnLogin')) $('#btnLogin').onclick = ()=> doAuth('login');
+  if($('#btnSignup')) $('#btnSignup').onclick = ()=> doAuth('signup');
+
   $('#board').addEventListener('click', () => hideMini());
   document.addEventListener('click', () => Snd.unlock(), { passive: true });
 }
@@ -1625,6 +1652,10 @@ async function init() {
   document.title = 'SYRO GAMES — Ludo à 2 ou 4 joueurs (' + APP_VERSION + ')';
   buildBoard();
   bind();
+  // Palier 2 : auth + XP
+  if(window.SyroAuth) SyroAuth.init();
+  const _ub = document.getElementById('syroUserBadge');
+  if(_ub) _ub.onclick = ()=> showScreen('auth');
   /* backend de partie en ligne : Firebase si configuré, sinon le serveur (Arena) */
   Backend = LudoBackends.pick({
     engine: Ludo,

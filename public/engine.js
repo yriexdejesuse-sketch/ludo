@@ -620,6 +620,7 @@
       }
     }
     if (caps.length) {
+      if(typeof window !== 'undefined' && window.SyroAuth && window.SyroAuth.addXp) try{ window.SyroAuth.addXp(10*caps.length,'Capture'); }catch(e){}
       state.eaten = pawnIdx;
       state.turnCaptured = true;
       if (!state.stats) state.stats = {};
