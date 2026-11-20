@@ -1811,7 +1811,7 @@ function bind() {
     }
   };
   if($('#btnAuthPrimary')) $('#btnAuthPrimary').onclick = doAuth;
-  if($('#btnGoMenu')) $('#btnGoMenu').onclick = ()=> showScreen('hero');
+  if($('#btnGoMenu')) $('#btnGoMenu').onclick = ()=> showScreen('menu');
   if($('#btnLogout')) $('#btnLogout').onclick = async ()=>{ await SyroAuth.signOut(); toast('Déconnecté'); };
   // Enter key
   ['authEmail','authPassword'].forEach(id=>{
