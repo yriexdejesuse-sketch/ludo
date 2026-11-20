@@ -1,28 +1,30 @@
-/* SYRO GAMES — Supabase Auth + XP + Boutique + Leaderboard v2026-11-20c */
+/* SYRO GAMES — Supabase Boutique gratuite + Thèmes v2026-11-22 — XP supprimé, tout gratuit */
 'use strict';
 window.SyroAuth = (function(){
   let supa=null, user=null, profile=null;
   let readyCbs=[];
   let cfg = window.SUPABASE_CONFIG;
   const SHOP_CATALOG = [
-    // pions
+    // pions — tout gratuit
     {id:'pawn_classic', cat:'pion', name:'Classique', price:0, preview:'🔴', desc:'Style d’origine'},
-    {id:'pawn_neon', cat:'pion', name:'Néon Pulse', price:80, preview:'💎', desc:'Aura néon animée'},
-    {id:'pawn_gold', cat:'pion', name:'Or Royal', price:150, preview:'👑', desc:'Pions dorés + brillance'},
-    {id:'pawn_emoji', cat:'pion', name:'Emoji Fun', price:60, preview:'😎', desc:'Têtes emoji'},
-    {id:'pawn_fire', cat:'pion', name:'Feu Infernal', price:200, preview:'🔥', desc:'Traînée de feu'},
-    // plateaux
+    {id:'pawn_neon', cat:'pion', name:'Néon Pulse', price:0, preview:'💎', desc:'Aura néon animée'},
+    {id:'pawn_gold', cat:'pion', name:'Or Royal', price:0, preview:'👑', desc:'Pions dorés + brillance'},
+    {id:'pawn_emoji', cat:'pion', name:'Emoji Fun', price:0, preview:'😎', desc:'Têtes emoji'},
+    {id:'pawn_fire', cat:'pion', name:'Feu Infernal', price:0, preview:'🔥', desc:'Traînée de feu'},
+    // plateaux — thèmes gratuits comme Afrique
     {id:'board_classic', cat:'plateau', name:'Bois Classique', price:0, preview:'🪵', desc:'Plateau chaleureux'},
-    {id:'board_neon', cat:'plateau', name:'Neon Night', price:100, preview:'🌃', desc:'Thème nuit néon'},
-    {id:'board_savanna', cat:'plateau', name:'Savane', price:120, preview:'🦁', desc:'Tons sable / ocre'},
-    {id:'board_ocean', cat:'plateau', name:'Ocean', price:120, preview:'🌊', desc:'Bleus profonds'},
+    {id:'board_neon', cat:'plateau', name:'Neon Night', price:0, preview:'🌃', desc:'Thème nuit néon'},
+    {id:'board_savanna', cat:'plateau', name:'Savane', price:0, preview:'🦁', desc:'Tons sable / ocre — comme Afrique'},
+    {id:'board_ocean', cat:'plateau', name:'Ocean', price:0, preview:'🌊', desc:'Bleus profonds'},
+    {id:'board_sunset', cat:'plateau', name:'Sunset', price:0, preview:'🌅', desc:'Coucher de soleil africain'},
     // dés
     {id:'dice_classic', cat:'de', name:'Dés Ivoire', price:0, preview:'🎲', desc:'Classique'},
-    {id:'dice_crystal', cat:'de', name:'Cristal', price:90, preview:'🔮', desc:'Dés translucides'},
-    {id:'dice_gold', cat:'de', name:'Dés Or', price:130, preview:'✨', desc:'Dés dorés premium'},
-    // sons (cosmétique future)
-    {id:'sound_pop', cat:'son', name:'Pop Fun', price:40, preview:'🔊', desc:'Sons rebondissants'},
-    {id:'sound_drum', cat:'son', name:'Tambour Africain', price:70, preview:'🥁', desc:'Percussions'},
+    {id:'dice_crystal', cat:'de', name:'Cristal', price:0, preview:'🔮', desc:'Dés translucides'},
+    {id:'dice_gold', cat:'de', name:'Dés Or', price:0, preview:'✨', desc:'Dés dorés premium'},
+    // sons — tous gratuits
+    {id:'sound_pop', cat:'son', name:'Pop Fun', price:0, preview:'🔊', desc:'Sons rebondissants'},
+    {id:'sound_tom', cat:'son', name:'Tom Scream', price:0, preview:'😾', desc:'Cri de Tom quand on le mange !'},
+    {id:'sound_drum', cat:'son', name:'Tambour Africain', price:0, preview:'🥁', desc:'Percussions'},
   ];
   function genPseudo(){ return 'Syro_' + Math.floor(1000+Math.random()*9000); }
   function levelFromXp(xp){ return Math.floor((xp||0)/100)+1; }
@@ -36,22 +38,15 @@ window.SyroAuth = (function(){
     const el = document.getElementById('syroUserBadge');
     if(!el) return;
     if(!user && !profile){
-      const xp = parseInt(localStorage.getItem('syro_xp')||'0');
       const pseudo = localStorage.getItem('syro_pseudo')||genPseudo();
       if(!localStorage.getItem('syro_pseudo')) localStorage.setItem('syro_pseudo', pseudo);
-      if(!localStorage.getItem('syro_coins')) localStorage.setItem('syro_coins','0');
-      const lvl=levelFromXp(xp), next=xpForNext(xp);
-      const coins=getLocalCoins();
-      el.innerHTML = `<span class="u-ava">🎮</span><span class="u-txt"><b>${pseudo}</b><small>Lv${lvl} • ${xp} XP • ${coins}🪙</small></span>`;
-      el.title='Invité — crée un compte pour garder ton XP';
+      el.innerHTML = `<span class="u-ava">🎮</span><span class="u-txt"><b>${pseudo}</b><small>Joueur SYRO</small></span>`;
+      el.title='Joueur SYRO';
       renderShopHeader();
       return;
     }
-    const xp = profile ? profile.xp : 0;
-    const coins = profile ? (profile.coins||0) : getLocalCoins();
-    const lvl = profile ? profile.level : levelFromXp(xp);
     const pseudo = profile ? profile.pseudo : (user?.email?.split('@')[0]||'Joueur');
-    el.innerHTML = `<span class="u-ava">🎮</span><span class="u-txt"><b>${pseudo}</b><small>Lv${lvl} • ${xp} XP • ${coins}🪙</small></span>`;
+    el.innerHTML = `<span class="u-ava">🎮</span><span class="u-txt"><b>${pseudo}</b><small>Joueur SYRO</small></span>`;
     el.title = user ? (user.email||pseudo) : '';
     renderShopHeader();
     applyEquipped();
@@ -64,9 +59,8 @@ window.SyroAuth = (function(){
     }
   }
   function renderShopHeader(){
-    const coins = profile ? (profile.coins||0) : getLocalCoins();
     const el = document.getElementById('shopCoinsBadge');
-    if(el) el.textContent = coins + ' 🪙';
+    if(el) el.textContent = '✨';
   }
   function applyEquipped(){
     const eq = profile ? (profile.equipped||{}) : getLocalEq();
@@ -131,22 +125,18 @@ window.SyroAuth = (function(){
     const dashSub = document.getElementById('dashSub');
     const dashFill = document.getElementById('dashXpFill');
     const dashNext = document.getElementById('dashXpNext');
-    const dPlayed = document.getElementById('dashStatPlayed');
-    const dWon = document.getElementById('dashStatWon');
-    const dCoins = document.getElementById('dashStatCoins');
-    const dShopHint = document.getElementById('dashShopHint');
     if(!dashName) return;
     if(isLogged){
-      const xp=profile.xp||0; const coins=profile.coins||0; const lvl=profile.level||levelFromXp(xp);
-      const next = xpForNext(xp); const pct = Math.round(((100-next)/100)*100);
       dashName.textContent = `Bienvenue, ${profile.pseudo} 👋`;
-      dashSub.textContent = `Lv${lvl} • ${xp} XP • ${coins} 🪙 — prêt à jouer ?`;
-      if(dashFill) dashFill.style.width = pct + '%';
-      if(dashNext) dashNext.textContent = `+${next} XP pour Lv${lvl+1}`;
-      if(dPlayed) dPlayed.textContent = profile.games_played||0;
-      if(dWon) dWon.textContent = profile.games_won||0;
-      if(dCoins) dCoins.textContent = coins + ' 🪙';
-      if(dShopHint) dShopHint.textContent = coins + ' 🪙';
+      dashSub.textContent = `Prêt à jouer ? Choisis ton mode !`;
+      if(dashFill) dashFill.style.width = '100%';
+      if(dashNext) dashNext.textContent = `SYRO GAMES — le Ludo africain`;
+    } else {
+      const pseudo=localStorage.getItem('syro_pseudo')||'Joueur';
+      dashName.textContent = `Bienvenue, ${pseudo} 👋`;
+      dashSub.textContent = `Prêt à jouer ? Choisis ton mode !`;
+      if(dashFill) dashFill.style.width = '100%';
+      if(dashNext) dashNext.textContent = `SYRO GAMES — le Ludo africain`;
     }
   }
   async function init(){

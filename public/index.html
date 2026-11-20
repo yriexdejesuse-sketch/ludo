@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-20c">
+<link rel="stylesheet" href="style.css?v=2026-11-22">
 </head>
 <body>
 <div id="app">
@@ -134,7 +134,7 @@
   <section id="screen-shop" class="screen hidden">
     <div class="shop-head">
       <h2>🛒 Boutique SYRO</h2>
-      <p class="hint">Débloque des skins avec tes <b id="shopCoinsBig">0 🪙</b> — gagne des 🪙 en jouant !</p>
+      <p class="hint"><b id="shopCoinsBig">Tout gratuit ✨</b> — choisis ton style et équipe-le !</p>
       <div class="shop-tabs" id="shopTabs">
         <button data-cat="pion" class="sel">♟ Pions</button>
         <button data-cat="plateau">🎨 Plateau</button>
@@ -356,11 +356,11 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-20c"></script>
-<script src="backends.js?v=2026-11-20c"></script>
-<script src="firebase-config.js?v=2026-11-20c"></script>
-<script src="supabase-config.js?v=2026-11-20c"></script>
-<script src="syro-supabase.js?v=2026-11-20c"></script>
-<script src="app.js?v=2026-11-20c"></script>
+<script src="engine.js?v=2026-11-22"></script>
+<script src="backends.js?v=2026-11-22"></script>
+<script src="firebase-config.js?v=2026-11-22"></script>
+<script src="supabase-config.js?v=2026-11-22"></script>
+<script src="syro-supabase.js?v=2026-11-22"></script>
+<script src="app.js?v=2026-11-22"></script>
 </body>
 </html>

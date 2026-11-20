@@ -395,6 +395,7 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
 [data-board-skin="board_neon"] #board{filter:contrast(1.1) saturate(1.2)}
 [data-board-skin="board_savanna"] #board{background:#fdf6e3}
 [data-board-skin="board_ocean"] #board{background:#e0f2fe}
+[data-board-skin="board_sunset"] #board{background:linear-gradient(180deg,#fef3c7 0%, #fde68a 50%, #fdba74 100%)}
 .board-die.skin-crystal{background:rgba(255,255,255,.85); backdrop-filter:blur(4px); border-color:#93c5fd}
 .board-die.skin-gold{background:linear-gradient(135deg,#fef3c7,#fde68a); border-color:#e0a82e}
 .capture-shake{animation:shake .35s ease}

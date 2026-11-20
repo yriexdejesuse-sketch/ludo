@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-20c';
+const APP_VERSION = 'v2026-11-22';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -135,6 +135,17 @@ const Snd = (() => {
     const fn=_orig[k]; _orig[k]=function(){ if(isMuted()) return; return fn.apply(this, arguments); };
   });
 })();
+let tomAudio=null;
+function playTomScream(){
+  if(document.documentElement.dataset.sound==='off') return;
+  const eq = window.SyroAuth ? window.SyroAuth.getEq() : {};
+  if(eq.sound && eq.sound!=='sound_tom' && eq.sound!=='sound_pop') return; // only when Tom selected or default
+  try{
+    if(!tomAudio){ tomAudio=new Audio('sounds/tom-scream.mp3'); tomAudio.volume=0.85; }
+    tomAudio.currentTime=0; tomAudio.play().catch(()=>{});
+    haptic(40);
+  }catch(e){}
+}
 function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms||20); }catch(e){} }
 function confettiBurst(){
   const c=document.getElementById('confetti'); if(!c) return;
@@ -387,19 +398,31 @@ function animateDiff(oldS, newS, after) {
   if (!ops.length) { syncPawns(); after && after(); return; }
   animating = true;
   let active = 0;
-  ops.forEach(t => {
-    active++;
-    if (t.to === -1 && t.from >= 0) { Snd.capture(); haptic(30); captureShake(); }
-    runTransition(t, () => {
-      if (t.to === 56) { Snd.home(); haptic(25); const el=pawnEl(t.color,t.idx); el.classList.add('home-bounce'); setTimeout(()=>el.classList.remove('home-bounce'),700); }
-      active--;
-      if (active <= 0) {
-        animating = false;
-        syncPawns(); applySkinsToBoard();
-        const q = queuedCommit; queuedCommit = null;
-        if (q) q(); else { after && after(); }
-      }
+  // Séparer attaquant vs mangé : attaquant d'abord, mangé après (pas désordonné)
+  const attackers = ops.filter(t=> t.to!==-1);
+  const captured = ops.filter(t=> t.to===-1);
+  function runBatch(batch, cb){
+    if(!batch.length) return cb();
+    let active=batch.length;
+    batch.forEach(t=>{
+      if(t.to===-1) { playTomScream(); haptic(30); captureShake(); }
+      runTransition(t, ()=>{
+        if(t.to===56){ Snd.home(); haptic(25); const el=pawnEl(t.color,t.idx); el.classList.add('home-bounce'); setTimeout(()=>el.classList.remove('home-bounce'),700); }
+        if(--active<=0) cb();
+      });
     });
+  }
+  animating=true;
+  runBatch(attackers, ()=>{
+    if(captured.length){
+      setTimeout(()=> runBatch(captured, ()=>{
+        animating=false; syncPawns(); applySkinsToBoard();
+        const q=queuedCommit; queuedCommit=null; if(q) q(); else after&&after();
+      }), 120);
+    } else {
+      animating=false; syncPawns(); applySkinsToBoard();
+      const q=queuedCommit; queuedCommit=null; if(q) q(); else after&&after();
+    }
   });
 }
 
@@ -566,6 +589,29 @@ function showMiniChoice(die, opts) {
     };
   });
   el.classList.remove('hidden');
+  // Fix plateau collé en haut : recaler le menu dans l'écran (jamais hors viewport)
+  requestAnimationFrame(()=>{
+    const r=el.getBoundingClientRect();
+    const pad=8;
+    let dx=0, dy=0;
+    if(r.top < pad) dy = pad - r.top;
+    if(r.bottom > innerHeight - pad) dy = (innerHeight - pad) - r.bottom;
+    if(r.left < pad) dx = pad - r.left;
+    if(r.right > innerWidth - pad) dx = (innerWidth - pad) - r.right;
+    if(dx||dy){
+      const curLeft=parseFloat(el.style.left)||0;
+      const curTop=parseFloat(el.style.top)||0;
+      // convertir px shift en % approximatif (boardWrap width ~ viewport)
+      const wrap=document.querySelector('.board-wrap'); const w=wrap?wrap.clientWidth:600;
+      el.style.left = `calc(${curLeft}% + ${dx}px)`;
+      el.style.top = `calc(${curTop}% + ${dy}px)`;
+      // si vraiment en haut, forcer sous le pion
+      if(my < 100) el.style.transform='translate(-50%, 12%)';
+      else el.style.transform='translate(-50%, -135%)';
+    }
+    // s'assurer scroll possible sur petit écran
+    el.style.maxHeight='42vh'; el.style.overflowY='auto';
+  });
   $('#hl').innerHTML = '';
   opts.forEach(o => addMarker(color, o.m));
 }
@@ -1032,26 +1078,22 @@ function showScreen(name) {
 let _shopCat='pion';
 function renderShop(){
   const grid=document.getElementById('shopGrid'); if(!grid || !window.SyroAuth) return;
-  const coinsBtn=document.getElementById('shopCoinsBig'); if(coinsBtn) coinsBtn.textContent=(SyroAuth.getCoins()||0)+' 🪙';
+  const coinsBtn=document.getElementById('shopCoinsBig'); if(coinsBtn) coinsBtn.textContent='Tout gratuit ✨';
   document.querySelectorAll('#shopTabs button').forEach(b=> b.classList.toggle('sel', b.dataset.cat===_shopCat));
-  const inv=SyroAuth.getInv()||[]; const eq=SyroAuth.getEq()||{};
+  const eq=SyroAuth.getEq()||{};
   const items=SyroAuth.SHOP_CATALOG.filter(x=>x.cat===_shopCat);
   grid.innerHTML = items.map(it=>{
-    const owned = it.price===0 || inv.includes(it.id);
+    const owned = true; // tout gratuit
     const catKey = it.cat==='pion'?'pawn': it.cat==='plateau'?'board': it.cat==='de'?'dice':'sound';
     const equipped = eq[catKey]===it.id;
     return `<div class="shop-card ${owned?'owned':''} ${equipped?'equipped':''}">
       <div class="sc-prev">${it.preview}</div>
       <h4>${it.name}</h4>
       <p>${it.desc}</p>
-      <div class="sc-price">${it.price===0?'Gratuit':it.price+' 🪙'}${owned?'<span style="color:#22c55e"> ✓ possédé</span>':''}${equipped?'<br><span style="color:var(--accent)">● équipé</span>':''}</div>
-      <div class="sc-actions">${!owned ? `<button class="buy" data-buy="${it.id}">Acheter</button>` : (equipped ? `<span style="font-size:.8rem; color:var(--accent); font-weight:800">Équipé</span>` : `<button class="equip" data-equip="${it.id}">Équiper</button>`)}</div>
+      <div class="sc-price">Gratuit ✨${equipped?'<br><span style="color:var(--accent)">● équipé</span>':''}</div>
+      <div class="sc-actions">${equipped ? `<span style="font-size:.8rem; color:var(--accent); font-weight:800">Équipé</span>` : `<button class="equip" data-equip="${it.id}">Équiper</button>`}</div>
     </div>`;
   }).join('');
-  grid.querySelectorAll('[data-buy]').forEach(b=> b.onclick=async()=>{
-    try{ await SyroAuth.buyItem(b.dataset.buy); Snd.shopBuy(); haptic(30); toast('Acheté ✓ — '+b.dataset.buy); renderShop(); }
-    catch(e){ toast(e.message); }
-  });
   grid.querySelectorAll('[data-equip]').forEach(b=> b.onclick=async()=>{
     try{ await SyroAuth.equipItem(b.dataset.equip); Snd.coin(); haptic(20); toast('Équipé ✓'); renderShop(); applySkinsToBoard(); }
     catch(e){ toast(e.message); }
@@ -1740,7 +1782,7 @@ function bind() {
     const logged = window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser();
     if(logged) showScreen('dashboard'); else showScreen('hero');
   }
-  // Nav header neuve v2026-11-20c
+  // Nav header neuve v2026-11-22
   const navShop = document.getElementById('btnNavShop'); if(navShop) navShop.onclick=()=> showScreen('shop');
   const navBoard = document.getElementById('btnNavBoard'); if(navBoard) navBoard.onclick=()=> showScreen('leaderboard');
   const brandHome = document.getElementById('brandHome'); if(brandHome) brandHome.onclick=()=> goHome();
