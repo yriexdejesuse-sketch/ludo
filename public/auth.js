@@ -1,4 +1,4 @@
-/* SYRO GAMES — Auth + XP (Palier 2) v2026-11-17cb */
+/* SYRO GAMES — Auth + XP (Palier 2) v2026-11-17db */
 'use strict';
 window.SyroAuth = (function(){
   let app=null, auth=null, db=null, apiFS=null, authMod=null, user=null, profile=null;
@@ -10,6 +10,7 @@ window.SyroAuth = (function(){
 
   function friendlyError(e){
     const c = (e && e.code) || '';
+    if(c.includes('configuration-not-found')) return 'Auth non activée : va sur console.firebase.google.com → Authentication → Activer Email/Mdp + Anonyme';
     if(c.includes('operation-not-allowed')) return 'Active Email/Mdp dans Firebase Console → Authentication → Méthode de connexion';
     if(c.includes('email-already-in-use')) return 'Cet email a déjà un compte → clique Se connecter';
     if(c.includes('invalid-email')) return 'Email invalide';
