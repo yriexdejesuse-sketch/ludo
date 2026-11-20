@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-18">
+<link rel="stylesheet" href="style.css?v=2026-11-18b">
 </head>
 <body>
 <div id="app">
@@ -69,6 +69,15 @@
         <button class="cta-primary" id="btnAuthPrimary" style="margin-top:4px;">Se connecter →</button>
         <p id="authError" class="error" style="min-height:1.2em; margin-top:2px;"></p>
         <p class="hint" id="authSwitchHint">Pas encore de compte ? <a href="#" id="linkToSignup">Créer un compte</a></p>
+      </div>
+
+      <!-- État connecté -->
+      <div id="authConnected" class="hidden" style="display:grid; gap:10px; margin-top:12px; background:var(--bg2); border:1.5px solid var(--line); border-radius:14px; padding:14px;">
+        <p style="font-weight:800; color:var(--text); margin:0;">✅ Connecté</p>
+        <p id="authConnectedInfo" class="hint" style="margin:0; line-height:1.4;"></p>
+        <button class="cta-primary" id="btnGoMenu" style="margin-top:6px;">Continuer → Jouer</button>
+        <button class="big-btn ghost" id="btnLogout" style="width:100%;">Se déconnecter</button>
+        <p id="authConnectedError" class="error" style="min-height:1em"></p>
       </div>
 
       <div style="height:1px; background:var(--line); margin:14px 0;"></div>
@@ -274,11 +283,11 @@ document.getElementById('btnTheme').onclick=()=>{
 try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-18"></script>
-<script src="backends.js?v=2026-11-18"></script>
-<script src="firebase-config.js?v=2026-11-18"></script>
-<script src="supabase-config.js?v=2026-11-18"></script>
-<script src="syro-supabase.js?v=2026-11-18"></script>
-<script src="app.js?v=2026-11-18"></script>
+<script src="engine.js?v=2026-11-18b"></script>
+<script src="backends.js?v=2026-11-18b"></script>
+<script src="firebase-config.js?v=2026-11-18b"></script>
+<script src="supabase-config.js?v=2026-11-18b"></script>
+<script src="syro-supabase.js?v=2026-11-18b"></script>
+<script src="app.js?v=2026-11-18b"></script>
 </body>
 </html>

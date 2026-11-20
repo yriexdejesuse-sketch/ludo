@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-18';
+const APP_VERSION = 'v2026-11-18b';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -1664,7 +1664,7 @@ function bind() {
       else await SyroAuth.signUpEmail(email, pass);
       if(errEl) errEl.textContent='';
       toast(authMode==='login'?'Connecté ✓':'Compte créé ✓ — XP gardé');
-      showScreen('hero');
+      if(window.SyroAuth && SyroAuth.renderAuthState) SyroAuth.renderAuthState();
     }catch(e){
       const msg = (window.SyroAuth && SyroAuth.friendlyError) ? SyroAuth.friendlyError(e) : (e.message||'Erreur');
       if(errEl) errEl.textContent = msg;
@@ -1673,6 +1673,8 @@ function bind() {
     }
   };
   if($('#btnAuthPrimary')) $('#btnAuthPrimary').onclick = doAuth;
+  if($('#btnGoMenu')) $('#btnGoMenu').onclick = ()=> showScreen('hero');
+  if($('#btnLogout')) $('#btnLogout').onclick = async ()=>{ await SyroAuth.signOut(); toast('Déconnecté'); };
   // Enter key
   ['authEmail','authPassword'].forEach(id=>{
     const el=document.getElementById(id);

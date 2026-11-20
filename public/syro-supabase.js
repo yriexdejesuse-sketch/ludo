@@ -58,6 +58,20 @@ window.SyroAuth = (function(){
     return data;
   }
 
+  function renderAuthState(){
+    const form = document.getElementById('authForm');
+    const tabs = document.getElementById('authTabs');
+    const connected = document.getElementById('authConnected');
+    const info = document.getElementById('authConnectedInfo');
+    const isLogged = !!(user && profile);
+    if(form) form.classList.toggle('hidden', isLogged);
+    if(tabs) tabs.classList.toggle('hidden', isLogged);
+    if(connected) connected.classList.toggle('hidden', !isLogged);
+    if(isLogged && info){
+      info.innerHTML = `Connecté en tant que <b>${profile.pseudo}</b> (${user.email||'—'})<br><span style="color:var(--accent)">Lv${profile.level} • ${profile.xp} XP</span> — ton XP est sauvegardé.`;
+    }
+  }
+
   async function init(){
     try{
       await ensureSupa();
@@ -66,35 +80,31 @@ window.SyroAuth = (function(){
         user=session.user;
         profile=await ensureProfile(user);
       } else {
-        // guest local
         if(!localStorage.getItem('syro_pseudo')) localStorage.setItem('syro_pseudo', genPseudo());
         if(!localStorage.getItem('syro_xp')) localStorage.setItem('syro_xp','0');
       }
-      renderHeader();
+      renderHeader(); renderAuthState();
       readyCbs.forEach(cb=>cb(user,profile));
-      // listen auth changes
       supa.auth.onAuthStateChange(async (ev, sess)=>{
         if(sess && sess.user){
           user=sess.user;
-          profile=await ensureProfile(user);
-          localStorage.setItem('syro_pseudo', profile.pseudo);
-          localStorage.setItem('syro_xp', profile.xp);
-          renderHeader();
+          try{ profile=await ensureProfile(user); }catch(e){}
+          if(profile){ localStorage.setItem('syro_pseudo', profile.pseudo); localStorage.setItem('syro_xp', profile.xp); }
+          renderHeader(); renderAuthState();
         } else if(ev==='SIGNED_OUT'){
           user=null; profile=null;
-          renderHeader();
+          renderHeader(); renderAuthState();
         }
       });
-      // live profile via realtime
       if(user){
         supa.channel('profiles_'+user.id)
           .on('postgres_changes', {event:'*', schema:'public', table:'profiles', filter:`id=eq.${user.id}`}, (payload)=>{
-            if(payload.new){ profile=payload.new; localStorage.setItem('syro_xp', profile.xp); renderHeader(); }
+            if(payload.new){ profile=payload.new; localStorage.setItem('syro_xp', profile.xp); renderHeader(); renderAuthState(); }
           }).subscribe();
       }
     }catch(e){
       console.warn('Supabase init fail', e);
-      renderHeader();
+      renderHeader(); renderAuthState();
     }
   }
 
@@ -142,19 +152,16 @@ window.SyroAuth = (function(){
     const { data, error } = await supa.auth.signUp({ email, password, options:{ data:{pseudo} } });
     if(error) throw error;
     user=data.user;
-    // if email confirmation required, session may be null; with autoconfirm, session exists
     if(data.session) {
       profile=await ensureProfile(user);
-      // migrate guest XP if any
       const guestXp = parseInt(localStorage.getItem('syro_xp')||'0');
       if(guestXp > (profile.xp||0)){
         await addXp(guestXp - (profile.xp||0), 'migration invité → compte');
       }
     } else {
-      // no session, need to sign in after confirmation — but autoconfirm true, so this shouldn't happen
       throw new Error('Vérifie ton email pour confirmer');
     }
-    renderHeader();
+    renderHeader(); renderAuthState();
     return data;
   }
 
@@ -164,7 +171,7 @@ window.SyroAuth = (function(){
     if(error) throw error;
     user=data.user;
     profile=await ensureProfile(user);
-    renderHeader();
+    renderHeader(); renderAuthState();
     return data;
   }
 
@@ -173,7 +180,7 @@ window.SyroAuth = (function(){
     localStorage.removeItem('syro_pseudo');
     localStorage.removeItem('syro_xp');
     user=null; profile=null;
-    location.reload();
+    renderHeader(); renderAuthState();
   }
 
   function onReady(cb){ if(user||profile) cb(user,profile); else readyCbs.push(cb); }
