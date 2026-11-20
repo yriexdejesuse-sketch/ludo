@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>LudoAfrik — Le Ludo africain en ligne</title>
-<meta name="description" content="Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
+<title>SYRO GAMES — Le Ludo africain en ligne</title>
+<meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="stylesheet" href="style.css?v=2026-11-14">
 </head>
 <body>
 <div id="app">
-  <!-- HEADER LudoAfrik -->
+  <!-- HEADER SYRO GAMES -->
   <header class="ludo-header">
     <div class="brand">
       <div class="brand-logo">🎲</div>
-      <div>LUDO <span style="color:var(--accent);">AFRIK</span><small>Le Ludo en ligne entre amis</small></div>
+      <div>SYRO <span style="color:var(--accent);">GAMES</span><small>Le Ludo en ligne entre amis</small></div>
     </div>
     <div class="header-actions">
       <button class="icon-btn" id="btnTheme" title="Clair / sombre">☀️</button>
@@ -68,7 +68,7 @@
   <!-- ================= ECRAN CONNEXION (maquette LudoAfrik) ================= -->
   <section id="screen-auth" class="screen hidden">
     <div class="card center-text" style="max-width:420px;">
-      <h2 style="font-family:'Baloo 2',sans-serif;">Bienvenue sur LudoAfrik</h2>
+      <h2 style="font-family:'Baloo 2',sans-serif;">Bienvenue sur SYRO GAMES</h2>
       <p class="hint">Pseudo automatique · ton XP est gardé si tu crées ton compte ensuite</p>
       <div style="display:grid; gap:10px; margin:16px 0;">
         <button class="cta-primary" id="btnGuestContinue">Continuer sans compte</button>
@@ -78,7 +78,7 @@
         <button class="big-btn primary" id="btnLoginFake">Se connecter</button>
         <button class="big-btn ghost" id="btnBackHero">← Retour</button>
         <p class="hint"><a href="#">Mot de passe oublié ?</a> · <a href="#">CGU</a> · <a href="#">Mentions légales</a></p>
-        <p class="hint">Édité par <b>SEEDVISION</b> — inspiré du niveau visuel ludoafrik.com/app</p>
+        <p class="hint"><b>SYRO GAMES</b> — Édité par <b>SEEDVISION</b></p>
       </div>
     </div>
   </section>
@@ -215,7 +215,7 @@
   </section>
 
   <footer class="app-footer">
-    <a href="#">CGU</a> · <a href="#">CGV</a> · <a href="#">Mentions légales</a> · Édité par <b>SEEDVISION</b> — <span style="color:var(--accent);">Niveau visuel inspiré de ludoafrik.com/app</span>
+    <a href="#">CGU</a> · <a href="#">CGV</a> · <a href="#">Mentions légales</a> · <b>SYRO GAMES</b> · Édité par <b>SEEDVISION</b>
   </footer>
 </div>
 
@@ -252,9 +252,9 @@
 </div>
 
 <script>
-// Thème clair/sombre persistant (comme LudoAfrik)
+// Thème clair/sombre persistant (SYRO GAMES)
 try{
-  const s=localStorage.getItem('ludoafrik_theme');
+  const s=localStorage.getItem('syro_theme') || localStorage.getItem('ludoafrik_theme');
   if(s) document.documentElement.dataset.theme=s;
   else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme='light';
 }catch(e){}
@@ -262,7 +262,7 @@ document.getElementById('btnTheme').onclick=()=>{
   const cur=document.documentElement.dataset.theme;
   const nxt=cur==='light'?'dark':'light';
   if(nxt==='dark') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=nxt;
-  try{localStorage.setItem('ludoafrik_theme', nxt);}catch(e){}
+  try{localStorage.setItem('syro_theme', nxt);}catch(e){}
   document.getElementById('btnTheme').textContent = nxt==='light'?'🌙':'☀️';
 };
 try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}

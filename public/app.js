@@ -1578,7 +1578,7 @@ function bind() {
 }
 
 async function init() {
-  document.title = 'Ludo — jeu à deux ou à quatre (' + APP_VERSION + ')';
+  document.title = 'SYRO GAMES — Ludo à 2 ou 4 joueurs (' + APP_VERSION + ')';
   buildBoard();
   bind();
   /* backend de partie en ligne : Firebase si configuré, sinon le serveur (Arena) */
