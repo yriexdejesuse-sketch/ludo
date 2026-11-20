@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-22">
+<link rel="stylesheet" href="style.css?v=2026-11-23">
 </head>
 <body>
 <div id="app">
@@ -43,10 +43,9 @@
         <span class="badge">👥 2 à 4 joueurs</span>
       </div>
       <div class="hero-ctas">
-        <button class="cta-primary" id="btnPlayGuest">🎲 Jouer sans compte <span style="opacity:.7;">→</span></button>
-        <button class="cta-secondary" id="btnShowLogin">ou avec un compte — Connexion / Inscription</button>
+        <button class="cta-primary" id="btnPlayGuest">🎲 Jouer maintenant →</button>
       </div>
-      <div class="hero-foot">Tu choisiras ton personnage juste après. <a href="#" id="linkRulesHero">Règles du jeu</a></div>
+      <div class="hero-foot"><a href="#" id="linkRulesHero">📜 Règles du jeu</a> · Ton pseudo est <b id="heroPseudo">—</b> <a href="#" id="linkChangeName">changer</a></div>
       <div class="hero-extra">
         <button class="badge" id="heroBoardBtn" style="cursor:pointer;">🏆 Classement</button>
         <button class="badge" id="heroShopBtn" style="cursor:pointer;">🛒 Boutique</button>
@@ -66,93 +65,20 @@
       <div class="dash-head">
         <div class="dash-ava">🎮</div>
         <div class="dash-welcome">
-          <h1 id="dashName">Bienvenue, Syro_5231 👋</h1>
-          <p id="dashSub" class="hint">Lv1 • 0 XP • 0 🪙 — prêt à jouer ?</p>
-          <div class="xp-bar"><div id="dashXpFill" class="xp-fill" style="width:0%"></div></div>
-          <small id="dashXpNext" class="hint">+100 XP pour Lv2</small>
+          <h1 id="dashName">Bienvenue 👋</h1>
+          <p id="dashSub" class="hint">SYRO GAMES — le Ludo africain</p>
         </div>
-        <button class="icon-btn" id="dashSettings" title="Mon compte">⚙️</button>
-      </div>
-      <div class="dash-stats">
-        <div class="dstat"><b id="dashStatPlayed">0</b><small>Parties</small></div>
-        <div class="dstat"><b id="dashStatWon">0</b><small>Victoires</small></div>
-        <div class="dstat"><b id="dashStatRank">—</b><small>Classement</small></div>
-        <div class="dstat"><b id="dashStatCoins">0 🪙</b><small>Coins</small></div>
+        <button class="icon-btn" id="dashSettings" title="Changer pseudo">✏️</button>
       </div>
       <div class="dash-actions">
         <button class="cta-primary" id="dashPlay">🎲 Jouer maintenant →</button>
         <div class="dash-grid">
           <button class="big-btn" id="dashOnline">🌐 En ligne<br><small>avec un ami</small></button>
           <button class="big-btn" id="dashBot">🤖 Solo<br><small>vs ordinateur</small></button>
-          <button class="big-btn" id="dashShop">🛒 Boutique<br><small id="dashShopHint">0 🪙</small></button>
-          <button class="big-btn" id="dashBoard">🏆 Classement<br><small>top joueurs</small></button>
+          <button class="big-btn" id="dashShop">🛒 Boutique<br><small>thèmes gratuits</small></button>
+          <button class="big-btn" id="dashBoard">🎨 Thèmes<br><small>plateau & pions</small></button>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ================= ECRAN CONNEXION (maquette LudoAfrik) ================= -->
-  <section id="screen-auth" class="screen hidden">
-    <div class="card center-text" style="max-width:420px; padding:26px 22px;">
-      <h2 style="font-family:'Baloo 2',sans-serif; margin-bottom:4px;">Bienvenue sur SYRO GAMES</h2>
-      <p class="hint" style="margin-bottom:14px;">Pseudo automatique · ton XP est gardé si tu crées ton compte ensuite</p>
-      <button class="cta-primary" id="btnGuestContinue" style="width:100%; margin-bottom:14px;">Continuer sans compte</button>
-      <div id="authOrSep" style="display:flex; align-items:center; gap:12px; color:var(--muted); font-size:.8rem; margin:8px 0 12px;"><span style="flex:1; height:1px; background:var(--line);"></span> ou avec un compte <span style="flex:1; height:1px; background:var(--line);"></span></div>
-
-      <!-- Onglets premium : Connexion / Inscription -->
-      <div class="auth-tabs" id="authTabs">
-        <button class="auth-tab active" data-tab="login">Se connecter</button>
-        <button class="auth-tab" data-tab="signup">Créer un compte</button>
-      </div>
-
-      <!-- Formulaire unique : le bouton change selon l'onglet -->
-      <div id="authForm" style="display:grid; gap:10px; margin-top:12px;">
-        <p id="authTabHint" class="hint" style="margin:2px 0 4px; min-height:1.2em;">Déjà un compte ? Connecte-toi pour retrouver ton XP.</p>
-        <input id="authEmail" placeholder="Adresse email" type="email" autocomplete="email">
-        <input id="authPassword" placeholder="Mot de passe (6 car. min)" type="password" autocomplete="current-password">
-        <button class="cta-primary" id="btnAuthPrimary" style="margin-top:4px;">Se connecter →</button>
-        <p id="authError" class="error" style="min-height:1.2em; margin-top:2px;"></p>
-        <p class="hint" id="authSwitchHint">Pas encore de compte ? <a href="#" id="linkToSignup">Créer un compte</a></p>
-      </div>
-
-      <!-- État connecté -->
-      <div id="authConnected" class="hidden" style="display:grid; gap:10px; margin-top:12px; background:var(--bg2); border:1.5px solid var(--line); border-radius:14px; padding:14px;">
-        <p style="font-weight:800; color:var(--text); margin:0;">✅ Connecté</p>
-        <p id="authConnectedInfo" class="hint" style="margin:0; line-height:1.4;"></p>
-        <button class="cta-primary" id="btnGoMenu" style="margin-top:6px;">Continuer → Jouer</button>
-        <button class="big-btn ghost" id="btnLogout" style="width:100%;">Se déconnecter</button>
-        <p id="authConnectedError" class="error" style="min-height:1em"></p>
-      </div>
-
-      <div style="height:1px; background:var(--line); margin:14px 0;"></div>
-      <button class="big-btn ghost" id="btnBackHero" style="width:100%;">← Retour</button>
-      <p class="hint" style="margin-top:10px;"><a href="#">Mot de passe oublié ?</a> · <a href="#">CGU</a> · <a href="#">Mentions légales</a></p>
-    </div>
-  </section>
-
-  <!-- ================= BOUTIQUE ================= -->
-  <section id="screen-shop" class="screen hidden">
-    <div class="shop-head">
-      <h2>🛒 Boutique SYRO</h2>
-      <p class="hint"><b id="shopCoinsBig">Tout gratuit ✨</b> — choisis ton style et équipe-le !</p>
-      <div class="shop-tabs" id="shopTabs">
-        <button data-cat="pion" class="sel">♟ Pions</button>
-        <button data-cat="plateau">🎨 Plateau</button>
-        <button data-cat="de">🎲 Dés</button>
-        <button data-cat="son">🔊 Sons</button>
-      </div>
-    </div>
-    <div id="shopGrid" class="shop-grid"></div>
-    <div class="row center" style="margin-top:14px"><button class="big-btn ghost" id="btnShopBack">← Retour</button></div>
-  </section>
-
-  <!-- ================= CLASSEMENT ================= -->
-  <section id="screen-leaderboard" class="screen hidden">
-    <div class="card" style="max-width:640px">
-      <h2>🏆 Classement SYRO</h2>
-      <p class="hint">Top joueurs par XP — mis à jour en temps réel</p>
-      <div id="leaderboardList" class="leaderboard-list"><p class="hint">Chargement…</p></div>
-      <div class="row center"><button class="big-btn ghost" id="btnBoardBack">← Retour</button><button class="big-btn primary small" id="btnBoardRefresh">↻ Actualiser</button></div>
     </div>
   </section>
 
@@ -356,11 +282,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-22"></script>
-<script src="backends.js?v=2026-11-22"></script>
-<script src="firebase-config.js?v=2026-11-22"></script>
-<script src="supabase-config.js?v=2026-11-22"></script>
-<script src="syro-supabase.js?v=2026-11-22"></script>
-<script src="app.js?v=2026-11-22"></script>
+<script src="engine.js?v=2026-11-23"></script>
+<script src="backends.js?v=2026-11-23"></script>
+<script src="firebase-config.js?v=2026-11-23"></script>
+<script src="syro-store.js?v=2026-11-23"></script>
+<script src="app.js?v=2026-11-23"></script>
 </body>
 </html>

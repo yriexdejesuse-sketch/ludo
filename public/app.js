@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-22';
+const APP_VERSION = 'v2026-11-23';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -1059,13 +1059,13 @@ function renderMyColor() {
 function showScreen(name) {
   window.showScreen = showScreen;
   clearAuto();
-  ['hero', 'dashboard', 'auth', 'menu', 'setup', 'lobby', 'game', 'shop', 'leaderboard'].forEach(s =>{
+  ['hero', 'dashboard', 'menu', 'setup', 'lobby', 'game', 'shop'].forEach(s =>{
     const el=document.getElementById('screen-' + s);
     if(el) el.classList.toggle('hidden', s !== name);
   });
   if(name==='dashboard' && window.SyroAuth) SyroAuth.renderDashboard();
   if(name==='shop') renderShop();
-  if(name==='leaderboard') renderLeaderboard();
+  // leaderboard removed
   if (name==='menu' || name==='hero') setSimPaused(false);
   if (mode === 'online' && room.code && (name === 'lobby' || name === 'game')) startWatch();
   else stopWatch();
@@ -1145,17 +1145,7 @@ function showOver() {
     `<li>${MEDAL[i + 1] || (i + 1) + '.'} <span class="chip" style="background:${HEX[c]}"></span> <b style="color:${HEX[c]}">${esc(nameOf(c))}</b></li>`).join('');
   renderBilan();
   $('#modalOver').classList.remove('hidden');
-  if(window.SyroAuth){
-    const myColor = (mode==='online'||mode==='ai') ? you : (G.players[0]&&G.players[0].color);
-    const myRank = G.players.find(p=>p.color===myColor)?.rank;
-    const isWin=myRank===1;
-    if(myRank===1) SyroAuth.addXp(50,'Victoire');
-    else if(myRank===2) SyroAuth.addXp(30,'2e place');
-    else if(myRank===3) SyroAuth.addXp(15,'3e place');
-    else SyroAuth.addXp(5,'Participation');
-    try{ SyroAuth.addWin(isWin); }catch(e){}
-    confettiBurst(); haptic(50);
-  }
+  confettiBurst(); haptic(50);
 }
 /* bilan des captures : le plus violent (pions mangés) et le plus violenté
    (pions perdus), plus le tableau complet */
@@ -1782,9 +1772,9 @@ function bind() {
     const logged = window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser();
     if(logged) showScreen('dashboard'); else showScreen('hero');
   }
-  // Nav header neuve v2026-11-22
+  // Nav header neuve v2026-11-23
   const navShop = document.getElementById('btnNavShop'); if(navShop) navShop.onclick=()=> showScreen('shop');
-  const navBoard = document.getElementById('btnNavBoard'); if(navBoard) navBoard.onclick=()=> showScreen('leaderboard');
+  const navBoard = document.getElementById('btnNavBoard'); if(navBoard) navBoard.onclick=()=> { _shopCat='plateau'; showScreen('shop'); };
   const brandHome = document.getElementById('brandHome'); if(brandHome) brandHome.onclick=()=> goHome();
   const heroShop = document.getElementById('heroShopBtn'); if(heroShop) heroShop.onclick=()=> showScreen('shop');
   const heroBoard = document.getElementById('heroBoardBtn'); if(heroBoard) heroBoard.onclick=()=> showScreen('leaderboard');
@@ -1795,7 +1785,13 @@ function bind() {
   const dashOnline = document.getElementById('dashOnline'); if(dashOnline) dashOnline.onclick=()=> { setupKind='online'; renderSetup(); showScreen('setup'); };
   const dashBot = document.getElementById('dashBot'); if(dashBot) dashBot.onclick=()=> { setupKind='ai'; renderSetup(); showScreen('setup'); };
   const dashShop = document.getElementById('dashShop'); if(dashShop) dashShop.onclick=()=> showScreen('shop');
-  const dashBoardBtn = document.getElementById('dashBoard'); if(dashBoardBtn) dashBoardBtn.onclick=()=> showScreen('leaderboard');
+  const syroBadge = document.getElementById('syroUserBadge'); if(syroBadge) syroBadge.onclick=()=>{
+    const cur=localStorage.getItem('syro_pseudo')||'Joueur';
+    const nxt=prompt('Ton pseudo :', cur); if(nxt!==null){ const v=nxt.trim().slice(0,16); if(v){ localStorage.setItem('syro_pseudo', v); if(window.SyroAuth){ SyroAuth.renderHeader(); SyroAuth.renderDashboard(); } toast('Pseudo : '+v); } }
+  };
+  const heroPseudoLink=document.getElementById('linkChangeName'); if(heroPseudoLink) heroPseudoLink.onclick=(e)=>{ e.preventDefault(); document.getElementById('syroUserBadge')?.click(); };
+  const btnPlayGuest=document.getElementById('btnPlayGuest'); if(btnPlayGuest) btnPlayGuest.onclick=()=> showScreen('menu');
+  const dashBoardBtn = document.getElementById('dashBoard'); if(dashBoardBtn) dashBoardBtn.onclick=()=> { _shopCat='plateau'; showScreen('shop'); };
   const dashSettings = document.getElementById('dashSettings'); if(dashSettings) dashSettings.onclick=()=> showScreen('auth');
   document.querySelectorAll('#shopTabs button').forEach(b=> b.onclick=()=>{ _shopCat=b.dataset.cat; renderShop(); });
   const btnSound = document.getElementById('btnSound'); if(btnSound) btnSound.onclick=()=>{
