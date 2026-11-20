@@ -5,8 +5,8 @@
 > quelles règles sont implémentées (et pourquoi), et **comment modifier le
 > projet** sans casser le reste.
 >
-> Dernière mise à jour : 20 novembre 2026 — **v2026-11-16 SYRO GAMES** — moteur strict + online fluide + rebrand LUDO AFRIK → SYRO GAMES
-> (20 tests moteur au vert, site https://yriexdejesuse-sketch.github.io/ludo/ en v2026-11-16).
+> Dernière mise à jour : 20 novembre 2026 — **v2026-11-24 Vercel unique + fix plateau haut** — boutique 100% gratuite + Tom scream + capture séquentielle + choix clamp + Vercel seul + miniChoice flip
+> (site https://syro-ludo.vercel.app en v2026-11-24, GitHub Pages `gh-pages` supprimé — 404 volontaire, `syro-store.js` sans Supabase).
 
 ---
 
@@ -632,6 +632,12 @@ qui est en fait un choix assumé.
 18. **v2026-11-16 — Moteur strict SYRO** : `public/engine.js` réécrit v2026-11-16 — (1) étoiles/départs 100% protégés : `SAFE` vérifié à `rawMovesFor` (`capture:false` dessus) + `actionMove` (`if(SAFE[ri]) ne mange pas`) + `movesForSum` filtré, empilement offset -8/+8 ; (2) anti-mix même pion : `state.pawnDir={}` posé à `actionRoll`/`actionMove` et filtré dans `movesForDie`/`movesForSum` → même pion ne peut pas fwd puis bwd, 2 pions différents OK ; (3) 5 dernières cases 51-55 recul possible : `pos>=51&&pos<=55` → `toB=pos-value` reste couloir (`corridorAt`) ou retombe anneau (`ringIdxOf` + `SAFE` + `occupiedBy`) ; (4) suppression `home_retour` (saut magique n'importe où → maison) ; (5) capture universelle anneau + somme respectant `SAFE`, 56 intouchable. Tests 20 passent. Déployé `f62ca92 → fee591f`.
 
 19. **v2026-11-16 docs** : restauration `DOCUMENTATION.md` trace complète (ce document) + `README.md` épuré public (sans Q&A perso) — commit `8b15871` annulé et reconstitué ici.
+
+20. **v2026-11-22 — boutique gratuite + Tom + capture + choix + thèmes** : `syro-supabase.js` `SHOP_CATALOG` tous `price:0` + `board_sunset` + `sound_tom`, `app.js` `tomAudio/playTomScream` + `animateDiff` séquentiel + `showMiniChoice` clamp initial (viewport) + `style.css` board_sunset, déployé `main 26963c4 → gh-pages 482cab1` (Vercel `syro-ludo` prêt).
+
+21. **v2026-11-23 — sans compte** : `public/index.html` hero 1 CTA + dashboard sans XP, `public/syro-store.js` nouveau store local (pseudo `localStorage`, `SHOP_CATALOG` gratuit, `equipItem` direct), `public/app.js` suppression auth/leaderboard/XP + handlers pseudo badge, déployé `main 75a6626 → gh-pages 654b6d4`.
+
+22. **v2026-11-24 — Vercel unique + fix plateau haut** : suppression `gh-pages` (GitHub Pages → 404 volontaire, `git push --delete gh-pages`), `vercel.json` `git.deploymentEnabled {main:true, gh-pages:false}` + `public/vercel.json false` pour bloquer les Preview Error rouges, `public/style.css` `.mini-choice z-index:50` + `max-width:92vw`, `public/app.js` `showMiniChoice` refait : `headerBottom` + `boardRect` + double `rAF` + flip `translate(14%)` dessous si `my<130` ou `r.top<headerBottom`, déployé `main eeae5a3` → Vercel prod `dpl_An2fQ` `age:0 MISS` `v2026-11-24` live. `README.md` mis à jour vers `https://syro-ludo.vercel.app` + arbre `syro-store.js` + section Vercel.
 
 11. **Round14ter** : la pastille `#diceHint` (« 👆 Clique pour lancer »)
     est **sortie du plateau** — elle vit désormais dans `.panel` (jamais
