@@ -5,7 +5,7 @@
    ============================================================ */
 
 const NS = 'http://www.w3.org/2000/svg';
-const APP_VERSION = 'v2026-11-14';
+const APP_VERSION = 'v2026-11-15';
 const LABEL = { red: 'Rouge', green: 'Vert', yellow: 'Jaune', blue: 'Bleu' };
 const EMOJI = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
 const HEX = { red: '#e5484d', green: '#2eb67d', yellow: '#f5a524', blue: '#3b82f6' };
@@ -1314,12 +1314,27 @@ function stopWatch() {
   watchSeq++;
   if (watchStop) { try { watchStop(); } catch (e) {} watchStop = null; }
 }
+function clearRoomUrl(){
+  try { history.replaceState(null, '', location.pathname); } catch(e){}
+  room = { code: null, token: null };
+}
+function quitOnlineToHome(){
+  stopWatch();
+  clearRoomUrl();
+  mode = null;
+  started = false;
+  showScreen('hero');
+}
 function onRoomState(resp) {
   if (!resp) return;
+  if (resp._transient) { /* Firestore reconnexion automatique — pas de kick */ return; }
   if (resp.error) {
-    stopWatch();
-    try { history.replaceState(null, '', location.pathname); } catch (e) {}
-    showScreen('menu');
+    const fatal = /introuvable|n'existe plus|invalide|introuvable/i.test(resp.error);
+    if (fatal) {
+      stopWatch();
+      clearRoomUrl();
+      showScreen('hero');
+    }
     toast(resp.error);
     return;
   }
@@ -1473,19 +1488,44 @@ function showJoinError(msg) {
    ÉVÉNEMENTS / INIT
    ============================================================ */
 function bind() {
-  $('#btnAi').onclick = () => { setupKind = 'ai'; renderSetup(); showScreen('setup'); };
-  $('#btnLocal').onclick = () => { setupKind = 'local'; renderSetup(); showScreen('setup'); };
-  $('#btnSim').onclick = () => { setupKind = 'sim'; renderSetup(); showScreen('setup'); };
-  $('#btnCreate').onclick = () => { setupKind = 'online'; renderSetup(); showScreen('setup'); };
-  $('#btnJoinShow').onclick = () => {
-    $('#joinBox').classList.toggle('hidden');
-    $('#joinError').textContent = '';
-    $('#joinCode').focus();
-  };
-  $('#btnJoin').onclick = () => { mode = 'online'; hotseat = false; joinOnline($('#joinCode').value, false); };
-  $('#joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnJoin').click(); });
+  // Hero SYRO GAMES → navigation fluide (remplace le script inline)
+  const goMenu = () => showScreen('menu');
+  const goHero = () => { stopWatch(); showScreen('hero'); };
+  const goAuth = () => showScreen('auth');
+  if ($('#btnPlayGuest')) $('#btnPlayGuest').onclick = goMenu;
+  if ($('#btnShowLogin')) $('#btnShowLogin').onclick = goAuth;
+  if ($('#btnGuestContinue')) $('#btnGuestContinue').onclick = goMenu;
+  if ($('#btnBackHero')) $('#btnBackHero').onclick = goHero;
+  if ($('#linkRulesHero')) $('#linkRulesHero').onclick = (e)=>{ e.preventDefault(); $('#modalRules').classList.remove('hidden'); };
+  if ($('#btnBackToHero')) $('#btnBackToHero').onclick = goHero;
 
-  $('#btnBackMenu').onclick = () => showScreen('hero');
+  // Menu (les deux versions hero+menu utilisent les mêmes handlers)
+  const bindMode = (id, kind) => {
+    const el = document.getElementById(id);
+    const el2 = document.getElementById(id+'2');
+    const h = () => { setupKind = kind; renderSetup(); showScreen('setup'); };
+    if (el) el.onclick = h;
+    if (el2) el2.onclick = h;
+  };
+  bindMode('btnAi', 'ai');
+  bindMode('btnLocal', 'local');
+  bindMode('btnSim', 'sim');
+  bindMode('btnCreate', 'online');
+  const j1 = $('#btnJoinShow'), j2 = $('#btnJoinShow2');
+  const toggleJoin = () => {
+    const box = $('#joinBox'); if (!box) return;
+    // joinBox est dans le menu, on s'assure d'être sur le menu
+    if (document.getElementById('screen-menu').classList.contains('hidden')) showScreen('menu');
+    box.classList.toggle('hidden');
+    $('#joinError').textContent = '';
+    setTimeout(()=>{ const i=$('#joinCode'); if(i) i.focus(); }, 50);
+  };
+  if (j1) j1.onclick = toggleJoin;
+  if (j2) j2.onclick = toggleJoin;
+  if ($('#btnJoin')) $('#btnJoin').onclick = () => { mode = 'online'; hotseat = false; joinOnline($('#joinCode').value, false); };
+  const jc = $('#joinCode'); if (jc) jc.addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnJoin').click(); });
+
+  $('#btnBackMenu').onclick = () => showScreen('menu');
   $('#btnStart').onclick = () => {
     if (setupKind === 'ai') startAiGame();
     else if (setupKind === 'online') { mode = 'online'; hotseat = false; createOnline(); }
@@ -1532,14 +1572,16 @@ function bind() {
     if (r && r.error) toast(r.error);
     else if (r) applyServer(r, false);
   };
-  $('#btnLeaveLobby').onclick = () => { stopWatch(); showScreen('menu'); };
+  $('#btnLeaveLobby').onclick = () => {
+    if (!confirm('Quitter le salon ?')) return;
+    quitOnlineToHome();
+  };
   $('#btnLeave').onclick = () => {
-    if (mode === 'online' && !confirm('Quitter la partie ? (tu pourras revenir avec le lien)')) return;
-    stopWatch();
+    if (mode === 'online' && !confirm('Quitter la partie ?')) return;
     clearTimeout(aiTimer);
     setSimPaused(false);
-    try { history.replaceState(null, '', location.pathname); } catch (e) {}
-    showScreen('menu');
+    if (mode === 'online') quitOnlineToHome();
+    else { stopWatch(); showScreen('hero'); }
   };
 
   const simBtn=$('#simPauseBtn'); if(simBtn) simBtn.onclick = () => setSimPaused(!simPaused);
@@ -1561,6 +1603,7 @@ function bind() {
     overShown = false;
     if (mode === 'local') startLocal();
     else if (mode === 'ai') startAiGame();
+    else if (mode === 'sim') startSim();
     else {
       const resp = await postAction({ type: 'restart' });
       if (resp.error) { toast(resp.error); return; }
@@ -1570,7 +1613,8 @@ function bind() {
   };
   $('#btnOverMenu').onclick = () => {
     $('#modalOver').classList.add('hidden');
-    stopWatch(); showScreen('menu');
+    if (mode === 'online') quitOnlineToHome();
+    else { stopWatch(); showScreen('hero'); }
   };
 
   $('#board').addEventListener('click', () => hideMini());
@@ -1616,10 +1660,27 @@ async function init() {
   const rc = params.get('room');
   if (rc) {
     mode = 'online'; hotseat = false;
-    $('#joinCode').value = rc;
+    const jc = $('#joinCode'); if (jc) jc.value = rc;
     await joinOnline(rc, true);
     return;
   }
   showScreen('hero');
+
+  // FLUIDITÉ : si l'utilisateur revient sur l'onglet, on re-sync sans refresh manuel
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && mode === 'online' && room.code) {
+      // le watch Firestore/HTTP se recharge seul, mais on force un getState pour les vieux onglets en arrière-plan
+      Backend.getState(room.code, room.token).then(r=>{ if(r && !r.error) applyServer(r,false); }).catch(()=>{});
+    }
+  });
+  // Si l'utilisateur efface le ?room à la main ou fait retour navigateur
+  window.addEventListener('popstate', () => {
+    const p = new URLSearchParams(location.search).get('room');
+    if (!p && mode === 'online' && !document.querySelector('#screen-game').classList.contains('hidden')) {
+      // il a quitté le lien → on le libère vraiment
+      stopWatch();
+      room = { code:null, token:null };
+    }
+  });
 }
 init();

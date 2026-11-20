@@ -61,14 +61,29 @@
       action: (code, token, action) => call('POST', '/api/rooms/' + code + '/action', { token, action }),
       async watch(code, token, cb) {
         let stopped = false;
+        let failCount = 0;
         const tick = async () => {
           if (stopped) return;
           const r = await this.getState(code, token);
-          if (!stopped && r && !r.error) cb(r);
+          if (stopped) return;
+          if (!r) return;
+          if (r.error) {
+            // erreur fatale (salle supprimée / token invalide) → on prévient l'app qui quittera
+            if (/introuvable|n'existe plus|invalide/i.test(r.error)) cb(r);
+            else {
+              failCount++;
+              if (failCount === 3) console.warn('[SYRO] synchro en attente...', r.error);
+            }
+            return;
+          }
+          failCount = 0;
+          cb(r);
         };
         tick();
-        const iv = setInterval(tick, 750);
-        return () => { stopped = true; clearInterval(iv); };
+        const iv = setInterval(tick, 500);
+        const onVis = () => { if (!stopped && document.visibilityState === 'visible') tick(); };
+        try { document.addEventListener('visibilitychange', onVis); } catch(e){}
+        return () => { stopped = true; clearInterval(iv); try { document.removeEventListener('visibilitychange', onVis); } catch(e){} };
       }
     };
   }
@@ -253,8 +268,20 @@
             if (!snap.exists()) { cb({ error: 'La partie n\'existe plus.' }); return; }
             publicOf(snap.data(), token || null).then(pub => { if (!stopped) cb(pub); });
           },
-          () => { if (!stopped) cb({ error: 'Connexion perdue.' }); });
-        return () => { stopped = true; try { unsub(); } catch (e) {} };
+          (err) => {
+            console.warn('[SYRO] Firestore watch erreur', err && err.message);
+            // transient : onSnapshot se reconnecte seul, on ne kick pas
+            if (!stopped) try{ cb({ _transient:true, error:'Connexion faible…' }); } catch(e){}
+          });
+        const onVis = () => {
+          if (stopped || document.visibilityState !== 'visible') return;
+          api.getDoc(ref).then(snap=>{
+            if (stopped || !snap.exists()) return;
+            publicOf(snap.data(), token || null).then(pub=>{ if(!stopped) cb(pub); });
+          }).catch(()=>{});
+        };
+        try { document.addEventListener('visibilitychange', onVis); } catch(e){}
+        return () => { stopped = true; try { unsub(); } catch (e) {} try { document.removeEventListener('visibilitychange', onVis); } catch(e){} };
       }
     };
   }

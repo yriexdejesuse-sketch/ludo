@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-14">
+<link rel="stylesheet" href="style.css?v=2026-11-15">
 </head>
 <body>
 <div id="app">
@@ -44,25 +44,6 @@
       <div class="hero-foot">Tu choisiras ton personnage juste après. <a href="#" id="linkRulesHero">Règles du jeu</a></div>
     </div>
 
-    <!-- Choix rapide (existant) en dessous du hero, style LudoAfrik -->
-    <div class="menu-cards" style="margin-top:16px;">
-      <button class="big-btn primary" id="btnAi">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
-      <button class="big-btn" id="btnLocal">👥 Partie locale<br><small>2, 3 ou 4 joueurs sur le même écran</small></button>
-      <button class="big-btn" id="btnSim">🔬 Simulateur entre ordinateurs<br><small>2, 3 ou 4 IA s'affrontent seules</small></button>
-      <button class="big-btn" id="btnCreate">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
-      <button class="big-btn" id="btnJoinShow">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
-    </div>
-    <div id="joinBox" class="card hidden" style="margin-top:14px;">
-      <h2>Rejoindre une partie</h2>
-      <div class="join-col">
-        <input id="joinName" maxlength="16" placeholder="Ton prénom ou pseudo" autocomplete="nickname">
-        <div class="row">
-          <input id="joinCode" placeholder="CODE (ex. K7M2P)" maxlength="8" autocomplete="off">
-          <button class="big-btn primary small" id="btnJoin">Rejoindre</button>
-        </div>
-      </div>
-      <p id="joinError" class="error"></p>
-    </div>
   </section>
 
   <!-- ================= ECRAN CONNEXION (maquette LudoAfrik) ================= -->
@@ -83,15 +64,27 @@
     </div>
   </section>
 
-  <!-- ================= MENU ORIGINAL (gardé pour compatibilité app.js) ================= -->
+  <!-- ================= MENU ================= -->
   <section id="screen-menu" class="screen hidden">
     <div class="menu-cards">
-      <button class="big-btn primary" id="btnAi2">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
-      <button class="big-btn" id="btnLocal2">👥 Partie locale<br><small>2, 3 ou 4 joueurs sur le même écran</small></button>
-      <button class="big-btn" id="btnSim2">🔬 Simulateur entre ordinateurs<br><small>2, 3 ou 4 IA s'affrontent seules</small></button>
-      <button class="big-btn" id="btnCreate2">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
-      <button class="big-btn" id="btnJoinShow2">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
+      <button class="big-btn primary" id="btnAi">🤖 Jouer contre l'ordinateur<br><small>2 joueurs (toi + 1 IA) ou 4 joueurs (toi + 3 IA)</small></button>
+      <button class="big-btn" id="btnLocal">👥 Partie locale<br><small>2, 3 ou 4 joueurs sur le même écran</small></button>
+      <button class="big-btn" id="btnSim">🔬 Simulateur entre ordinateurs<br><small>2, 3 ou 4 IA s'affrontent seules</small></button>
+      <button class="big-btn" id="btnCreate">🌐 Créer une partie en ligne<br><small>invite un ami avec un code</small></button>
+      <button class="big-btn" id="btnJoinShow">🔑 Rejoindre une partie<br><small>avec le code de ton ami</small></button>
       <button class="big-btn ghost" id="btnRules">📜 Règles du jeu</button>
+      <button class="big-btn ghost" id="btnBackToHero" style="opacity:.7;">← Retour accueil</button>
+    </div>
+    <div id="joinBox" class="card hidden" style="margin-top:14px;">
+      <h2>Rejoindre une partie</h2>
+      <div class="join-col">
+        <input id="joinName" maxlength="16" placeholder="Ton prénom ou pseudo" autocomplete="nickname">
+        <div class="row">
+          <input id="joinCode" placeholder="CODE (ex. K7M2P)" maxlength="8" autocomplete="off">
+          <button class="big-btn primary small" id="btnJoin">Rejoindre</button>
+        </div>
+      </div>
+      <p id="joinError" class="error"></p>
     </div>
   </section>
 
@@ -266,22 +259,11 @@ document.getElementById('btnTheme').onclick=()=>{
   document.getElementById('btnTheme').textContent = nxt==='light'?'🌙':'☀️';
 };
 try{ document.getElementById('btnTheme').textContent = (document.documentElement.dataset.theme==='light'?'🌙':'☀️'); }catch(e){}
-// Hero → menu existant
-document.getElementById('btnPlayGuest').onclick=()=>{ document.getElementById('screen-hero').classList.add('hidden'); document.getElementById('screen-menu').classList.remove('hidden'); window.scrollTo(0,0); };
-document.getElementById('btnShowLogin').onclick=()=>{ document.getElementById('screen-hero').classList.add('hidden'); document.getElementById('screen-auth').classList.remove('hidden'); };
-document.getElementById('btnGuestContinue').onclick=()=>{ document.getElementById('screen-auth').classList.add('hidden'); document.getElementById('screen-menu').classList.remove('hidden'); };
-document.getElementById('btnBackHero').onclick=()=>{ document.getElementById('screen-auth').classList.add('hidden'); document.getElementById('screen-hero').classList.remove('hidden'); };
-document.getElementById('linkRulesHero').onclick=(e)=>{ e.preventDefault(); document.getElementById('modalRules').classList.remove('hidden'); };
-// Compat : dupliquer les IDs du hero vers les handlers existants de app.js
-['btnAi','btnLocal','btnSim','btnCreate','btnJoinShow'].forEach(id=>{
-  const heroBtn=document.getElementById(id);
-  const menuBtn=document.getElementById(id+'2');
-  if(heroBtn && menuBtn) heroBtn.onclick=()=>menuBtn.click();
-});
+// Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-14"></script>
-<script src="backends.js?v=2026-11-14"></script>
-<script src="firebase-config.js?v=2026-11-14"></script>
-<script src="app.js?v=2026-11-14"></script>
+<script src="engine.js?v=2026-11-15"></script>
+<script src="backends.js?v=2026-11-15"></script>
+<script src="firebase-config.js?v=2026-11-15"></script>
+<script src="app.js?v=2026-11-15"></script>
 </body>
 </html>
