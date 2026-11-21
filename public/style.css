@@ -493,32 +493,38 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
   .board-die .pipd{width:58%;height:58%}
   .hero h1{font-size:1.35rem;}
 }
-/* ---- Thème FOOT v2 : ambiance stade sombre, photo mono-teinte, aucun halo ---- */
+/* ---- Thème FOOT v3 : photo floutée en <img> (aucun ::after parasite) ---- */
 [data-board-skin="board_foot"] .board-wrap{
-  position:relative; padding:16px; border-radius:26px; isolation:isolate;
-  background:#050d09;
-  box-shadow:0 30px 70px rgba(0,0,0,.62), 0 0 0 1px rgba(255,255,255,.06);
+  position:relative; overflow:hidden; padding:26px; border-radius:26px;
+  background:#06110b;
+  box-shadow:0 30px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06);
 }
-/* la photo : floutée ET forcée en vert mono (plus de taches bleues/rouges/jaunes) */
-[data-board-skin="board_foot"] .board-wrap::before{
-  content:""; position:absolute; inset:-60px; z-index:0; border-radius:32px;
-  background:url('img/foot-bg.jpg') center 40%/cover no-repeat;
-  filter:blur(34px) grayscale(1) sepia(.55) saturate(2.2) hue-rotate(58deg) brightness(.54);
-  opacity:.85;
-  transform:scale(1.06);
+.board-wrap .board-bg{display:none}
+[data-board-skin="board_foot"] .board-bg{
+  display:block; position:absolute; inset:-70px; width:calc(100% + 140px); height:calc(100% + 140px);
+  object-fit:cover; z-index:0; pointer-events:none; user-select:none;
+  filter:blur(26px) grayscale(.35) saturate(1.1) brightness(.42);
+  transform:scale(1.08);
 }
-/* vignette : assombrit les bords, garde le centre lumineux (effet stade) */
+/* voile sombre : lisibilité du plateau, plus aucun halo de couleur */
 [data-board-skin="board_foot"] .board-wrap::after{
   content:""; position:absolute; inset:0; z-index:1; border-radius:26px; pointer-events:none;
   background:
-    radial-gradient(78% 62% at 50% 42%, rgba(6,34,22,.10) 0%, rgba(3,14,9,.72) 72%, rgba(1,7,4,.94) 100%),
-    linear-gradient(180deg, rgba(4,20,13,.30) 0%, rgba(4,20,13,0) 30%, rgba(1,8,5,.55) 100%);
+    radial-gradient(80% 64% at 50% 44%, rgba(4,26,17,.16) 0%, rgba(3,13,9,.70) 74%, rgba(1,6,4,.92) 100%),
+    linear-gradient(180deg, rgba(4,18,12,.34) 0%, rgba(4,18,12,0) 32%, rgba(1,7,4,.5) 100%);
 }
 [data-board-skin="board_foot"] .board-wrap > *{position:relative; z-index:2}
+[data-board-skin="board_foot"] .board-wrap > .board-bg{position:absolute; z-index:0}
 [data-board-skin="board_foot"] #board{
   border:none; border-radius:14px;
   box-shadow:0 16px 40px rgba(0,0,0,.66), 0 0 0 1px rgba(255,255,255,.10);
 }
+/* pions : couleur franche + relief, le motif ballon est retiré (illisible) */
+[data-board-skin="board_foot"] .pawn > circle:first-child{
+  stroke-width:3.2 !important;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));
+}
+[data-board-skin="board_foot"] .pawn .ball-dot{display:none !important}
 [data-board-skin="board_foot"] .board-die{
   background:linear-gradient(160deg,#ffffff,#eef2f6); border:2px solid #0f172a;
   box-shadow:0 5px 12px rgba(0,0,0,.45), inset 0 -2px 0 rgba(15,23,42,.10);
@@ -534,3 +540,7 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
   filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)) drop-shadow(0 0 0 rgba(0,0,0,0));
 }
 [data-board-skin="board_foot"] .pawn .ball-dot{fill:rgba(0,0,0,.82)}
+
+/* ---- FIX pions : la règle générique blanchissait les 2e/3e cercles -> effet "yeux" ---- */
+.pawn > circle:not(:first-child){fill:none !important; stroke:none !important; opacity:0 !important}
+.pawn.done > circle:first-child{stroke:#e0a82e !important; stroke-width:4.5 !important}
