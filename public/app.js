@@ -352,8 +352,60 @@ function syncPawns() {
       el.style.transform = `translate(${pt[0]}px,${pt[1]}px)`;
       el.classList.toggle('movable', pos !== 56 && p.color === cur && movable.has(i));
       el.classList.toggle('done', pos === 56);
+      // danger : pion exposé à 1..6 cases d'un adversaire (pas sur SAFE)
+      let threatened=false;
+      if(pos!==56 && pos!==-1){
+        let onRing=false; let myRing=-1;
+        if(pos===-2){ onRing=true; myRing=Ludo.ringIdxOf(p.color, pos); }
+        else if(Ludo.isIntruderPos(pos)){ onRing=false; }
+        else if(pos>=0 && pos<=50){ onRing=true; myRing=Ludo.ringIdxOf(p.color,pos); if(myRing!==-1 && Ludo.SAFE[myRing]) onRing=false; }
+        if(onRing){
+          for(const op of G.players){ if(op.color===p.color) continue; for(const opPos of op.pawns){ if((opPos<0 && opPos!==-2) || opPos>50 || opPos===56) continue; if(Ludo.isIntruderPos(opPos)) continue; const opRing=Ludo.ringIdxOf(op.color,opPos); if(opRing===-1) continue; const f=(myRing - opRing + 52)%52; const b=(opRing - myRing + 52)%52; if((f>=1&&f<=6)||(b>=1&&b<=6)){ threatened=true; break; } } if(threatened) break; }
+        }
+      }
+      el.classList.toggle('threatened', threatened);
     });
   });
+}
+// --- CHRONO 15s + DANGER ---
+let turnTimer=null, turnDeadline=0;
+function clearChrono(){ if(turnTimer){ clearInterval(turnTimer); turnTimer=null; } const el=document.getElementById('turnTimer'); if(el) el.classList.add('hidden'); }
+function forceNextTurn(){
+  if(!G) return;
+  const old=JSON.parse(JSON.stringify(G));
+  G.dieUsed=[true,true]; G.dice=[null,null]; G.phase='roll';
+  let n=G.players.length, guard=0;
+  do{ G.turn=(G.turn+1)%n; guard++; } while(G.players[G.turn].pawns.every(x=>x===56) && guard<n*2);
+  G.sixStreak=0; G.pawnDir={}; G.rev=(G.rev||0)+1;
+  commitState(G,null,true,old);
+}
+function updateChrono(){
+  const el=document.getElementById('turnTimer'); if(!el||!turnDeadline) return;
+  const left=Math.ceil((turnDeadline - Date.now())/1000);
+  if(left<=0){ el.textContent='⏰ Temps écoulé !'; el.classList.add('warn'); clearInterval(turnTimer); turnTimer=null; toast('⏰ Temps écoulé — tour passé !');
+    setTimeout(()=>{
+      if(!G||G.over||!canAct()||isAiTurn()) return;
+      if(G.phase==='roll'){ doRoll(); }
+      else if(G.phase==='move'){
+        const moves=[]; [0,1].forEach(i=>{ if(!G.dieUsed[i]) (legal[i]||[]).forEach(m=> moves.push({die:i,m})); }); (legal.sum||[]).forEach(m=> moves.push({die:'sum',m}));
+        if(moves.length){ const pick=moves[Math.floor(Math.random()*moves.length)]; executeMove(pick.die, pick.m); }
+        else forceNextTurn();
+      }
+    }, 500);
+    return;
+  }
+  el.textContent=`⏳ ${left}s`;
+  el.classList.toggle('warn', left<=5);
+}
+function startChrono(){
+  clearChrono();
+  if(!G||G.over||!started) return;
+  if(!canAct()||isAiTurn()) return;
+  turnDeadline=Date.now()+15000;
+  const el=document.getElementById('turnTimer'); if(!el) return;
+  el.classList.remove('hidden'); el.classList.remove('warn');
+  updateChrono();
+  turnTimer=setInterval(updateChrono, 1000);
 }
 
 /* ---------- animations de déplacement ---------- */
@@ -796,6 +848,12 @@ function renderPanel() {
   checkOver();
   updateSimPauseUI();
   scheduleAi();
+  // chrono : démarre à chaque nouveau tour / phase
+  if(G && started && !G.over && canAct() && !isAiTurn() && !busy()){
+    if(!turnTimer) startChrono();
+  } else if(isAiTurn() || !canAct() || (G&&G.over)){
+    clearChrono();
+  }
 }
 function toast(msg) {
   if (!msg) return;
@@ -858,6 +916,7 @@ function commitState(newG, newLegal, animate, oldState) {
   }
 
   hideMini();
+  clearChrono();
   playStateSounds(old, G);
   syncSelection();
 

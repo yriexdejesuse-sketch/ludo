@@ -356,6 +356,14 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
 @keyframes onlinePulse{0%,100%{opacity:1; transform:scale(1)}50%{opacity:.6; transform:scale(1.2)}}
 .online-bar .ping{margin-left:auto; opacity:.7; font-size:.7rem}
 .confetti-canvas{position:fixed; inset:0; pointer-events:none; z-index:60; width:100%; height:100%}
+.turn-timer{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:.95rem; text-align:center; padding:6px 10px; border-radius:12px; background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(224,168,46,.10)); border:1.5px solid var(--line); margin-bottom:6px}
+.turn-timer.hidden{display:none !important}
+.turn-timer.warn{background:rgba(239,68,68,.18); border-color:#ef4444; color:#dc2626; animation:timerPulse .6s infinite}
+@keyframes timerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.pawn.threatened{filter:drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 2px #fbbf24)}
+.pawn.threatened > circle:first-child{stroke:#ef4444 !important; stroke-width:3.5 !important}
+@keyframes threatPulse{0%,100%{filter:drop-shadow(0 0 4px #ef4444)}50%{filter:drop-shadow(0 0 10px #ef4444)}}
+.pawn.threatened{animation:threatPulse 1.1s ease-in-out infinite}
 .shop-head{text-align:center; margin-bottom:14px}
 .shop-tabs{display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap}
 .shop-tabs button{appearance:none; border:1.5px solid var(--line); background:var(--card); color:var(--muted); padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer; font-size:.85rem}
