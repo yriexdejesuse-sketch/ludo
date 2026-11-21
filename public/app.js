@@ -849,8 +849,10 @@ function renderChrome() {
 }
 function renderPanel() {
   applyBoardOrientation();
+  if(window.SyroAuth) try{ const e=SyroAuth.getEq(); document.documentElement.dataset.boardSkin=e.board||'board_classic'; document.documentElement.dataset.diceSkin=e.dice||'dice_classic'; }catch(e){}
   renderChrome();
   syncPawns();
+  try{ applySkinsToBoard(); }catch(e){}
   checkOver();
   updateSimPauseUI();
   scheduleAi();
@@ -1261,12 +1263,16 @@ function applySkinsToBoard(){
   const eq = window.SyroAuth ? SyroAuth.getEq() : {};
   const boardSkin = eq.board || 'board_classic';
   document.documentElement.dataset.boardSkin = boardSkin;
-  // pawn skins via body class
+  document.documentElement.dataset.diceSkin = eq.dice||'dice_classic';
+  // pawn skins
   document.querySelectorAll('.pawn').forEach(p=>{
     p.classList.remove('pawn-skin-neon','pawn-skin-gold','pawn-skin-fire','pawn-skin-foot','pawn-skin-music','pawn-skin-afro','pawn-skin-gaming','pawn-skin-anime','pawn-skin-classic');
     const ps = eq.pawn || 'pawn_classic';
     p.classList.add('pawn-skin-'+ps.replace('pawn_',''));
   });
+  // board-wrap fallback visuel fort si thème foot/music etc
+  const wrap=document.querySelector('.board-wrap');
+  if(wrap){ wrap.style.outline=''; wrap.style.outlineOffset=''; }
   if(window.SyroAuth) SyroAuth.renderHeader();
 }
 async function renderLeaderboard(){
@@ -1577,7 +1583,7 @@ function startSim() {
   seats = G.players.map((p,i)=>({ seat:i, color:p.color, joined:true }));
   legal = { 0:[],1:[], sum:[] };
   showScreen('game');
-  renderPanel();
+  renderPanel(); setTimeout(()=>{ try{ applySkinsToBoard(); renderDice(); }catch(e){} },80);
 }
 function startLocal() {
   mode = 'local'; hotseat = true; you = null; aiColors = new Set();
@@ -1593,7 +1599,7 @@ function startLocal() {
   seats = G.players.map((p, i) => ({ seat: i, color: p.color, joined: true }));
   legal = { 0: [], 1: [], sum: [] };
   showScreen('game');
-  renderPanel();
+  renderPanel(); setTimeout(()=>{ try{ applySkinsToBoard(); renderDice(); }catch(e){} },80);
 }
 function startAiGame() {
   mode = 'ai'; hotseat = false; overShown = false; selectedDie = null;
@@ -1609,7 +1615,7 @@ function startAiGame() {
   seats = G.players.map((p, i) => ({ seat: i, color: p.color, joined: true }));
   legal = { 0: [], 1: [], sum: [] };
   showScreen('game');
-  renderPanel();
+  renderPanel(); setTimeout(()=>{ try{ applySkinsToBoard(); renderDice(); }catch(e){} },80);
 }
 
 /* ============================================================
