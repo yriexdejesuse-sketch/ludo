@@ -543,7 +543,7 @@ function applyDiceSkins(){
   let skin='dice_classic';
   try{ if(window.SyroAuth && SyroAuth.getEq) skin=SyroAuth.getEq().dice || skin; else { const eq=JSON.parse(localStorage.getItem('syro_eq')||'{}'); skin=eq.dice||skin; } }catch(e){}
   document.documentElement.dataset.diceSkin = skin||'dice_classic';
-  [$('#die0'),$('#die1')].forEach(el=>{ if(!el) return; el.classList.remove('skin-crystal','skin-gold'); if(skin==='dice_crystal') el.classList.add('skin-crystal'); if(skin==='dice_gold') el.classList.add('skin-gold'); });
+  [$('#die0'),$('#die1')].forEach(el=>{ if(!el) return; el.classList.remove('skin-crystal','skin-gold','skin-foot','skin-music','skin-afro','skin-gaming','skin-anime','skin-classic'); el.classList.add('skin-'+skin.replace('dice_','')); });
 }
 function renderDice() {
   if (rollAnim) return;
@@ -1259,11 +1259,9 @@ function applySkinsToBoard(){
   document.documentElement.dataset.boardSkin = boardSkin;
   // pawn skins via body class
   document.querySelectorAll('.pawn').forEach(p=>{
-    p.classList.remove('pawn-skin-neon','pawn-skin-gold','pawn-skin-fire');
+    p.classList.remove('pawn-skin-neon','pawn-skin-gold','pawn-skin-fire','pawn-skin-foot','pawn-skin-music','pawn-skin-afro','pawn-skin-gaming','pawn-skin-anime','pawn-skin-classic');
     const ps = eq.pawn || 'pawn_classic';
-    if(ps==='pawn_neon') p.classList.add('pawn-skin-neon');
-    if(ps==='pawn_gold') p.classList.add('pawn-skin-gold');
-    if(ps==='pawn_fire') p.classList.add('pawn-skin-fire');
+    p.classList.add('pawn-skin-'+ps.replace('pawn_',''));
   });
   if(window.SyroAuth) SyroAuth.renderHeader();
 }
