@@ -400,6 +400,8 @@ function updateChrono(){
 function startChrono(){
   clearChrono();
   if(!G||G.over||!started) return;
+  // chrono uniquement en ligne (local/AI exempt — pas de stress entre amis)
+  if(mode!=='online') return;
   if(!canAct()||isAiTurn()) return;
   turnDeadline=Date.now()+15000;
   const el=document.getElementById('turnTimer'); if(!el) return;
@@ -848,10 +850,10 @@ function renderPanel() {
   checkOver();
   updateSimPauseUI();
   scheduleAi();
-  // chrono : démarre à chaque nouveau tour / phase
-  if(G && started && !G.over && canAct() && !isAiTurn() && !busy()){
+  // chrono : uniquement en ligne
+  if(mode==='online' && G && started && !G.over && canAct() && !isAiTurn() && !busy()){
     if(!turnTimer) startChrono();
-  } else if(isAiTurn() || !canAct() || (G&&G.over)){
+  } else if(mode!=='online' || isAiTurn() || !canAct() || (G&&G.over)){
     clearChrono();
   }
 }
