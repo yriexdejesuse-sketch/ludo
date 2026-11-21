@@ -523,3 +523,17 @@ input:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(2
 #screen-game.fs .panel .players{flex:1 1 100%; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:6px}
 #screen-game.fs .panel .log-wrap{display:none}
 #screen-game.fs .panel .mini-actions{flex:0 0 auto}
+
+/* ---- Sélection du club (thème foot) ---- */
+.club-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin:8px 0 6px}
+.club-chip{
+  background:var(--card); border:2px solid var(--line); border-radius:14px;
+  padding:6px 4px 5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+  transition:border-color .15s, transform .12s, box-shadow .15s;
+}
+.club-chip img{width:42px;height:42px;object-fit:contain; display:block}
+.club-chip span{font-size:.62rem;font-weight:800;letter-spacing:.02em;color:var(--text);text-align:center;line-height:1.15}
+.club-chip:hover{transform:translateY(-1px)}
+.club-chip.sel{border-color:var(--accent); box-shadow:0 0 0 3px rgba(224,168,46,.28); background:rgba(224,168,46,.10)}
+.club-chip.random{border-style:dashed}
+.club-chip.random .rnd{font-size:26px;line-height:1.2}

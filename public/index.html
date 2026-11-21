@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne. Sans compte, entre amis.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-12-12">
+<link rel="stylesheet" href="style.css?v=2026-12-14">
 </head>
 <body>
 <div id="app">
@@ -201,6 +201,11 @@
         </div>
         <p class="hint" id="themeHint">Tu peux aussi changer dans ✨ Apparences</p>
       </div>
+      <div class="pick-block hidden" id="clubBlock">
+        <h3>🏟️ Ton club <small style="font-weight:600;color:var(--muted)">(top clubs)</small></h3>
+        <div id="clubPick" class="club-grid"></div>
+        <p class="hint" id="clubHint">Choisis ton club — les 3 autres maisons reçoivent un club tiré au hasard à chaque partie.</p>
+      </div>
       <p class="hint" id="setupHint">Tous les parcours ont la même longueur : choisis ce que tu veux !</p>
       <div class="row center">
         <button class="big-btn ghost" id="btnBackMenu">← Retour</button>
@@ -320,10 +325,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-12-12"></script>
-<script src="backends.js?v=2026-12-12"></script>
-<script src="firebase-config.js?v=2026-12-12"></script>
-<script src="syro-store.js?v=2026-12-12"></script>
-<script src="app.js?v=2026-12-12"></script>
+<script src="engine.js?v=2026-12-14"></script>
+<script src="backends.js?v=2026-12-14"></script>
+<script src="firebase-config.js?v=2026-12-14"></script>
+<script src="syro-store.js?v=2026-12-14"></script>
+<script src="app.js?v=2026-12-14"></script>
 </body>
 </html>

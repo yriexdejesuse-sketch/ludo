@@ -211,9 +211,27 @@ const FOOT_CLUBS=[
   {name:'TOTTENHAM',  code:'tottenham',  bg:'#132257'},
   {name:'BARCELONA',  code:'barcelona',  bg:'#A50044'},
   {name:'REAL MADRID',code:'realmadrid', bg:'#00529F'},
+  {name:'PSG',        code:'psg',        bg:'#004170'},
+  {name:'BAYERN',     code:'bayern',     bg:'#DC052D'},
+  {name:'JUVENTUS',   code:'juventus',   bg:'#1a1a1a'},
+  {name:'AC MILAN',   code:'acmilan',    bg:'#FB090B'},
+  {name:'INTER',      code:'inter',      bg:'#0B1F5C'},
+  {name:'DORTMUND',   code:'dortmund',   bg:'#FDE100'},
+  {name:'ATLÉTICO',   code:'atletico',   bg:'#CB3524'},
+  {name:'AJAX',       code:'ajax',       bg:'#D2122E'},
 ];
+let myClub = 'random';   // 'random' ou code du club choisi
 let footPick=null;
-function pickFootClubs(){ const a=[...FOOT_CLUBS].sort(()=>Math.random()-0.5); return {red:a[0], green:a[1], yellow:a[2], blue:a[3]}; }
+function pickFootClubs(){
+  const pool=[...FOOT_CLUBS];
+  let me=null;
+  if(myClub && myClub!=='random'){ me=FOOT_CLUBS.find(c=>c.code===myClub)||null; }
+  const rest=pool.filter(c=>!me || c.code!==me.code).sort(()=>Math.random()-0.5);
+  const mine = me || rest.shift();
+  const others = rest.slice(0,3);
+  const mixed=[...others].sort(()=>Math.random()-0.5);
+  return {red:mine, green:mixed[0], yellow:mixed[1], blue:mixed[2]};
+}
 function buildBoard() {
   const svg = $('#board');
   svg.innerHTML = '';
@@ -1521,6 +1539,7 @@ function renderSetup() {
   $('#onlineNameBlock').classList.toggle('hidden', !isOnline);
   // thème
   try{ const cur=currentTheme(); document.querySelectorAll('#themePick button').forEach(b=> b.classList.toggle('sel', b.dataset.theme===cur)); }catch(e){}
+  try{ renderClubPick(); }catch(e){}
   $('#setupHint').textContent = isAi
     ? (aiCount === 4 ? 'Tu joues contre 3 ordinateurs.' : aiCount === 3 ? 'Tu joues contre 2 ordinateurs.' : 'Tu joues contre 1 ordinateur.')
     : 'Tous les parcours ont la même longueur : choisis ce que tu veux !';
@@ -2030,6 +2049,7 @@ if(btnFs){
   const dashSettings = document.getElementById('dashSettings'); if(dashSettings) dashSettings.onclick=()=> showScreen('auth');
   document.querySelectorAll('#shopTabs button').forEach(b=> b.onclick=()=>{ _shopCat=b.dataset.cat; renderShop(); });
   document.querySelectorAll('#themePick button').forEach(b=> b.onclick=()=>{ applyThemePack(b.dataset.theme); renderSetup(); toast('Thème '+b.dataset.theme+' ✓'); });
+  renderClubPick();
   const btnSound = document.getElementById('btnSound'); if(btnSound) btnSound.onclick=()=>{
     const isOff=document.documentElement.dataset.sound==='off';
     if(isOff){ delete document.documentElement.dataset.sound; localStorage.setItem('syro_sound','on'); btnSound.textContent='🔊'; toast('Son activé'); }
@@ -2194,3 +2214,36 @@ async function init() {
   window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); _deferredPrompt=e; });
 }
 init();
+
+/* ---------- sélection du club (thème foot) ---------- */
+function isFootTheme(){
+  try{ return SyroAuth.getEq().board==='board_foot'; }catch(e){ return document.documentElement.dataset.boardSkin==='board_foot'; }
+}
+function renderClubPick(){
+  const box=document.getElementById('clubPick');
+  const block=document.getElementById('clubBlock');
+  if(!box||!block) return;
+  const on = isFootTheme();
+  block.classList.toggle('hidden', !on);
+  if(!on) return;
+  const chips = [{code:'random',name:'AU HASARD'}, ...FOOT_CLUBS];
+  box.innerHTML = chips.map(c=>{
+    const sel = (myClub===c.code) ? 'sel' : '';
+    if(c.code==='random'){
+      return '<button class="club-chip random '+sel+'" data-club="random"><span class="rnd">🎲</span><span>'+c.name+'</span></button>';
+    }
+    return '<button class="club-chip '+sel+'" data-club="'+c.code+'">'
+      + '<img src="img/crests/'+c.code+'.webp" alt="'+c.name+'"><span>'+c.name+'</span></button>';
+  }).join('');
+  box.querySelectorAll('[data-club]').forEach(b=> b.onclick=()=>{
+    myClub=b.dataset.club;
+    try{ localStorage.setItem('syro_foot_club', myClub); }catch(e){}
+    footPick = pickFootClubs();
+    try{ buildBoard(); if(G) syncPawns(); }catch(e){}
+    renderClubPick();
+    haptic(12);
+    const nm=(FOOT_CLUBS.find(x=>x.code===myClub)||{}).name;
+    toast(myClub==='random' ? 'Clubs tirés au hasard' : 'Ton club : ' + nm);
+  });
+}
+try{ const saved=localStorage.getItem('syro_foot_club'); if(saved) myClub=saved; }catch(e){}
