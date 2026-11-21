@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne. Sans compte, entre amis.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-12-07">
+<link rel="stylesheet" href="style.css?v=2026-12-08">
 </head>
 <body>
 <div id="app">
@@ -233,7 +233,6 @@
   <section id="screen-game" class="screen hidden">
     <div class="game-layout">
       <div class="board-wrap">
-        <img class="board-bg" src="img/foot-bg.jpg" alt="" aria-hidden="true">
         <svg id="board" viewBox="0 0 600 600" aria-label="Plateau de Ludo"></svg>
         <div id="diceOverlay">
           <div class="board-die" id="die0" title="Dé 1"></div>
@@ -320,10 +319,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-12-07"></script>
-<script src="backends.js?v=2026-12-07"></script>
-<script src="firebase-config.js?v=2026-12-07"></script>
-<script src="syro-store.js?v=2026-12-07"></script>
-<script src="app.js?v=2026-12-07"></script>
+<script src="engine.js?v=2026-12-08"></script>
+<script src="backends.js?v=2026-12-08"></script>
+<script src="firebase-config.js?v=2026-12-08"></script>
+<script src="syro-store.js?v=2026-12-08"></script>
+<script src="app.js?v=2026-12-08"></script>
 </body>
 </html>
