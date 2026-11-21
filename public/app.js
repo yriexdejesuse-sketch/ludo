@@ -203,15 +203,34 @@ function arrowPath(cx, cy, dir) {
 const START_DIR = { red: 'E', green: 'S', yellow: 'W', blue: 'N' };
 
 const FOOT_CLUBS=[
-  {name:'CHELSEA', short:'CHE', bg:'#034694', fg:'#fff', emoji:'🦁'},
-  {name:'LIVERPOOL', short:'LIV', bg:'#C8102E', fg:'#fff', emoji:'🐦'},
-  {name:'ARSENAL', short:'ARS', bg:'#EF0107', fg:'#fff', emoji:'🔴'},
-  {name:'MAN UTD', short:'MUN', bg:'#DA020E', fg:'#FFCC00', emoji:'😈'},
-  {name:'MAN CITY', short:'MCI', bg:'#6CABDD', fg:'#fff', emoji:'🌙'},
-  {name:'TOTTENHAM', short:'TOT', bg:'#132257', fg:'#fff', emoji:'🐓'},
-  {name:'BARCELONA', short:'BAR', bg:'#A50044', fg:'#FFED02', emoji:'🔵'},
-  {name:'REAL MADRID', short:'RMA', bg:'#fff', fg:'#00529F', emoji:'👑'},
+  {name:'CHELSEA', short:'CHE', bg:'#034694', accent:'#DBA111',
+   emblem:`<path d="M30,44 L30,30 L38,39 L50,27 L62,39 L70,30 L70,44 Z" fill="ACC"/><rect x="30" y="47" width="40" height="5" rx="2" fill="ACC"/><circle cx="50" cy="63" r="9" fill="BG"/>`},
+  {name:'LIVERPOOL', short:'LIV', bg:'#C8102E', accent:'#00B2A9',
+   emblem:`<circle cx="52" cy="50" r="8" fill="BG"/><ellipse cx="46" cy="66" rx="17" ry="11" fill="BG"/><path d="M58,48 L74,45 L60,56 Z" fill="ACC"/><path d="M30,62 L15,53 L19,71 Z" fill="BG"/>`},
+  {name:'ARSENAL', short:'ARS', bg:'#EF0107', accent:'#9C824A',
+   emblem:`<rect x="22" y="47" width="42" height="10" rx="4" fill="BG"/><rect x="60" y="42" width="13" height="20" rx="3" fill="ACC"/><circle cx="36" cy="71" r="9" fill="none" stroke="BG" stroke-width="5"/><circle cx="57" cy="71" r="9" fill="none" stroke="BG" stroke-width="5"/>`},
+  {name:'MAN UTD', short:'MUN', bg:'#DA020E', accent:'#FBE122',
+   emblem:`<circle cx="50" cy="60" r="17" fill="BG"/><path d="M37,46 C32,33 34,26 39,24 C41,33 43,39 45,44 Z" fill="BG"/><path d="M63,46 C68,33 66,26 61,24 C59,33 57,39 55,44 Z" fill="BG"/><circle cx="44" cy="58" r="3.4" fill="ACC"/><circle cx="56" cy="58" r="3.4" fill="ACC"/><path d="M43,68 Q50,74 57,68" stroke="ACC" stroke-width="3" fill="none" stroke-linecap="round"/>`},
+  {name:'MAN CITY', short:'MCI', bg:'#6CABDD', accent:'#1C2C5B',
+   emblem:`<circle cx="52" cy="56" r="18" fill="BG"/><circle cx="61" cy="50" r="15" fill="#fff"/><path d="M34,26 l2.7,6.6 7,.5 -5.4,4.5 1.8,6.8 -6.1,-3.7 -6.1,3.7 1.8,-6.8 -5.4,-4.5 7,-.5 Z" fill="ACC"/>`},
+  {name:'TOTTENHAM', short:'TOT', bg:'#132257', accent:'#C9A227',
+   emblem:`<ellipse cx="50" cy="67" rx="15" ry="13" fill="BG"/><circle cx="60" cy="48" r="9" fill="BG"/><path d="M55,40 l2,-6 3,5" stroke="ACC" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M62,39 l3,-6 2,6" stroke="ACC" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M68,47 L81,44 L69,54 Z" fill="ACC"/><path d="M40,75 L29,87 L48,81 Z" fill="BG"/>`},
+  {name:'BARCELONA', short:'BAR', bg:'#A50044', accent:'#EDBB00',
+   emblem:`<rect x="25" y="18" width="7" height="66" fill="BG"/><rect x="38" y="18" width="7" height="66" fill="ACC"/><rect x="51" y="18" width="7" height="66" fill="BG"/><rect x="64" y="18" width="7" height="66" fill="ACC"/><circle cx="48" cy="44" r="10" fill="#fff" stroke="BG" stroke-width="3"/>`},
+  {name:'REAL MADRID', short:'RMA', bg:'#00529F', accent:'#FEBE10',
+   emblem:`<path d="M30,34 L30,21 L38,31 L50,17 L62,31 L70,21 L70,34 Z" fill="ACC"/><rect x="30" y="35" width="40" height="5" rx="2" fill="ACC"/><circle cx="50" cy="63" r="15" fill="none" stroke="BG" stroke-width="5"/><path d="M42,55 L58,71 M58,55 L42,71" stroke="BG" stroke-width="4"/>`},
 ];
+function clubEmblem(club){
+  const COL = {BG: club.bg || '#00529F', ACC: club.accent || '#fff'};
+  const raw = club.emblem || '';
+  return raw.replace(/\b(BG|ACC)\b/g, m => COL[m]);
+}
+/* blason dessiné (aucun texte) */
+function crestPaths(club){
+  return `<path d="M50,5 L89,20 L89,53 C89,76 71,90 50,96 C29,90 11,76 11,53 L11,20 Z"
+            fill="#fff" stroke="${club.bg || '#00529F'}" stroke-width="5" stroke-linejoin="round"/>
+          ${clubEmblem(club)}`;
+}
 let footPick=null;
 function pickFootClubs(){ const a=[...FOOT_CLUBS].sort(()=>Math.random()-0.5); return {red:a[0], green:a[1], yellow:a[2], blue:a[3]}; }
 function buildBoard() {
@@ -239,10 +258,11 @@ function buildBoard() {
     if(isFoot && footPick && footPick[c]){
       const club=footPick[c];
       add('rect', { x: X + 26, y: Y + 26, width: 188, height: 188, fill: '#fff', rx: 12, stroke: DARK[c], 'stroke-width': 2 });
-      add('rect', { x: X + 40, y: Y + 40, width: 160, height: 160, fill: club.bg, rx: 14, stroke: club.fg, 'stroke-width': 2 });
-      { const t=add('text', { x: X+120, y: Y+85, 'text-anchor':'middle', 'font-size':'32', 'font-weight':'900', fill: club.fg }); t.textContent=club.emoji; }
-      { const t=add('text', { x: X+120, y: Y+115, 'text-anchor':'middle', 'font-size':'11', 'font-weight':'900', fill: club.fg, 'letter-spacing':'0.04em' }); t.textContent=club.name; }
-      { const t=add('text', { x: X+120, y: Y+135, 'text-anchor':'middle', 'font-size':'8', fill: club.fg, opacity:.85 }); t.textContent='FOOTBALL CLUB'; }
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'crest');
+      g.setAttribute('transform', `translate(${X + 120 - 66},${Y + 120 - 66}) scale(1.32)`);
+      g.innerHTML = crestPaths(club);
+      svg.appendChild(g);
     } else {
       add('rect', { x: X + 26, y: Y + 26, width: 188, height: 188, fill: '#fffdf7', rx: 12, stroke: DARK[c], 'stroke-width': 2 });
       SLOT.forEach(([sx, sy]) =>
@@ -322,13 +342,6 @@ function pawnEl(color, idx) {
     h.setAttribute('r', 4.5); h.setAttribute('cx', -4); h.setAttribute('cy', -4.5);
     h.setAttribute('fill', '#fff'); h.setAttribute('opacity', .7);
     e.appendChild(c); e.appendChild(ring); e.appendChild(h);
-    /* petits points de ballon, visibles seulement en thème foot */
-    [[5,-3],[2.5,3.5],[-1.5,-6]].forEach(([dx,dy])=>{
-      const d=document.createElementNS(NS,'circle');
-      d.setAttribute('r',1.9); d.setAttribute('cx',dx); d.setAttribute('cy',dy);
-      d.setAttribute('fill','#1b1b1b'); d.setAttribute('class','ball-dot');
-      e.appendChild(d);
-    });
     $('#pawns').appendChild(e);
     e.addEventListener('click', (ev) => { ev.stopPropagation(); onPawnClick(color, idx); });
   }
@@ -1956,6 +1969,24 @@ function bind() {
     if (!confirm('Quitter le salon ?')) return;
     quitOnlineToHome();
   };
+/* ---------- plein écran plateau ---------- */
+const btnFs = $('#btnFs');
+if(btnFs){
+  btnFs.onclick = () => {
+    const g = document.getElementById('screen-game');
+    const on = !g.classList.contains('fs');
+    g.classList.toggle('fs', on);
+    btnFs.textContent = on ? '⛶ Réduire' : '⛶ Plein écran';
+    if(on && document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().catch(()=>{});
+    } else if(!on && document.fullscreenElement && document.exitFullscreen){
+      document.exitFullscreen().catch(()=>{});
+    }
+    setTimeout(()=>{ if(G) { try{ renderDice(); syncPawns(); }catch(e){} } }, 60);
+  };
+  document.addEventListener('keydown', e => { if(e.key==='Escape' && g_fsActive()) btnFs.click(); });
+  function g_fsActive(){ return document.getElementById('screen-game').classList.contains('fs'); }
+}
   $('#btnLeave').onclick = () => {
     if (mode === 'online' && !confirm('Quitter la partie ?')) return;
     clearTimeout(aiTimer);

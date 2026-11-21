@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne. Sans compte, entre amis.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-12-08">
+<link rel="stylesheet" href="style.css?v=2026-12-09">
 </head>
 <body>
 <div id="app">
@@ -232,15 +232,6 @@
   <!-- ================= PARTIE ================= -->
   <section id="screen-game" class="screen hidden">
     <div class="game-layout">
-      <div class="board-wrap">
-        <svg id="board" viewBox="0 0 600 600" aria-label="Plateau de Ludo"></svg>
-        <div id="diceOverlay">
-          <div class="board-die" id="die0" title="Dé 1"></div>
-          <div class="board-die" id="die1" title="Dé 2"></div>
-        </div>
-        <div id="miniChoice" class="mini-choice hidden"></div>
-        <div id="simPauseOverlay" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.78);border-radius:18px;font-size:1.45rem;font-weight:800;z-index:7;pointer-events:none;backdrop-filter:blur(2px)">⏸️ En pause</div>
-      </div>
       <aside class="panel">
         <div id="diceHint">👆 Clique pour lancer</div>
         <div id="turnBanner" class="turn-banner">—</div>
@@ -255,10 +246,20 @@
         </div>
         <button id="finishBtn" class="big-btn warn hidden">🏁 Terminer la partie</button>
         <div class="mini-actions">
+          <button class="big-btn ghost small" id="btnFs" title="Agrandir le plateau">⛶ Plein écran</button>
           <button class="big-btn ghost small" id="btnRules3">📜 Règles</button>
           <button class="big-btn ghost small" id="btnLeave">✕ Quitter</button>
         </div>
       </aside>
+      <div class="board-wrap" id="boardWrap">
+        <svg id="board" viewBox="0 0 600 600" aria-label="Plateau de Ludo"></svg>
+        <div id="diceOverlay">
+          <div class="board-die" id="die0" title="Dé 1"></div>
+          <div class="board-die" id="die1" title="Dé 2"></div>
+        </div>
+        <div id="miniChoice" class="mini-choice hidden"></div>
+        <div id="simPauseOverlay" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.78);border-radius:18px;font-size:1.45rem;font-weight:800;z-index:7;pointer-events:none;backdrop-filter:blur(2px)">⏸️ En pause</div>
+      </div>
     </div>
   </section>
 
@@ -319,10 +320,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-12-08"></script>
-<script src="backends.js?v=2026-12-08"></script>
-<script src="firebase-config.js?v=2026-12-08"></script>
-<script src="syro-store.js?v=2026-12-08"></script>
-<script src="app.js?v=2026-12-08"></script>
+<script src="engine.js?v=2026-12-09"></script>
+<script src="backends.js?v=2026-12-09"></script>
+<script src="firebase-config.js?v=2026-12-09"></script>
+<script src="syro-store.js?v=2026-12-09"></script>
+<script src="app.js?v=2026-12-09"></script>
 </body>
 </html>
