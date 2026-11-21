@@ -21,7 +21,7 @@ let aiCount = 2;
 let aiLevel = (()=>{ try{ return localStorage.getItem('syro_aiLevel')||'normal'; }catch(e){ return 'normal'; }})();
 const THEME_PACKS={classic:{pawn:'pawn_classic',board:'board_classic',dice:'dice_classic',sound:'sound_pop'},foot:{pawn:'pawn_foot',board:'board_foot',dice:'dice_foot',sound:'sound_foot'},music:{pawn:'pawn_music',board:'board_music',dice:'dice_music',sound:'sound_music'},afro:{pawn:'pawn_afro',board:'board_afro',dice:'dice_afro',sound:'sound_afro'},gaming:{pawn:'pawn_gaming',board:'board_gaming',dice:'dice_gaming',sound:'sound_gaming'},anime:{pawn:'pawn_anime',board:'board_anime',dice:'dice_anime',sound:'sound_anime'}};
 function currentTheme(){ try{ const eq=SyroAuth.getEq(); const b=eq.board||'board_classic'; return Object.keys(THEME_PACKS).find(k=>THEME_PACKS[k].board===b)||'classic'; }catch(e){ return 'classic'; } }
-function applyThemePack(k){ const p=THEME_PACKS[k]; if(!p) return; try{ ['pawn','board','dice','sound'].forEach(cat=>{ const id=p[cat]; const item=SyroAuth.SHOP_CATALOG.find(x=>x.id===id); if(item) SyroAuth.equipItem(id); }); }catch(e){} }
+function applyThemePack(k){ const p=THEME_PACKS[k]; if(!p) return; try{ ['pawn','board','dice','sound'].forEach(cat=>{ const id=p[cat]; const item=SyroAuth.SHOP_CATALOG.find(x=>x.id===id); if(item) SyroAuth.equipItem(id); }); if(p.board==='board_foot') footPick=pickFootClubs(); else footPick=null; try{ buildBoard(); if(G) syncPawns(); }catch(e){} }catch(e){} }
 let localCount = 2;
 let simCount = 2;
 let onlineCount = 2;
@@ -202,18 +202,42 @@ function arrowPath(cx, cy, dir) {
 }
 const START_DIR = { red: 'E', green: 'S', yellow: 'W', blue: 'N' };
 
+const FOOT_CLUBS=[
+  {name:'CHELSEA', short:'CHE', bg:'#034694', fg:'#fff', emoji:'🦁'},
+  {name:'LIVERPOOL', short:'LIV', bg:'#C8102E', fg:'#fff', emoji:'🐦'},
+  {name:'ARSENAL', short:'ARS', bg:'#EF0107', fg:'#fff', emoji:'🔴'},
+  {name:'MAN UTD', short:'MUN', bg:'#DA020E', fg:'#FFCC00', emoji:'😈'},
+  {name:'MAN CITY', short:'MCI', bg:'#6CABDD', fg:'#fff', emoji:'🌙'},
+  {name:'TOTTENHAM', short:'TOT', bg:'#132257', fg:'#fff', emoji:'🐓'},
+  {name:'BARCELONA', short:'BAR', bg:'#A50044', fg:'#FFED02', emoji:'🔵'},
+  {name:'REAL MADRID', short:'RMA', bg:'#fff', fg:'#00529F', emoji:'👑'},
+];
+let footPick=null;
+function pickFootClubs(){ const a=[...FOOT_CLUBS].sort(()=>Math.random()-0.5); return {red:a[0], green:a[1], yellow:a[2], blue:a[3]}; }
 function buildBoard() {
   const svg = $('#board');
   svg.innerHTML = '';
+  const isFoot = (()=>{ try{ return (SyroAuth.getEq().board==='board_foot') }catch(e){ return document.documentElement.dataset.boardSkin==='board_foot' } })();
+  if(isFoot && !footPick) footPick=pickFootClubs();
+  if(!isFoot) footPick=null;
   add('rect', { x: 0, y: 0, width: 600, height: 600, fill: '#f4f1ea', rx: 12 });
 
   for (const c of Object.keys(BASE_ORIGIN)) {
     const [ox, oy] = BASE_ORIGIN[c];
     const X = ox * 40, Y = oy * 40;
     add('rect', { x: X, y: Y, width: 240, height: 240, fill: HEX[c], rx: 10, stroke: DARK[c], 'stroke-width': 3 });
-    add('rect', { x: X + 26, y: Y + 26, width: 188, height: 188, fill: '#fffdf7', rx: 12, stroke: DARK[c], 'stroke-width': 2 });
-    SLOT.forEach(([sx, sy]) =>
-      add('circle', { cx: X + sx, cy: Y + sy, r: 21, fill: HEX[c], stroke: DARK[c], 'stroke-width': 2, opacity: .9 }));
+    if(isFoot && footPick && footPick[c]){
+      const club=footPick[c];
+      add('rect', { x: X + 26, y: Y + 26, width: 188, height: 188, fill: '#fff', rx: 12, stroke: DARK[c], 'stroke-width': 2 });
+      add('rect', { x: X + 40, y: Y + 40, width: 160, height: 160, fill: club.bg, rx: 14, stroke: club.fg, 'stroke-width': 2 });
+      { const t=add('text', { x: X+120, y: Y+85, 'text-anchor':'middle', 'font-size':'32', 'font-weight':'900', fill: club.fg }); t.textContent=club.emoji; }
+      { const t=add('text', { x: X+120, y: Y+115, 'text-anchor':'middle', 'font-size':'11', 'font-weight':'900', fill: club.fg, 'letter-spacing':'0.04em' }); t.textContent=club.name; }
+      { const t=add('text', { x: X+120, y: Y+135, 'text-anchor':'middle', 'font-size':'8', fill: club.fg, opacity:.85 }); t.textContent='FOOTBALL CLUB'; }
+    } else {
+      add('rect', { x: X + 26, y: Y + 26, width: 188, height: 188, fill: '#fffdf7', rx: 12, stroke: DARK[c], 'stroke-width': 2 });
+      SLOT.forEach(([sx, sy]) =>
+        add('circle', { cx: X + sx, cy: Y + sy, r: 21, fill: HEX[c], stroke: DARK[c], 'stroke-width': 2, opacity: .9 }));
+    }
   }
 
   Ludo.RING.forEach((cell, i) => {
@@ -1575,6 +1599,9 @@ function startSim() {
   const cols = simPlayers.slice(0, simCount).map(p=>p.color);
   const names = simPlayers.slice(0, simCount).map(p=>p.name.trim()||('Ordi '+(simPlayers.indexOf(p)+1)));
   started = true; overShown = false; selectedDie = null; simPaused = false;
+  // thème foot : nouveau tirage à chaque partie pour varier
+  try{ if(SyroAuth.getEq().board==='board_foot') footPick=pickFootClubs(); }catch(e){}
+  try{ buildBoard(); }catch(e){}
   clearFx();
   $('#modalOver').classList.add('hidden');
   G = Ludo.createGame(cols);
@@ -1588,6 +1615,8 @@ function startSim() {
 function startLocal() {
   mode = 'local'; hotseat = true; you = null; aiColors = new Set();
   started = true; overShown = false; selectedDie = null;
+  try{ if(SyroAuth.getEq().board==='board_foot') footPick=pickFootClubs(); }catch(e){}
+  try{ buildBoard(); }catch(e){}
   clearFx();
   $('#modalOver').classList.add('hidden');
   const cols = localPlayers.slice(0, localCount).map(p=>p.color);
@@ -1604,6 +1633,8 @@ function startLocal() {
 function startAiGame() {
   mode = 'ai'; hotseat = false; overShown = false; selectedDie = null;
   started = true;
+  try{ if(SyroAuth.getEq().board==='board_foot') footPick=pickFootClubs(); }catch(e){}
+  try{ buildBoard(); }catch(e){}
   clearFx();
   $('#modalOver').classList.add('hidden');
   const human = setupColors.c1;
