@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne. Sans compte, entre amis.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-29">
+<link rel="stylesheet" href="style.css?v=2026-11-30">
 </head>
 <body>
 <div id="app">
@@ -18,7 +18,7 @@
       <div>SYRO <span style="color:var(--accent);">GAMES</span><small>Le Ludo en ligne entre amis</small></div>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" id="btnNavShop" title="Boutique">🛒<span class="nav-badge" id="shopCoinsBadge">0 🪙</span></button>
+      <button class="icon-btn" id="btnNavShop" title="Apparences">✨<span class="nav-badge" id="shopCoinsBadge" style="display:none">0</span></button>
       <button class="icon-btn" id="btnNavBoard" title="Classement">🏆</button>
       <button class="icon-btn" id="btnTheme" title="Clair / sombre">☀️</button>
       <button class="icon-btn" id="btnSound" title="Son ON/OFF" style="font-size:.95rem">🔊</button>
@@ -47,7 +47,7 @@
       <div class="hero-foot"><a href="#" id="linkRulesHero">📜 Règles du jeu</a></div>
       <div class="hero-extra">
         <button class="badge" id="heroBoardBtn" style="cursor:pointer;">🏆 Classement</button>
-        <button class="badge" id="heroShopBtn" style="cursor:pointer;">🛒 Boutique</button>
+        <button class="badge" id="heroShopBtn" style="cursor:pointer;">✨ Apparences</button>
       </div>
     </div>
     <div class="hero-features">
@@ -74,10 +74,28 @@
         <div class="dash-grid">
           <button class="big-btn" id="dashOnline">🌐 En ligne<br><small>avec un ami</small></button>
           <button class="big-btn" id="dashBot">🤖 Solo<br><small>vs ordinateur</small></button>
-          <button class="big-btn" id="dashShop">🛒 Boutique<br><small>thèmes gratuits</small></button>
+          <button class="big-btn" id="dashShop">✨ Apparences<br><small>pions & plateaux</small></button>
           <button class="big-btn" id="dashBoard">🎨 Thèmes<br><small>plateau & pions</small></button>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ================= APPARENCES ================= -->
+  <section id="screen-shop" class="screen hidden">
+    <div class="card" style="max-width:760px">
+      <div class="shop-head">
+        <h2>✨ Apparences</h2>
+        <p class="hint">Personnalise ton jeu — tout est gratuit, clique pour équiper ✨</p>
+        <div class="shop-tabs" id="shopTabs">
+          <button data-cat="pion" class="sel">♟ Pions</button>
+          <button data-cat="plateau">🎨 Plateau</button>
+          <button data-cat="de">🎲 Dés</button>
+          <button data-cat="son">🔊 Sons</button>
+        </div>
+      </div>
+      <div id="shopGrid" class="shop-grid"></div>
+      <div class="row center" style="margin-top:14px"><button class="big-btn ghost" id="btnShopBack">← Retour</button></div>
     </div>
   </section>
 
@@ -291,10 +309,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-29"></script>
-<script src="backends.js?v=2026-11-29"></script>
-<script src="firebase-config.js?v=2026-11-29"></script>
-<script src="syro-store.js?v=2026-11-29"></script>
-<script src="app.js?v=2026-11-29"></script>
+<script src="engine.js?v=2026-11-30"></script>
+<script src="backends.js?v=2026-11-30"></script>
+<script src="firebase-config.js?v=2026-11-30"></script>
+<script src="syro-store.js?v=2026-11-30"></script>
+<script src="app.js?v=2026-11-30"></script>
 </body>
 </html>
