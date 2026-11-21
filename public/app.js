@@ -1273,7 +1273,7 @@ async function renderLeaderboard(){
   try{
     const rows=await SyroAuth.getLeaderboard(50);
     if(!rows.length){ box.innerHTML='<p class="hint">Pas encore de joueurs — sois le premier !</p>'; return; }
-    const mePseudo = (()=>{ try{ return (SyroAuth.getProfile()&&SyroAuth.getProfile().pseudo) || localStorage.getItem('syro_pseudo'); }catch(e){ return '' }})();
+    const mePseudo = '';
     box.innerHTML = rows.map((r,i)=>{
       const medal = i===0?'🥇' : i===1?'🥈' : i===2?'🥉' : (i+1)+'.';
       const isMe = r.pseudo===mePseudo;
@@ -1802,10 +1802,7 @@ function bind() {
   // Hero SYRO GAMES → navigation fluide (remplace le script inline)
   const goMenu = () => showScreen('menu');
   const goHero = () => { stopWatch(); showScreen('hero'); };
-  const goAuth = () => showScreen('auth');
   if ($('#btnPlayGuest')) $('#btnPlayGuest').onclick = goMenu;
-  if ($('#btnShowLogin')) $('#btnShowLogin').onclick = goAuth;
-  if ($('#btnGuestContinue')) $('#btnGuestContinue').onclick = goMenu;
   if ($('#btnBackHero')) $('#btnBackHero').onclick = goHero;
   if ($('#linkRulesHero')) $('#linkRulesHero').onclick = (e)=>{ e.preventDefault(); $('#modalRules').classList.remove('hidden'); };
   if ($('#btnBackToHero')) $('#btnBackToHero').onclick = goHero;
@@ -1934,12 +1931,11 @@ function bind() {
   $('#btnOverMenu').onclick = () => {
     $('#modalOver').classList.add('hidden');
     if (mode === 'online') quitOnlineToHome();
-    else { const logged=window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser(); if(logged) showScreen('dashboard'); else showScreen('hero'); }
+    else showScreen('hero');
   };
 
   function goHome(){
-    const logged = window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser();
-    if(logged) showScreen('dashboard'); else showScreen('hero');
+    showScreen('hero');
   }
   // Nav header neuve v2026-11-23
   const navShop = document.getElementById('btnNavShop'); if(navShop) navShop.onclick=()=> showScreen('shop');
@@ -1954,11 +1950,7 @@ function bind() {
   const dashOnline = document.getElementById('dashOnline'); if(dashOnline) dashOnline.onclick=()=> { setupKind='online'; renderSetup(); showScreen('setup'); };
   const dashBot = document.getElementById('dashBot'); if(dashBot) dashBot.onclick=()=> { setupKind='ai'; renderSetup(); showScreen('setup'); };
   const dashShop = document.getElementById('dashShop'); if(dashShop) dashShop.onclick=()=> showScreen('shop');
-  const syroBadge = document.getElementById('syroUserBadge'); if(syroBadge) syroBadge.onclick=()=>{
-    const cur=localStorage.getItem('syro_pseudo')||'Joueur';
-    const nxt=prompt('Ton pseudo :', cur); if(nxt!==null){ const v=nxt.trim().slice(0,16); if(v){ localStorage.setItem('syro_pseudo', v); if(window.SyroAuth){ SyroAuth.renderHeader(); SyroAuth.renderDashboard(); } toast('Pseudo : '+v); } }
-  };
-  const heroPseudoLink=document.getElementById('linkChangeName'); if(heroPseudoLink) heroPseudoLink.onclick=(e)=>{ e.preventDefault(); document.getElementById('syroUserBadge')?.click(); };
+  // pseudo supprimé — sans compte
   const btnPlayGuest=document.getElementById('btnPlayGuest'); if(btnPlayGuest) btnPlayGuest.onclick=()=> showScreen('menu');
   const dashBoardBtn = document.getElementById('dashBoard'); if(dashBoardBtn) dashBoardBtn.onclick=()=> { _shopCat='plateau'; showScreen('shop'); };
   const dashSettings = document.getElementById('dashSettings'); if(dashSettings) dashSettings.onclick=()=> showScreen('auth');
@@ -2046,10 +2038,8 @@ async function init() {
   document.title = 'SYRO GAMES — Ludo à 2 ou 4 joueurs (' + APP_VERSION + ')';
   buildBoard();
   bind();
-  // Palier 2 : auth + XP
-  if(window.SyroAuth) { SyroAuth.init(); setTimeout(()=>{ try{ applySkinsToBoard(); }catch(e){} }, 800); }
-  const _ub = document.getElementById('syroUserBadge');
-  if(_ub) _ub.onclick = ()=> showScreen('auth');
+  // init boutique (sans compte)
+  if(window.SyroAuth) { SyroAuth.init(); setTimeout(()=>{ try{ applySkinsToBoard(); }catch(e){} }, 400); }
   /* backend de partie en ligne : Firebase si configuré, sinon le serveur (Arena) */
   Backend = LudoBackends.pick({
     engine: Ludo,
@@ -2089,14 +2079,8 @@ async function init() {
     await joinOnline(rc, true);
     return;
   }
-  // Accueil intelligent : connecté → dashboard, invité → hero
-  setTimeout(()=>{
-    const logged = window.SyroAuth && SyroAuth.getUser && SyroAuth.getUser();
-    if(logged) showScreen('dashboard'); else showScreen('hero');
-  }, 600);
-  // si login arrive après (async), on bascule auto
-  if(window.SyroAuth) SyroAuth.onReady(()=>{ const u=SyroAuth.getUser(); if(u && document.getElementById('screen-hero') && !document.getElementById('screen-hero').classList.contains('hidden')) showScreen('dashboard'); });
-  else showScreen('hero');
+  // Accueil direct (sans compte)
+  setTimeout(()=> showScreen('hero'), 200);
 
   // FLUIDITÉ : si l'utilisateur revient sur l'onglet, on re-sync sans refresh manuel
   document.addEventListener('visibilitychange', () => {

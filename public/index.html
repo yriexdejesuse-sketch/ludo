@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>SYRO GAMES — Le Ludo africain en ligne</title>
-<meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
+<meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne. Sans compte, entre amis.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-28">
+<link rel="stylesheet" href="style.css?v=2026-11-29">
 </head>
 <body>
 <div id="app">
@@ -20,7 +20,6 @@
     <div class="header-actions">
       <button class="icon-btn" id="btnNavShop" title="Boutique">🛒<span class="nav-badge" id="shopCoinsBadge">0 🪙</span></button>
       <button class="icon-btn" id="btnNavBoard" title="Classement">🏆</button>
-      <div class="syro-user" id="syroUserBadge" title="Profil SYRO"> <span style="opacity:.6">...</span></div>
       <button class="icon-btn" id="btnTheme" title="Clair / sombre">☀️</button>
       <button class="icon-btn" id="btnSound" title="Son ON/OFF" style="font-size:.95rem">🔊</button>
     </div>
@@ -36,7 +35,7 @@
     <div class="hero">
       <div class="hero-logo">🎲</div>
       <h1>Le Ludo africain,<br>en ligne et entre amis.</h1>
-      <p>Ton XP est gardé si tu crées ton compte ensuite.<br>Choisis ton personnage juste après.</p>
+      <p>Sans compte, sans pub. Choisis ton mode et joue direct.</p>
       <div class="hero-badges">
         <span class="badge live">● 1 240 en ligne</span>
         <span class="badge">⚡ Sans téléchargement</span>
@@ -45,7 +44,7 @@
       <div class="hero-ctas">
         <button class="cta-primary" id="btnPlayGuest">🎲 Jouer maintenant →</button>
       </div>
-      <div class="hero-foot"><a href="#" id="linkRulesHero">📜 Règles du jeu</a> · Ton pseudo est <b id="heroPseudo">—</b> <a href="#" id="linkChangeName">changer</a></div>
+      <div class="hero-foot"><a href="#" id="linkRulesHero">📜 Règles du jeu</a></div>
       <div class="hero-extra">
         <button class="badge" id="heroBoardBtn" style="cursor:pointer;">🏆 Classement</button>
         <button class="badge" id="heroShopBtn" style="cursor:pointer;">🛒 Boutique</button>
@@ -292,10 +291,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-28"></script>
-<script src="backends.js?v=2026-11-28"></script>
-<script src="firebase-config.js?v=2026-11-28"></script>
-<script src="syro-store.js?v=2026-11-28"></script>
-<script src="app.js?v=2026-11-28"></script>
+<script src="engine.js?v=2026-11-29"></script>
+<script src="backends.js?v=2026-11-29"></script>
+<script src="firebase-config.js?v=2026-11-29"></script>
+<script src="syro-store.js?v=2026-11-29"></script>
+<script src="app.js?v=2026-11-29"></script>
 </body>
 </html>

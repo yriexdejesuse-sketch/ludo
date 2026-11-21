@@ -1,4 +1,4 @@
-/* SYRO GAMES — Local Store (sans compte) v2026-11-23 */
+/* SYRO GAMES — Local Store (sans compte, sans pseudo) v2026-11-28 */
 'use strict';
 window.SyroAuth = (function(){
   const SHOP_CATALOG = [
@@ -19,53 +19,40 @@ window.SyroAuth = (function(){
     {id:'sound_tom', cat:'son', name:'Tom Scream', price:0, preview:'😾', desc:'Cri de Tom quand on le mange !'},
     {id:'sound_drum', cat:'son', name:'Tambour Africain', price:0, preview:'🥁', desc:'Percussions'},
   ];
-  function genPseudo(){ return 'Joueur_' + Math.floor(1000+Math.random()*9000); }
-  function getPseudo(){ return localStorage.getItem('syro_pseudo') || (localStorage.setItem('syro_pseudo', genPseudo()), localStorage.getItem('syro_pseudo')); }
-  function setPseudo(v){ v=String(v||'').trim().slice(0,16) || genPseudo(); localStorage.setItem('syro_pseudo', v); renderHeader(); renderDashboard(); return v; }
   function getInv(){ try{ return JSON.parse(localStorage.getItem('syro_inv')||'[]'); }catch(e){ return []; } }
   function getEq(){ try{ return JSON.parse(localStorage.getItem('syro_eq')||'{}'); }catch(e){ return {}; } }
-  function renderHeader(){
-    const el=document.getElementById('syroUserBadge'); if(!el) return;
-    const pseudo=getPseudo();
-    el.innerHTML=`<span class="u-ava">🎮</span><span class="u-txt"><b>${pseudo}</b><small>SYRO GAMES</small></span>`;
-    el.title='Changer de pseudo';
-    const hp=document.getElementById('heroPseudo'); if(hp) hp.textContent=pseudo;
-    applyEquipped();
-  }
+  function renderHeader(){} // no-op sans compte
   function renderDashboard(){
     const dn=document.getElementById('dashName'); const ds=document.getElementById('dashSub');
     if(!dn) return;
-    const pseudo=getPseudo();
-    dn.textContent=`Bienvenue, ${pseudo} 👋`;
-    if(ds) ds.textContent='Prêt à jouer ? Choisis ton mode !';
+    dn.textContent='Bienvenue 👋';
+    if(ds) ds.textContent='Choisis ton mode et joue direct !';
   }
   function applyEquipped(){
     const eq=getEq();
     document.documentElement.dataset.pawnSkin = eq.pawn || 'pawn_classic';
     document.documentElement.dataset.boardSkin = eq.board || 'board_classic';
     document.documentElement.dataset.diceSkin = eq.dice || 'dice_classic';
-    document.documentElement.dataset.soundPack = eq.sound || 'sound_pop';
+    document.documentElement.dataset.soundPack = eq.sound || 'sound_tom';
   }
   function init(){
-    if(!localStorage.getItem('syro_pseudo')) localStorage.setItem('syro_pseudo', genPseudo());
     if(!localStorage.getItem('syro_inv')) localStorage.setItem('syro_inv', JSON.stringify(SHOP_CATALOG.map(x=>x.id)));
     if(!localStorage.getItem('syro_eq')) localStorage.setItem('syro_eq', JSON.stringify({pawn:'pawn_classic', board:'board_classic', dice:'dice_classic', sound:'sound_tom'}));
-    renderHeader(); renderDashboard(); applyEquipped();
+    try{ localStorage.removeItem('syro_pseudo'); localStorage.removeItem('syro_xp'); }catch(e){}
+    renderDashboard(); applyEquipped();
   }
   function equipItem(id){
     const item=SHOP_CATALOG.find(x=>x.id===id); if(!item) throw new Error('Item inconnu');
     const catKey=item.cat==='pion'?'pawn': item.cat==='plateau'?'board': item.cat==='de'?'dice':'sound';
     const eq=getEq(); eq[catKey]=id;
     localStorage.setItem('syro_eq', JSON.stringify(eq));
-    applyEquipped(); renderHeader();
+    applyEquipped();
     return eq;
   }
-  // compat: ancien code appelait addXp, addWin, etc. -> no-op
   function addXp(){}
   function addWin(){}
   function getCoins(){ return 0; }
-  function getInv2(){ return getInv(); }
   function getLeaderboard(){ return Promise.resolve([]); }
   function buyItem(id){ return Promise.resolve(equipItem(id)); }
-  return { init, renderHeader, renderDashboard, equipItem, SHOP_CATALOG, getEq, getInv:getInv2, getCoins, addXp, addWin, getLeaderboard, buyItem, getUser:()=>null, getProfile:()=>({pseudo:getPseudo()}), setPseudo, getPseudo, friendlyError:(e)=>e.message||'Erreur' };
+  return { init, renderHeader, renderDashboard, equipItem, SHOP_CATALOG, getEq, getInv, getCoins, addXp, addWin, getLeaderboard, buyItem, getUser:()=>null, getProfile:()=>null, getPseudo:()=>'', setPseudo:()=>{}, friendlyError:(e)=>e.message||'Erreur' };
 })();
