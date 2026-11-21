@@ -18,6 +18,7 @@ const MEDAL = ['', '🥇', '🥈', '🥉', '4️⃣'];
 let mode = null;                 // 'local' | 'ai' | 'online'
 let setupKind = 'local';         // écran de préparation
 let aiCount = 2;
+let aiLevel = (()=>{ try{ return localStorage.getItem('syro_aiLevel')||'normal'; }catch(e){ return 'normal'; }})();
 let localCount = 2;
 let simCount = 2;
 let onlineCount = 2;
@@ -1044,47 +1045,87 @@ function aiStep() {
   }
 }
 function pickAiMove() {
-  let best = null;
-  [0, 1].forEach(i => {
-    if (G.dieUsed[i]) return;
-    (legal[i] || []).forEach(m => {
-      const s = scoreAi(m, i);
-      if (!best || s > best.s) best = { die: i, m, s };
+  const moves=[];
+  [0,1].forEach(i=>{ if(G.dieUsed[i]) return; (legal[i]||[]).forEach(m=> moves.push({die:i,m})); });
+  (legal.sum||[]).forEach(m=> moves.push({die:'sum',m}));
+  if(!moves.length) return null;
+  if(aiLevel==='easy'){
+    return moves[Math.floor(Math.random()*moves.length)];
+  }
+  if(aiLevel==='hard'){
+    let best=null;
+    moves.forEach(({die,m})=>{
+      const s = scoreHard(m, die);
+      if(!best || s>best.s) best={die,m,s};
     });
-  });
-  /* somme des deux dés : recul-capture combiné */
-  (legal.sum || []).forEach(m => {
-    const s = scoreAi(m, 'sum');
-    if (!best || s > best.s) best = { die: 'sum', m, s };
+    return best;
+  }
+  // normal
+  let best=null;
+  moves.forEach(({die,m})=>{
+    const s = scoreAi(m, die);
+    if(!best || s>best.s) best={die,m,s};
   });
   return best;
 }
 function scoreAi(m, dieIdx) {
-  const v = dieIdx === 'sum' ? (G.dice[0] + G.dice[1]) : G.dice[dieIdx];
   const col = Ludo.currentColor(G);
   let s = Math.random() * 8;
-  if (m.to === 56) s += 160;              // rentrer un pion
-  if (m.capture) s += 110;                // manger
-  if (m.type === 'out') s += 80;          // sortir de la base
-  s += m.to * 0.4;                        // avancer
+  if (m.to === 56) s += 160;
+  if (m.capture) s += 110;
+  if (m.type === 'out') s += 80;
+  s += m.to * 0.4;
   if (m.to <= 50 && !Ludo.isIntruderPos(m.to)) {
     const d = Ludo.ringIdxOf(col, m.to);
     if (Ludo.SAFE[d]) s += 26;
     else {
-      let danger = false;
-      for (const p of G.players) {
-        if (p.color === col) continue;
-        for (const pos of p.pawns) {
-          if ((pos < 0 && pos !== -2) || pos > 50) continue;
-          const r = Ludo.ringIdxOf(p.color, pos);
-          const f = (d - r + 52) % 52; if (f >= 1 && f <= 6) danger = true;
-          const b = (r - d + 52) % 52; if (b >= 1 && b <= 6) danger = true;
-        }
-        if (danger) break;
-      }
-      if (danger) s -= 55;                // risque d'être mangé
+      let danger=false;
+      for(const p of G.players){ if(p.color===col) continue; for(const pos of p.pawns){ if((pos<0 && pos!==-2) || pos>50) continue; const r=Ludo.ringIdxOf(p.color,pos); const f=(d - r + 52)%52; if(f>=1&&f<=6) danger=true; const b=(r - d + 52)%52; if(b>=1&&b<=6) danger=true; } if(danger) break; }
+      if(danger) s-=55;
     }
   }
+  return s;
+}
+function scoreHard(m, dieIdx){
+  let s = scoreAi(m, dieIdx);
+  try{
+    const col = Ludo.currentColor(G);
+    // bonus si on bloque un adversaire proche de la maison
+    if(m.capture && m.to>=38) s+=32;
+    if(m.to===56) s+=24; // hard valorise encore plus la maison
+    // pénalité si on s'expose après ce coup
+    if(m.to<=50 && !Ludo.isIntruderPos(m.to)){
+      const d=Ludo.ringIdxOf(col, m.to);
+      if(!Ludo.SAFE[d]){
+        for(const p of G.players){
+          if(p.color===col) continue;
+          for(const pos of p.pawns){
+            if((pos<0 && pos!==-2) || pos>50) continue;
+            const r=Ludo.ringIdxOf(p.color,pos);
+            const f=(d - r + 52)%52, b=(r - d + 52)%52;
+            if((f>=1&&f<=6) || (b>=1&&b<=6)){ s-=78; break; }
+          }
+        }
+      }
+    }
+    // look-ahead 1 coup adverse simulé : si après notre coup on donne un manger facile à l'adversaire, gros malus
+    // on simule vite : clone G, joue m, regarde si adversaire a une capture
+    const sim = JSON.parse(JSON.stringify(G));
+    try{ Ludo.actionMove(sim, m.pawn, m.to, dieIdx); }catch(e){}
+    if(sim && sim.players){
+      const nextCol = Ludo.currentColor(sim);
+      if(nextCol !== col){
+        let oppCanCapture=false;
+        const diceTry=[1,2,3,4,5,6];
+        for(const v of diceTry){
+          const fake={...sim, dice:[v,6], dieUsed:[false,false], phase:'move'};
+          // on ne peut pas appeler movesForDie sans G global, on approxime : si un pion adverse à 1..6 cases de notre pion
+          for(const p of sim.players){ if(p.color!==col) continue; for(const myPos of p.pawns){ if(myPos!==m.to) continue; const myR=Ludo.ringIdxOf(col,myPos); for(const op of sim.players){ if(op.color===col) continue; for(const opPos of op.pawns){ if((opPos<0&&opPos!==-2)||opPos>50) continue; const opR=Ludo.ringIdxOf(op.color,opPos); const dist=(myR - opR + 52)%52; if(dist>=1&&dist<=6) oppCanCapture=true; } } } }
+        }
+        if(oppCanCapture) s-=34;
+      }
+    }
+  }catch(e){}
   return s;
 }
 
@@ -1315,9 +1356,15 @@ function renderSetup() {
   }
   $('#localCountBlock').classList.toggle('hidden', !isLocal);
   $('#aiCountBlock').classList.toggle('hidden', !isAi);
+  $('#aiLevelBlock').classList.toggle('hidden', !isAi);
   $('#simCountBlock').classList.toggle('hidden', !isSim);
   $('#simPlayersBlock').classList.toggle('hidden', !isSim);
   $('#onlineCountBlock').classList.toggle('hidden', !isOnline);
+  if(isAi){
+    const desc={easy:'😊 Facile joue au hasard — idéal pour apprendre.', normal:'😐 Normal cherche à rentrer et manger, sans voir trop loin.', hard:'😈 Difficile voit 2 coups devant : il punit si tu t\'exposes et bloque près de ta maison.'};
+    const h=document.getElementById('aiLevelHint'); if(h) h.textContent=desc[aiLevel]||desc.normal;
+    document.querySelectorAll('#aiLevel button').forEach(b=> b.classList.toggle('sel', b.dataset.lvl===aiLevel));
+  }
   if (isSim) {
     // ajuster simPlayers selon simCount
     while (simPlayers.length < simCount) {
@@ -1740,6 +1787,15 @@ function bind() {
       aiCount = +b.dataset.n;
       $('#aiCount').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
       renderSetup();
+    };
+  });
+  document.querySelectorAll('#aiLevel button').forEach(b=>{
+    b.onclick=()=>{
+      aiLevel=b.dataset.lvl;
+      try{ localStorage.setItem('syro_aiLevel', aiLevel); }catch(e){}
+      document.querySelectorAll('#aiLevel button').forEach(x=> x.classList.toggle('sel', x===b));
+      const desc={easy:'😊 Facile joue au hasard — idéal pour apprendre.', normal:'😐 Normal cherche à rentrer et manger, sans voir trop loin.', hard:'😈 Difficile voit 2 coups devant : il punit si tu t\'exposes et bloque près de ta maison.'};
+      const h=document.getElementById('aiLevelHint'); if(h) h.textContent=desc[aiLevel];
     };
   });
   $('#simCount').querySelectorAll('button').forEach(b => {

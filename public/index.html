@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne, avec personnages. Joue sans compte, garde ton XP.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-11-26">
+<link rel="stylesheet" href="style.css?v=2026-11-27">
 </head>
 <body>
 <div id="app">
@@ -139,6 +139,15 @@
           <button data-n="3">3 joueurs<br><small>toi + 2 ordinateurs</small></button>
           <button data-n="4">4 joueurs<br><small>toi + 3 ordinateurs</small></button>
         </div>
+      </div>
+      <div class="pick-block hidden" id="aiLevelBlock">
+        <h3>Niveau de l'ordinateur</h3>
+        <div class="seg" id="aiLevel">
+          <button data-lvl="easy">😊 Facile<br><small>joue au hasard</small></button>
+          <button data-lvl="normal" class="sel">😐 Normal<br><small>équilibré</small></button>
+          <button data-lvl="hard">😈 Difficile<br><small>voit 2 coups devant</small></button>
+        </div>
+        <p class="hint" id="aiLevelHint">L'ordi Normal cherche à rentrer et manger, sans voir trop loin.</p>
       </div>
       <div class="pick-block hidden" id="simCountBlock">
         <h3>Nombre de joueurs (simulateur)</h3>
@@ -282,10 +291,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-11-26"></script>
-<script src="backends.js?v=2026-11-26"></script>
-<script src="firebase-config.js?v=2026-11-26"></script>
-<script src="syro-store.js?v=2026-11-26"></script>
-<script src="app.js?v=2026-11-26"></script>
+<script src="engine.js?v=2026-11-27"></script>
+<script src="backends.js?v=2026-11-27"></script>
+<script src="firebase-config.js?v=2026-11-27"></script>
+<script src="syro-store.js?v=2026-11-27"></script>
+<script src="app.js?v=2026-11-27"></script>
 </body>
 </html>
