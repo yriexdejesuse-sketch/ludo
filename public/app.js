@@ -19,6 +19,9 @@ let mode = null;                 // 'local' | 'ai' | 'online'
 let setupKind = 'local';         // écran de préparation
 let aiCount = 2;
 let aiLevel = (()=>{ try{ return localStorage.getItem('syro_aiLevel')||'normal'; }catch(e){ return 'normal'; }})();
+const THEME_PACKS={classic:{pawn:'pawn_classic',board:'board_classic',dice:'dice_classic',sound:'sound_pop'},foot:{pawn:'pawn_foot',board:'board_foot',dice:'dice_foot',sound:'sound_foot'},music:{pawn:'pawn_music',board:'board_music',dice:'dice_music',sound:'sound_music'},afro:{pawn:'pawn_afro',board:'board_afro',dice:'dice_afro',sound:'sound_afro'},gaming:{pawn:'pawn_gaming',board:'board_gaming',dice:'dice_gaming',sound:'sound_gaming'},anime:{pawn:'pawn_anime',board:'board_anime',dice:'dice_anime',sound:'sound_anime'}};
+function currentTheme(){ try{ const eq=SyroAuth.getEq(); const b=eq.board||'board_classic'; return Object.keys(THEME_PACKS).find(k=>THEME_PACKS[k].board===b)||'classic'; }catch(e){ return 'classic'; } }
+function applyThemePack(k){ const p=THEME_PACKS[k]; if(!p) return; try{ ['pawn','board','dice','sound'].forEach(cat=>{ const id=p[cat]; const item=SyroAuth.SHOP_CATALOG.find(x=>x.id===id); if(item) SyroAuth.equipItem(id); }); }catch(e){} }
 let localCount = 2;
 let simCount = 2;
 let onlineCount = 2;
@@ -547,10 +550,11 @@ function applyDiceSkins(){
 }
 function renderDice() {
   if (rollAnim) return;
-  applyDiceSkins();
   const els = [$('#die0'), $('#die1')];
   els.forEach((el, i) => {
     el.className = 'board-die';
+    // ré-appliquer skin après reset (sinon écrasé)
+    try{ const sk=(window.SyroAuth&&SyroAuth.getEq()?SyroAuth.getEq().dice:'dice_classic').replace('dice_',''); el.classList.add('skin-'+sk); }catch(e){}
     const v = G ? G.dice[i] : null;
     if (v == null) { el.classList.add('empty'); el.innerHTML = ''; return; }
     setFace(el, v);
@@ -1466,6 +1470,8 @@ function renderSetup() {
     }
   }
   $('#onlineNameBlock').classList.toggle('hidden', !isOnline);
+  // thème
+  try{ const cur=currentTheme(); document.querySelectorAll('#themePick button').forEach(b=> b.classList.toggle('sel', b.dataset.theme===cur)); }catch(e){}
   $('#setupHint').textContent = isAi
     ? (aiCount === 4 ? 'Tu joues contre 3 ordinateurs.' : aiCount === 3 ? 'Tu joues contre 2 ordinateurs.' : 'Tu joues contre 1 ordinateur.')
     : 'Tous les parcours ont la même longueur : choisis ce que tu veux !';
@@ -1937,13 +1943,9 @@ function bind() {
   }
   // Nav header neuve v2026-11-23
   const navShop = document.getElementById('btnNavShop'); if(navShop) navShop.onclick=()=> showScreen('shop');
-  const navBoard = document.getElementById('btnNavBoard'); if(navBoard) navBoard.onclick=()=> { _shopCat='plateau'; showScreen('shop'); };
   const brandHome = document.getElementById('brandHome'); if(brandHome) brandHome.onclick=()=> goHome();
   const heroShop = document.getElementById('heroShopBtn'); if(heroShop) heroShop.onclick=()=> showScreen('shop');
-  const heroBoard = document.getElementById('heroBoardBtn'); if(heroBoard) heroBoard.onclick=()=> showScreen('leaderboard');
   const shopBack = document.getElementById('btnShopBack'); if(shopBack) shopBack.onclick=()=> goHome();
-  const boardBack = document.getElementById('btnBoardBack'); if(boardBack) boardBack.onclick=()=> goHome();
-  const boardRefresh = document.getElementById('btnBoardRefresh'); if(boardRefresh) boardRefresh.onclick=()=> renderLeaderboard();
   const dashPlay = document.getElementById('dashPlay'); if(dashPlay) dashPlay.onclick=()=> showScreen('menu');
   const dashOnline = document.getElementById('dashOnline'); if(dashOnline) dashOnline.onclick=()=> { setupKind='online'; renderSetup(); showScreen('setup'); };
   const dashBot = document.getElementById('dashBot'); if(dashBot) dashBot.onclick=()=> { setupKind='ai'; renderSetup(); showScreen('setup'); };
@@ -1953,6 +1955,7 @@ function bind() {
   const dashBoardBtn = document.getElementById('dashBoard'); if(dashBoardBtn) dashBoardBtn.onclick=()=> { _shopCat='plateau'; showScreen('shop'); };
   const dashSettings = document.getElementById('dashSettings'); if(dashSettings) dashSettings.onclick=()=> showScreen('auth');
   document.querySelectorAll('#shopTabs button').forEach(b=> b.onclick=()=>{ _shopCat=b.dataset.cat; renderShop(); });
+  document.querySelectorAll('#themePick button').forEach(b=> b.onclick=()=>{ applyThemePack(b.dataset.theme); renderSetup(); toast('Thème '+b.dataset.theme+' ✓'); });
   const btnSound = document.getElementById('btnSound'); if(btnSound) btnSound.onclick=()=>{
     const isOff=document.documentElement.dataset.sound==='off';
     if(isOff){ delete document.documentElement.dataset.sound; localStorage.setItem('syro_sound','on'); btnSound.textContent='🔊'; toast('Son activé'); }

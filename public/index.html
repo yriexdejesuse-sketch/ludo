@@ -7,7 +7,7 @@
 <meta name="description" content="SYRO GAMES — Le Ludo africain multijoueur en ligne. Sans compte, entre amis.">
 <meta name="theme-color" content="#e0a82e">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="style.css?v=2026-12-01">
+<link rel="stylesheet" href="style.css?v=2026-12-02">
 </head>
 <body>
 <div id="app">
@@ -18,8 +18,7 @@
       <div>SYRO <span style="color:var(--accent);">GAMES</span><small>Le Ludo en ligne entre amis</small></div>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" id="btnNavShop" title="Apparences">✨<span class="nav-badge" id="shopCoinsBadge" style="display:none">0</span></button>
-      <button class="icon-btn" id="btnNavBoard" title="Classement">🏆</button>
+      <button class="icon-btn" id="btnNavShop" title="Apparences">✨</button>
       <button class="icon-btn" id="btnTheme" title="Clair / sombre">☀️</button>
       <button class="icon-btn" id="btnSound" title="Son ON/OFF" style="font-size:.95rem">🔊</button>
     </div>
@@ -46,7 +45,6 @@
       </div>
       <div class="hero-foot"><a href="#" id="linkRulesHero">📜 Règles du jeu</a></div>
       <div class="hero-extra">
-        <button class="badge" id="heroBoardBtn" style="cursor:pointer;">🏆 Classement</button>
         <button class="badge" id="heroShopBtn" style="cursor:pointer;">✨ Apparences</button>
       </div>
     </div>
@@ -75,7 +73,7 @@
           <button class="big-btn" id="dashOnline">🌐 En ligne<br><small>avec un ami</small></button>
           <button class="big-btn" id="dashBot">🤖 Solo<br><small>vs ordinateur</small></button>
           <button class="big-btn" id="dashShop">✨ Apparences<br><small>pions & plateaux</small></button>
-          <button class="big-btn" id="dashBoard">🎨 Thèmes<br><small>plateau & pions</small></button>
+          <button class="big-btn" id="dashBoard" style="display:none">🎨 Thèmes<br><small>plateau & pions</small></button>
         </div>
       </div>
     </div>
@@ -190,6 +188,18 @@
       <div class="pick-block hidden" id="onlineNameBlock">
         <h3>Ton nom</h3>
         <input id="onlineName" maxlength="16" placeholder="Ton prénom ou pseudo" autocomplete="nickname">
+      </div>
+      <div class="pick-block" id="themeBlock">
+        <h3>✨ Thème de la partie</h3>
+        <div class="seg" id="themePick" style="grid-template-columns:repeat(3,1fr);gap:8px">
+          <button data-theme="classic" class="sel">🟫 Classique<br><small>Bois Ludo</small></button>
+          <button data-theme="foot">⚽ Foot<br><small>Stade</small></button>
+          <button data-theme="music">🎵 Musique<br><small>Scène</small></button>
+          <button data-theme="afro">🦁 Afro<br><small>Kente</small></button>
+          <button data-theme="gaming">👾 Gaming<br><small>Néon</small></button>
+          <button data-theme="anime">⛩️ Animé<br><small>Sakura</small></button>
+        </div>
+        <p class="hint" id="themeHint">Tu peux aussi changer dans ✨ Apparences</p>
       </div>
       <p class="hint" id="setupHint">Tous les parcours ont la même longueur : choisis ce que tu veux !</p>
       <div class="row center">
@@ -309,10 +319,10 @@ try{ const _sm=localStorage.getItem('syro_sound'); if(_sm==='off') document.docu
 const _sb=document.getElementById('btnSound'); if(_sb) _sb.textContent=(document.documentElement.dataset.sound==='off'?'🔇':'🔊');
 // Navigation gérée par app.js (showScreen) — pas de handler inline ici
 </script>
-<script src="engine.js?v=2026-12-01"></script>
-<script src="backends.js?v=2026-12-01"></script>
-<script src="firebase-config.js?v=2026-12-01"></script>
-<script src="syro-store.js?v=2026-12-01"></script>
-<script src="app.js?v=2026-12-01"></script>
+<script src="engine.js?v=2026-12-02"></script>
+<script src="backends.js?v=2026-12-02"></script>
+<script src="firebase-config.js?v=2026-12-02"></script>
+<script src="syro-store.js?v=2026-12-02"></script>
+<script src="app.js?v=2026-12-02"></script>
 </body>
 </html>
