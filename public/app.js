@@ -220,7 +220,17 @@ function buildBoard() {
   const isFoot = (()=>{ try{ return (SyroAuth.getEq().board==='board_foot') }catch(e){ return document.documentElement.dataset.boardSkin==='board_foot' } })();
   if(isFoot && !footPick) footPick=pickFootClubs();
   if(!isFoot) footPick=null;
-  add('rect', { x: 0, y: 0, width: 600, height: 600, fill: '#f4f1ea', rx: 12 });
+  add('rect', { x: 0, y: 0, width: 600, height: 600, fill: isFoot ? '#1c7a43' : '#f4f1ea', rx: 12 });
+  if(isFoot){
+    /* bandes de tonte du terrain */
+    for(let i=0;i<10;i++){
+      add('rect', { x: i*60, y: 0, width: 60, height: 600, fill: i%2 ? '#1f8a4b' : '#1c7a43', opacity: .55 });
+    }
+    add('rect', { x: 12, y: 12, width: 576, height: 576, fill: 'none', stroke: 'rgba(255,255,255,.55)', 'stroke-width': 3, rx: 8 });
+    add('circle', { cx: 300, cy: 300, r: 70, fill: 'none', stroke: 'rgba(255,255,255,.45)', 'stroke-width': 3 });
+    add('path', { d: 'M300,12 L300,230', stroke: 'rgba(255,255,255,.45)', 'stroke-width': 3 });
+    add('path', { d: 'M300,370 L300,588', stroke: 'rgba(255,255,255,.45)', 'stroke-width': 3 });
+  }
 
   for (const c of Object.keys(BASE_ORIGIN)) {
     const [ox, oy] = BASE_ORIGIN[c];
@@ -303,10 +313,22 @@ function pawnEl(color, idx) {
     const c = document.createElementNS(NS, 'circle');
     c.setAttribute('r', 13); c.setAttribute('fill', HEX[color]);
     c.setAttribute('stroke', DARK[color]); c.setAttribute('stroke-width', 2.5);
+    // anneau intérieur : effet « pion de ludo » qui garde la couleur de l'équipe
+    const ring = document.createElementNS(NS, 'circle');
+    ring.setAttribute('r', 8.5); ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', '#ffffff'); ring.setAttribute('stroke-opacity', .55);
+    ring.setAttribute('stroke-width', 1.6);
     const h = document.createElementNS(NS, 'circle');
     h.setAttribute('r', 4.5); h.setAttribute('cx', -4); h.setAttribute('cy', -4.5);
     h.setAttribute('fill', '#fff'); h.setAttribute('opacity', .7);
-    e.appendChild(c); e.appendChild(h);
+    e.appendChild(c); e.appendChild(ring); e.appendChild(h);
+    /* petits points de ballon, visibles seulement en thème foot */
+    [[5,-3],[2.5,3.5],[-1.5,-6]].forEach(([dx,dy])=>{
+      const d=document.createElementNS(NS,'circle');
+      d.setAttribute('r',1.9); d.setAttribute('cx',dx); d.setAttribute('cy',dy);
+      d.setAttribute('fill','#1b1b1b'); d.setAttribute('class','ball-dot');
+      e.appendChild(d);
+    });
     $('#pawns').appendChild(e);
     e.addEventListener('click', (ev) => { ev.stopPropagation(); onPawnClick(color, idx); });
   }
